@@ -184,6 +184,10 @@
   details.dodatki summary{font-size:14px; font-weight:600; color:var(--szary); cursor:pointer;}
   .kolejka-info{background:var(--bg-uwaga); color:var(--tekst-uwaga); border-radius:12px;
     padding:10px 14px; margin-bottom:12px; font-size:15px; display:none;}
+  /* Odrzucony wpis z kolejki — wzorzec z aplikacji floty (.odrzucony) */
+  .odrzucony{background:var(--bg-blad); color:var(--tekst-blad); border-radius:10px;
+    padding:10px; margin-top:8px; font-size:14px;}
+  .odrzucony .p{display:flex; gap:8px; margin-top:8px;}
   nav{position:fixed; bottom:0; left:0; right:0; background:var(--karta);
     border-top:1px solid var(--linia); display:flex; z-index:5;
     padding-bottom:env(safe-area-inset-bottom);}
@@ -949,6 +953,16 @@ el('zapiszBtn').onclick = function(){
   el('overlay').classList.remove('ukryte');
 
   if (STAN.edytowanyId) {
+    // D66: poprawka wymaga sieci — nie da się jej zakolejkować, bo w tym
+    // czasie ktoś inny mógłby zmienić ten sam wiersz i nie wiedzielibyśmy,
+    // czyja wersja jest właściwa. Mówimy to wprost, zanim człowiek
+    // wypełni formularz na darmo.
+    if (!navigator.onLine) {
+      el('overlay').classList.add('ukryte');
+      komunikat('wpisKomunikat', 'Brak internetu. Poprawianie wpisu wymaga zasięgu — ' +
+        'nowy wpis możesz zapisać offline, ale poprawkę trzeba zrobić online.', 'blad');
+      return;
+    }
     payload.idWpisu = STAN.edytowanyId;
     wolajAPI('edytujWpis', payload).then(function(odp){
       el('overlay').classList.add('ukryte');
@@ -1127,6 +1141,11 @@ function rysujWpisy(){
   el('listaWpisow').querySelectorAll('[data-anuluj]').forEach(function(b){
     b.onclick = function(){
       var w = lista[Number(b.dataset.anuluj)];
+      // D66 — jak przy poprawianiu: anulowanie wymaga sieci.
+      if (!navigator.onLine) {
+        alert('Brak internetu.\n\nAnulowanie wpisu wymaga zasięgu. Spróbuj, gdy wróci sieć.');
+        return;
+      }
       if (!confirm('Anulować wpis z ' + w.data + '?\n\nWpis zostanie przekreślony, ale zostanie w ewidencji.')) return;
       el('overlay').classList.remove('ukryte');
       wolajAPI('anulujWpis', { idWpisu: w.idWpisu }).then(function(o){

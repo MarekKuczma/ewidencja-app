@@ -7,7 +7,7 @@
  * a Ty stracisz godzinę na szukanie błędu, którego nie ma.
  */
 
-var WERSJA_CACHE = 'ewidencja-v8';
+var WERSJA_CACHE = 'ewidencja-v9';
 
 var PLIKI_SHELL = [
   './',
