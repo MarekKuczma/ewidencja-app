@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ewidencja Floty Rinkon</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./ikona-192.png">
+<link rel="apple-touch-icon" href="./ikona-192.png">
+<meta name="theme-color" content="#27272a">
+<style>
+  /* ===== PALETA C (grafit) — domyślna. Kolory typów sprzętu (pomarańcz,
+     zieleń, niebieski, fiolet) są zarezerwowane dla akcentów jednostek,
+     dlatego kolor główny aplikacji jest celowo neutralny. ===== */
+  :root{
+    --akcent:#3f3f46; --akcent-c:#27272a;
+    --gradient:linear-gradient(135deg, #27272a 0%, #52525b 70%, #a1a1aa 100%);
+    --ikona-grad:linear-gradient(135deg, #27272a, #71717a);
+    --przycisk-cien:rgba(39,39,42,.35);
+    --tlo:#f4f6f8; --karta:#ffffff; --input-tlo:#ffffff; --input-brzeg:#d1d5db;
+    --tekst:#1f2937; --szary:#6b7280; --blad:#d93025; --ok:#188038;
+    --linia:#e5e7eb;
+    --bg-uwaga:#fef3c7; --brzeg-uwaga:#f59e0b; --tekst-uwaga:#92400e;
+    --bg-ok:#e6f4ea; --tekst-ok:#135c26;
+    --bg-blad:#fce8e6; --tekst-blad:#a50e0e;
+    --bg-akcentjasny:#f4f4f5; --tekst-akcentjasny:#3f3f46;
+    --metryka-grad:linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
+    --paleta-ikona:#a1a1aa;
+  }
+  /* ===== PALETA D (burgund) — druga, przełączalna paleta ===== */
+  [data-paleta="burgund"]{
+    --akcent:#9f1239; --akcent-c:#4c0519;
+    --gradient:linear-gradient(135deg, #4c0519 0%, #9f1239 55%, #e11d48 100%);
+    --ikona-grad:linear-gradient(135deg, #4c0519, #be123c);
+    --przycisk-cien:rgba(159,18,57,.35);
+    --bg-akcentjasny:#fff1f2; --tekst-akcentjasny:#9f1239;
+    --metryka-grad:linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    --paleta-ikona:#e11d48;
+  }
+  [data-motyw="ciemny"]{
+    --tlo:#0f1115; --karta:#1c1f26; --input-tlo:#262b34; --input-brzeg:#3a3f4a;
+    --tekst:#f0f1f3; --szary:#9aa1ad; --linia:#333844;
+    --bg-uwaga:#453615; --brzeg-uwaga:#8a5a12; --tekst-uwaga:#fcd34d;
+    --bg-ok:#123522; --tekst-ok:#86efac;
+    --bg-blad:#451a17; --tekst-blad:#fca5a5;
+    --bg-akcentjasny:#26262a; --tekst-akcentjasny:#d4d4d8;
+    --metryka-grad:linear-gradient(135deg, #1f2127 0%, #24262c 100%);
+  }
+  [data-motyw="ciemny"][data-paleta="burgund"]{
+    --bg-akcentjasny:#3f1220; --tekst-akcentjasny:#fda4af;
+    --metryka-grad:linear-gradient(135deg, #2a1218 0%, #33161d 100%);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--tlo); color:var(--tekst);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:17px;}
+  header{background:var(--gradient); color:#fff; padding:14px 16px;
+    padding-top:calc(14px + env(safe-area-inset-top)); position:sticky; top:0; z-index:5;
+    display:flex; align-items:center; gap:12px;}
+  header img{width:40px; height:40px; border-radius:10px; flex:none;}
+  header h1{margin:0; font-size:18px; font-weight:600;}
+  header .kto{font-size:14px; opacity:.9; margin-top:2px;}
+  header .naglowek-tekst{flex:1; min-width:0;}
+  #motywBtn,#paletaBtn{background:rgba(255,255,255,.2); border:none; border-radius:10px;
+    width:40px; height:40px; font-size:18px; color:#fff; flex:none;
+    display:inline-flex; align-items:center; justify-content:center;}
+  main{max-width:560px; margin:0 auto; padding:14px 14px 90px;}
+  .karta{background:var(--karta); border-radius:14px; padding:16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:14px;}
+  .powitanie{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .avatar-krag{width:42px; height:42px; border-radius:50%; background:var(--ikona-grad);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:600; font-size:15px; flex:none;}
+  .powitanie .p1{font-size:18px; font-weight:600;}
+  .powitanie .p2{font-size:14px; color:var(--szary);}
+  label{display:block; font-size:14px; font-weight:600; color:var(--szary); margin:0 0 6px;}
+  label .wym{color:var(--blad);}
+  .pole + .pole{margin-top:20px;}
+  input,select,textarea{width:100%; max-width:100%; min-width:0; font-size:18px; padding:12px;
+    border:1.5px solid var(--input-brzeg); border-radius:10px; background:var(--input-tlo);
+    color:var(--tekst); min-height:48px;}
+  input[type="date"]{-webkit-min-logical-width:0; -webkit-appearance:none; appearance:none;}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--akcent);}
+  textarea{min-height:64px; resize:vertical;}
+  button{font-family:inherit; cursor:pointer;}
+  .przycisk{display:block; width:100%; background:var(--gradient); color:#fff;
+    font-size:18px; font-weight:600; border:none; border-radius:12px;
+    padding:15px; min-height:54px; margin-top:18px;
+    box-shadow:0 4px 12px var(--przycisk-cien);}
+  .przycisk:active{opacity:.85;}
+  .przycisk[disabled]{opacity:.6;}
+  .przycisk-drugi{display:block; width:100%; background:var(--karta); color:var(--akcent);
+    border:1.5px solid var(--akcent); font-size:16px; font-weight:600;
+    border-radius:12px; padding:12px; min-height:48px; margin-top:10px;}
+  .przycisk-maly{background:var(--karta); color:var(--akcent); border:1.5px solid var(--akcent);
+    border-radius:10px; font-size:14px; font-weight:600; padding:8px 14px; min-height:40px;}
+  .komunikat{border-radius:12px; padding:14px; margin:12px 0; font-size:16px; display:none;}
+  .komunikat.ok{display:block; background:var(--bg-ok); border:1px solid var(--ok); color:var(--tekst-ok);}
+  .komunikat.blad{display:block; background:var(--bg-blad); border:1px solid var(--blad); color:var(--tekst-blad);}
+  .komunikat.uwaga{display:block; background:var(--bg-uwaga); border:1px solid var(--brzeg-uwaga); color:var(--tekst-uwaga);}
+  .komunikat ul{margin:6px 0 0; padding-left:20px;}
+  /* Karta jednostki — akcent po lewej w kolorze typu sprzętu (D29) */
+  .jedn{display:flex; gap:12px; background:var(--karta); border-radius:12px;
+    border-left:3px solid var(--szary); box-shadow:0 1px 2px rgba(0,0,0,.06);
+    padding:12px 12px 12px 14px; margin-bottom:10px; align-items:center;}
+  .jedn .ikona-krag{width:38px; height:38px; border-radius:50%; background:var(--karta);
+    border:2px solid var(--szary); box-sizing:border-box; flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:18px;}
+  .jedn .tresc{flex:1; min-width:0;}
+  .jedn .linia1{font-weight:600; font-size:15px; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;}
+  .jedn .linia2{color:var(--szary); font-size:13px; margin-top:2px;}
+  .jedn.uwaga{background:var(--bg-blad);}
+  .jedn.uwaga .linia2{color:var(--tekst-blad);}
+  .plakietka{display:inline-block; background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);
+    font-size:13px; font-weight:600; border-radius:8px; padding:3px 10px; margin-top:6px;}
+  /* Wpis w historii — wzorzec z aplikacji floty, z rozwijanymi szczegółami */
+  .wpis{display:flex; gap:12px; background:var(--karta); border-radius:12px;
+    border-left:3px solid var(--szary); box-shadow:0 1px 2px rgba(0,0,0,.06);
+    padding:12px 12px 12px 14px; margin-bottom:10px;}
+  .wpis .wpis-tresc{flex:1; min-width:0; cursor:pointer;}
+  .wpis .linia1{display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+    font-weight:600; font-size:15px;}
+  .wpis .linia1 span:last-child{flex:none;}
+  .wpis .linia2{color:var(--szary); font-size:13px; margin-top:2px;}
+  .wpis.postoj{border-left-color:var(--linia); background:var(--tlo);}
+  .wpis-strzalka{width:24px; height:24px; border-radius:50%; background:var(--bg-akcentjasny);
+    color:var(--tekst-akcentjasny); font-size:13px; font-weight:700; flex:none;
+    display:inline-flex; align-items:center; justify-content:center;
+    margin-left:4px; transition:transform .15s;}
+  .wpis.rozwiniety .wpis-strzalka{transform:rotate(180deg);}
+  .wpis-szczegoly{display:grid; grid-template-rows:0fr; opacity:0;
+    margin-top:0; padding-top:0; border-top:1px dashed transparent;
+    transition:grid-template-rows .25s ease, opacity .25s ease,
+      margin-top .25s ease, padding-top .25s ease;}
+  .wpis.rozwiniety .wpis-szczegoly{grid-template-rows:1fr; opacity:1;
+    margin-top:8px; padding-top:8px; border-top-color:var(--linia);}
+  .wpis-szczegoly .wsz-zawartosc{min-height:0; overflow:hidden;}
+  .wsz-wiersz{display:flex; justify-content:space-between; gap:10px; font-size:13px;
+    color:var(--szary); margin-bottom:4px;}
+  .wsz-wiersz b{color:var(--tekst); font-weight:600; text-align:right;}
+  .wpisy-naglowek-miesiac{font-size:13px; font-weight:700; color:var(--szary);
+    text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
+  .wpisy-naglowek-miesiac:first-child{margin-top:0;}
+  details.dodatki{border:1.5px solid var(--linia); border-radius:10px; padding:10px 12px;
+    margin-top:20px;}
+  details.dodatki summary{font-size:14px; font-weight:600; color:var(--szary); cursor:pointer;}
+  details.dodatki[open] summary{margin-bottom:6px;}
+  .kolejka-info{background:var(--bg-uwaga); color:var(--tekst-uwaga); border-radius:12px;
+    padding:10px 14px; margin-bottom:12px; font-size:15px; display:none;}
+  nav{position:fixed; bottom:0; left:0; right:0; background:var(--karta);
+    border-top:1px solid var(--linia); display:flex; z-index:5;
+    padding-bottom:env(safe-area-inset-bottom);}
+  nav button{flex:1; background:none; border:none; padding:12px 0 10px;
+    font-size:13px; font-weight:600; color:var(--szary); min-height:56px;}
+  nav button.aktywna{color:var(--akcent);}
+  nav button .i{display:block; font-size:22px; line-height:1.1;}
+  .ukryte{display:none !important;}
+  .srodek{text-align:center; padding:40px 20px; color:var(--szary);}
+  h2{font-size:18px; margin:0 0 12px;}
+  .sukces-ikona{font-size:52px; text-align:center; margin:6px 0 0;}
+  .sukces-tekst{text-align:center; font-size:18px; font-weight:600; margin:6px 0 2px;}
+  .overlay-zapis{position:fixed; inset:0; background:rgba(15,17,21,.55);
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    gap:14px; z-index:50;}
+  .overlay-zapis .spinner{width:42px; height:42px; border:4px solid rgba(255,255,255,.3);
+    border-top-color:#fff; border-radius:50%; animation:kreciSie .8s linear infinite;}
+  .overlay-zapis .tekst{color:#fff; font-size:16px; font-weight:600;}
+  @keyframes kreciSie{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="./ikona-192.png" alt="">
+  <div class="naglowek-tekst">
+    <h1>Ewidencja Floty Rinkon</h1>
+    <div class="kto" id="naglowekKto"></div>
+  </div>
+  <button id="motywBtn" title="Jasny / ciemny">&#9728;&#65039;</button>
+  <button id="paletaBtn" title="Zmień kolory">&#127912;</button>
+</header>
+
+<main>
+  <div class="kolejka-info" id="kolejkaInfo"></div>
+
+  <!-- ===================== EKRAN: START ===================== -->
+  <section id="ekranStart">
+    <div class="karta">
+      <div class="powitanie">
+        <div class="avatar-krag" id="avatar">?</div>
+        <div>
+          <div class="p1" id="powitanieImie">Ładowanie…</div>
+          <div class="p2" id="powitanieData"></div>
+        </div>
+      </div>
+      <div id="listaJednostek"></div>
+      <button class="przycisk-drugi" id="dodajJednostkeBtn">+ Dodaj jednostkę</button>
+    </div>
+  </section>
+
+  <!-- ===================== EKRAN: WPIS ===================== -->
+  <section id="ekranWpis" class="ukryte">
+    <div class="karta">
+      <h2 id="wpisTytul">Nowy wpis</h2>
+      <div class="komunikat" id="wpisKomunikat"></div>
+
+      <div class="pole">
+        <label>&#128197; Data <span class="wym">*</span></label>
+        <input type="date" id="poleData">
+      </div>
+
+      <div class="pole" id="poleLicznikBox">
+        <label>&#128290; Stan licznika <span id="jednLicznika">(km)</span> <span class="wym">*</span></label>
+        <input type="number" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
+        <div class="plakietka" id="ostatniLicznikInfo"></div>
+      </div>
+
+      <div class="pole">
+        <label>&#127959;&#65039; Budowa</label>
+        <input type="text" id="poleBudowa" list="listaBudow" placeholder="np. Płock">
+        <datalist id="listaBudow"></datalist>
+      </div>
+
+      <details class="dodatki">
+        <summary>&#8853; Tankowanie / serwis (opcjonalnie)</summary>
+        <div class="pole" style="margin-top:14px;">
+          <label>&#9981; Tankowanie — litry razem</label>
+          <input type="number" id="poleLitry" inputmode="decimal" step="0.01" placeholder="np. 45,5">
+        </div>
+        <div class="pole">
+          <label>&#128295; Serwis — kategoria</label>
+          <select id="poleSerwis"><option value="">— brak —</option></select>
+        </div>
+      </details>
+
+      <div class="pole">
+        <label>&#128221; Uwagi</label>
+        <textarea id="poleUwagi" placeholder="np. usterka, wymiana ogumienia"></textarea>
+      </div>
+
+      <button class="przycisk" id="zapiszBtn">Zapisz wpis</button>
+      <button class="przycisk-drugi" id="wpisWrocBtn">Anuluj</button>
+    </div>
+  </section>
+
+  <!-- ===================== EKRAN: SUKCES ===================== -->
+  <section id="ekranSukces" class="ukryte">
+    <div class="karta">
+      <div class="sukces-ikona">&#9989;</div>
+      <div class="sukces-tekst">Zapisano</div>
+      <div class="komunikat" id="sukcesKomunikat"></div>
+      <div id="sukcesLuka"></div>
+      <button class="przycisk" id="sukcesWrocBtn">Wróć do listy</button>
+    </div>
+  </section>
+
+  <!-- ===================== EKRAN: HISTORIA ===================== -->
+  <section id="ekranHistoria" class="ukryte">
+    <div class="karta">
+      <h2 id="historiaTytul">Historia jednostki</h2>
+      <div id="listaHistorii"><div class="srodek">Ładowanie…</div></div>
+      <button class="przycisk-drugi" id="historiaWrocBtn">Wróć</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button id="navStart" class="aktywna"><span class="i">&#127968;</span>Start</button>
+  <button id="navHistoria"><span class="i">&#128203;</span>Historia</button>
+</nav>
+
+<div class="overlay-zapis ukryte" id="overlay">
+  <div class="spinner"></div>
+  <div class="tekst">Zapisuję…</div>
+</div>
+
+<script src="./config.js"></script>
+<script>
+/* =====================================================================
+   EWIDENCJA FLOTY RINKON — logika PWA
+
+   Zasady, których trzymamy się w tym pliku:
+   - Kod dostępu bierzemy z adresu (?kod=XXXX) i zapamiętujemy lokalnie,
+     żeby kierowca wpisywał go tylko raz (D7).
+   - Wpis nie ma przełącznika Pracowała/Postój — luki domyka backend
+     automatycznie na podstawie licznika (D47).
+   - Brak zasięgu nie może zgubić wpisu: wpada do kolejki w localStorage
+     i wysyła się sam, gdy sieć wróci.
+   ===================================================================== */
+
+var STAN = { kod: null, imie: null, jednostki: [], budowy: [], kategorie: [], aktywna: null };
+var KLUCZ_KOD = 'ewidencja_kod';
+var KLUCZ_KOLEJKA = 'ewidencja_kolejka';
+var KLUCZ_MOTYW = 'ewidencja_motyw';
+var KLUCZ_PALETA = 'ewidencja_paleta';
+
+/* ---------- pomocnicze ---------- */
+function el(id){ return document.getElementById(id); }
+function pokazEkran(nazwa){
+  ['ekranStart','ekranWpis','ekranSukces','ekranHistoria'].forEach(function(e){
+    el(e).classList.add('ukryte');
+  });
+  el(nazwa).classList.remove('ukryte');
+  el('navStart').classList.toggle('aktywna', nazwa === 'ekranStart');
+  el('navHistoria').classList.toggle('aktywna', nazwa === 'ekranHistoria');
+  window.scrollTo(0, 0);
+}
+function komunikat(idEl, tekst, typ){
+  var e = el(idEl);
+  e.className = 'komunikat ' + (typ || 'ok');
+  e.innerHTML = tekst;
+}
+function schowajKomunikat(idEl){ el(idEl).className = 'komunikat'; }
+function dzisiajISO(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+}
+function inicjaly(imie){
+  return String(imie||'?').split(/\s+/).slice(0,2).map(function(s){ return s.charAt(0); }).join('').toUpperCase();
+}
+function ikonaTypu(typ){
+  var t = String(typ||'').toLowerCase();
+  if (t.indexOf('koparko') !== -1) return '🚧';
+  if (t.indexOf('koparka') !== -1) return '🚧';
+  if (t.indexOf('hds') !== -1) return '🏗️';
+  if (t.indexOf('dostaw') !== -1 || t.indexOf('bus') !== -1) return '🚐';
+  if (t.indexOf('ciężarow') !== -1) return '🚛';
+  return '🚗';
+}
+
+/* ---------- motyw i paleta ---------- */
+function wczytajMotyw(){
+  var m = localStorage.getItem(KLUCZ_MOTYW) || 'jasny';
+  document.documentElement.setAttribute('data-motyw', m);
+  el('motywBtn').innerHTML = m === 'ciemny' ? '🌙' : '☀️';
+  var p = localStorage.getItem(KLUCZ_PALETA) || KONFIG.PALETA_DOMYSLNA;
+  document.documentElement.setAttribute('data-paleta', p);
+}
+el('motywBtn').onclick = function(){
+  var teraz = document.documentElement.getAttribute('data-motyw');
+  localStorage.setItem(KLUCZ_MOTYW, teraz === 'ciemny' ? 'jasny' : 'ciemny');
+  wczytajMotyw();
+};
+el('paletaBtn').onclick = function(){
+  var teraz = document.documentElement.getAttribute('data-paleta');
+  localStorage.setItem(KLUCZ_PALETA, teraz === 'burgund' ? 'grafit' : 'burgund');
+  wczytajMotyw();
+};
+
+/* ---------- komunikacja z API ---------- */
+function wolajAPI(akcja, dane){
+  var payload = Object.assign({ akcja: akcja, token: KONFIG.TOKEN, kod: STAN.kod }, dane || {});
+  return fetch(KONFIG.URL_API, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+    // Uwaga: bez nagłówka Content-Type — Apps Script odrzuca preflight CORS.
+  }).then(function(r){ return r.json(); });
+}
+
+/* ---------- kolejka offline ---------- */
+function kolejka(){
+  try { return JSON.parse(localStorage.getItem(KLUCZ_KOLEJKA) || '[]'); }
+  catch(e){ return []; }
+}
+function zapiszKolejke(k){ localStorage.setItem(KLUCZ_KOLEJKA, JSON.stringify(k)); }
+function dodajDoKolejki(payload){
+  var k = kolejka(); k.push(payload); zapiszKolejke(k); odswiezKolejkeInfo();
+}
+function odswiezKolejkeInfo(){
+  var k = kolejka(), e = el('kolejkaInfo');
+  if (!k.length){ e.style.display = 'none'; return; }
+  e.style.display = 'block';
+  e.innerHTML = '⏳ ' + k.length + (k.length === 1 ? ' wpis czeka' : ' wpisy czekają') +
+    ' na wysłanie. Wyślą się same, gdy wróci zasięg.';
+}
+function wyslijKolejke(){
+  var k = kolejka();
+  if (!k.length) return Promise.resolve();
+  var pierwszy = k[0];
+  return wolajAPI('nowyWpis', pierwszy).then(function(odp){
+    if (odp && (odp.ok || odp.blad === 'E008')) {
+      // E008 = miesiąc zamknięty; nie ma sensu próbować w nieskończoność.
+      var nowa = kolejka(); nowa.shift(); zapiszKolejke(nowa);
+      odswiezKolejkeInfo();
+      return wyslijKolejke();
+    }
+  }).catch(function(){ /* dalej brak sieci — zostaje w kolejce */ });
+}
+window.addEventListener('online', wyslijKolejke);
+
+/* ---------- start aplikacji ---------- */
+function ustalKod(){
+  var url = new URLSearchParams(location.search);
+  var zUrl = url.get('kod');
+  if (zUrl) { localStorage.setItem(KLUCZ_KOD, zUrl); return zUrl; }
+  return localStorage.getItem(KLUCZ_KOD);
+}
+
+function start(){
+  wczytajMotyw();
+  odswiezKolejkeInfo();
+  STAN.kod = ustalKod();
+  if (!STAN.kod) {
+    el('listaJednostek').innerHTML =
+      '<div class="srodek">Otwórz aplikację ze swojego osobistego linku od Marka.<br>' +
+      'Link zawiera Twój kod dostępu.</div>';
+    el('powitanieImie').textContent = 'Brak kodu dostępu';
+    return;
+  }
+  el('poleData').value = dzisiajISO();
+  wyslijKolejke().then(odswiezStart);
+}
+
+function odswiezStart(){
+  return wolajAPI('status', {}).then(function(odp){
+    if (!odp.ok) {
+      el('powitanieImie').textContent = 'Błąd';
+      el('listaJednostek').innerHTML = '<div class="srodek">' + (odp.wiadomosc || 'Nie udało się wczytać danych.') + '</div>';
+      return;
+    }
+    STAN.imie = odp.imie;
+    STAN.jednostki = odp.jednostki || [];
+    STAN.budowy = odp.budowy || [];
+    STAN.kategorie = odp.kategorie || [];
+    el('naglowekKto').textContent = odp.imie;
+    el('avatar').textContent = inicjaly(odp.imie);
+    el('powitanieImie').textContent = 'Cześć, ' + String(odp.imie).split(' ')[0] + '!';
+    el('powitanieData').textContent = STAN.jednostki.length
+      ? (STAN.jednostki.length === 1 ? 'Twoja jednostka' : 'Twoje jednostki')
+      : 'Nie masz jeszcze przypisanej jednostki';
+    rysujJednostki();
+    rysujSlowniki();
+  }).catch(function(){
+    el('powitanieImie').textContent = 'Brak połączenia';
+    el('listaJednostek').innerHTML = '<div class="srodek">Brak zasięgu. ' +
+      'Możesz zapisać wpis — wyśle się, gdy sieć wróci.</div>';
+  });
+}
+
+function rysujSlowniki(){
+  el('listaBudow').innerHTML = STAN.budowy.map(function(b){
+    return '<option value="' + b + '">';
+  }).join('');
+  el('poleSerwis').innerHTML = '<option value="">— brak —</option>' +
+    STAN.kategorie.map(function(k){ return '<option value="' + k + '">' + k + '</option>'; }).join('');
+}
+
+function rysujJednostki(){
+  var box = el('listaJednostek');
+  if (!STAN.jednostki.length) {
+    box.innerHTML = '<div class="srodek">Dodaj jednostkę, żeby zacząć wpisywać.</div>';
+    return;
+  }
+  box.innerHTML = STAN.jednostki.map(function(j, i){
+    var opis = j.ostatniaData
+      ? (j.dniOdWpisu === 0 ? 'ostatni wpis: dziś'
+         : j.dniOdWpisu === 1 ? 'ostatni wpis: wczoraj'
+         : 'brak wpisu od ' + j.dniOdWpisu + ' dni')
+      : 'brak wpisów';
+    return '<div class="jedn' + (j.brakUwaga ? ' uwaga' : '') + '" style="border-left-color:' + j.kolor + '">' +
+      '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ) + '</div>' +
+      '<div class="tresc" data-hist="' + i + '">' +
+        '<div class="linia1">' + j.tytul + '</div>' +
+        '<div class="linia2">' + j.podtytul + ' &middot; ' + opis + '</div>' +
+      '</div>' +
+      '<button class="przycisk-maly" data-wpis="' + i + '">Wpisz</button>' +
+    '</div>';
+  }).join('');
+
+  box.querySelectorAll('[data-wpis]').forEach(function(b){
+    b.onclick = function(){ otworzWpis(STAN.jednostki[Number(b.dataset.wpis)]); };
+  });
+  box.querySelectorAll('[data-hist]').forEach(function(b){
+    b.onclick = function(){ otworzHistorie(STAN.jednostki[Number(b.dataset.hist)]); };
+  });
+}
+
+/* ---------- ekran wpisu ---------- */
+function otworzWpis(j){
+  STAN.aktywna = j;
+  schowajKomunikat('wpisKomunikat');
+  el('wpisTytul').textContent = j.tytul;
+  el('jednLicznika').textContent = '(' + j.jednostkaLicznika + ')';
+  el('poleData').value = dzisiajISO();
+  el('poleLicznik').value = '';
+  el('poleLitry').value = '';
+  el('poleSerwis').value = '';
+  el('poleUwagi').value = '';
+  el('poleBudowa').value = j.ostatniaBudowa || '';
+  el('ostatniLicznikInfo').textContent = j.ostatniStanLicznika
+    ? 'Ostatnio: ' + j.ostatniStanLicznika + ' ' + j.jednostkaLicznika +
+      (j.ostatniaData ? ' (' + j.ostatniaData + ')' : '')
+    : '';
+  el('poleLicznikBox').style.display = (j.maLicznik === 'NIE') ? 'none' : '';
+  pokazEkran('ekranWpis');
+}
+
+el('zapiszBtn').onclick = function(){
+  var j = STAN.aktywna;
+  if (!j) return;
+  var data = el('poleData').value;
+  var licznik = el('poleLicznik').value;
+  if (!data) { komunikat('wpisKomunikat', 'Podaj datę.', 'blad'); return; }
+  if (j.maLicznik === 'TAK' && !licznik) {
+    komunikat('wpisKomunikat', 'Podaj stan licznika.', 'blad'); return;
+  }
+
+  var payload = {
+    idPojazdu: j.idPojazdu,
+    data: data,
+    licznik: licznik,
+    budowa: el('poleBudowa').value,
+    litry: el('poleLitry').value,
+    serwisKategoria: el('poleSerwis').value,
+    uwagi: el('poleUwagi').value
+  };
+
+  el('overlay').classList.remove('ukryte');
+  wolajAPI('nowyWpis', payload).then(function(odp){
+    el('overlay').classList.add('ukryte');
+    if (!odp.ok) { komunikat('wpisKomunikat', odp.wiadomosc || 'Nie udało się zapisać.', 'blad'); return; }
+    pokazSukces(odp);
+    odswiezStart();
+  }).catch(function(){
+    // Brak sieci — wpis nie ginie.
+    el('overlay').classList.add('ukryte');
+    dodajDoKolejki(payload);
+    pokazSukces({ offline: true });
+  });
+};
+
+function pokazSukces(odp){
+  var box = el('sukcesLuka');
+  box.innerHTML = '';
+  schowajKomunikat('sukcesKomunikat');
+
+  if (odp.offline) {
+    komunikat('sukcesKomunikat', 'Brak zasięgu — wpis zapisany w telefonie i wyśle się sam, gdy sieć wróci.', 'uwaga');
+  } else {
+    if (odp.lukaAutoZamknieta && odp.lukaAutoZamknieta.dni > 0) {
+      komunikat('sukcesKomunikat', 'Uzupełniono też ' + odp.lukaAutoZamknieta.dni +
+        ' dni postoju (licznik był bez zmian).', 'ok');
+    }
+    if (odp.ostrzezenia && odp.ostrzezenia.length) {
+      komunikat('sukcesKomunikat', '<ul><li>' + odp.ostrzezenia.join('</li><li>') + '</li></ul>', 'uwaga');
+    }
+    if (odp.pytanieLuka) rysujPytanieLuka(odp.pytanieLuka);
+  }
+  pokazEkran('ekranSukces');
+}
+
+/* D47: pytanie o lukę pojawia się DOPIERO tutaj, po zapisie, i jest
+   opcjonalne — nigdy nie blokuje zapisania bieżącego dnia. */
+function rysujPytanieLuka(luka){
+  var box = el('sukcesLuka');
+  box.innerHTML =
+    '<div class="komunikat uwaga" style="display:block">' + luka.wiadomosc + '</div>' +
+    '<button class="przycisk-drugi" id="lukaRozbij">Rozpisz te dni (' + luka.dniLuki + ')</button>' +
+    '<button class="przycisk-drugi" id="lukaPomin">Zostaw jako lukę</button>';
+  el('lukaPomin').onclick = function(){ box.innerHTML = ''; };
+  el('lukaRozbij').onclick = function(){
+    // Rozdzielamy przyrost równo na dni luki i oznaczamy jako szacowany (D42).
+    var dni = [], krok = luka.przyrostLicznika / (luka.dniLuki + 1);
+    var d = new Date(luka.od), bazowy = Number(STAN.aktywna.ostatniStanLicznika) || 0, n = 1;
+    while (d <= new Date(luka.do)) {
+      dni.push({
+        data: d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2),
+        licznik: Math.round(bazowy + krok * n),
+        licznikSzacowany: true
+      });
+      d.setDate(d.getDate() + 1); n++;
+    }
+    el('overlay').classList.remove('ukryte');
+    wolajAPI('zamknijLuke', {
+      idPojazdu: STAN.aktywna.idPojazdu, sposob: 'rozbicie',
+      od: luka.od, do: luka.do, budowa: el('poleBudowa').value, dni: dni
+    }).then(function(o){
+      el('overlay').classList.add('ukryte');
+      box.innerHTML = o.ok
+        ? '<div class="komunikat ok" style="display:block">Rozpisano ' + dni.length + ' dni. Wartości licznika są oznaczone jako szacowane.</div>'
+        : '<div class="komunikat blad" style="display:block">' + (o.wiadomosc || 'Nie udało się.') + '</div>';
+      odswiezStart();
+    }).catch(function(){
+      el('overlay').classList.add('ukryte');
+      box.innerHTML = '<div class="komunikat blad" style="display:block">Brak połączenia — spróbuj później.</div>';
+    });
+  };
+}
+
+/* ---------- historia jednostki (D34: cały pojazd, nie tylko własne wpisy) ---------- */
+function otworzHistorie(j){
+  STAN.aktywna = j;
+  el('historiaTytul').textContent = j.tytul;
+  el('listaHistorii').innerHTML = '<div class="srodek">Ładowanie…</div>';
+  pokazEkran('ekranHistoria');
+  wolajAPI('historiaPojazdu', { idPojazdu: j.idPojazdu }).then(function(odp){
+    if (!odp.ok) { el('listaHistorii').innerHTML = '<div class="srodek">' + (odp.wiadomosc||'Błąd') + '</div>'; return; }
+    rysujHistorie(odp.wpisy || [], j);
+  }).catch(function(){
+    el('listaHistorii').innerHTML = '<div class="srodek">Brak połączenia.</div>';
+  });
+}
+
+var MIESIACE = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca',
+  'sierpnia','września','października','listopada','grudnia'];
+
+function rysujHistorie(wpisy, j){
+  if (!wpisy.length) { el('listaHistorii').innerHTML = '<div class="srodek">Brak wpisów.</div>'; return; }
+  var html = '', ostatniMiesiac = '';
+  wpisy.forEach(function(w, i){
+    var m = w.data.slice(0, 7);
+    if (m !== ostatniMiesiac) {
+      ostatniMiesiac = m;
+      html += '<div class="wpisy-naglowek-miesiac">' +
+        MIESIACE[Number(m.slice(5,7)) - 1] + ' ' + m.slice(0,4) + '</div>';
+    }
+    var postoj = w.statusDnia === 'Postój';
+    var wartosc = w.licznik ? (w.licznik + ' ' + j.jednostkaLicznika) : '—';
+    html += '<div class="wpis' + (postoj ? ' postoj' : '') + '" style="border-left-color:' +
+        (postoj ? '' : j.kolor) + '" data-i="' + i + '">' +
+      '<div class="wpis-tresc">' +
+        '<div class="linia1"><span>' + w.data.slice(8) + '.' + w.data.slice(5,7) +
+          (postoj ? ' &middot; postój' : '') + '</span><span>' + wartosc +
+          (w.licznikSzacowany ? ' *' : '') + '<span class="wpis-strzalka">&#8964;</span></span></div>' +
+        '<div class="linia2">' + (w.kierowca || '') + (w.budowa ? ' &middot; ' + w.budowa : '') + '</div>' +
+        '<div class="wpis-szczegoly"><div class="wsz-zawartosc">' +
+          (w.litry ? '<div class="wsz-wiersz"><span>Tankowanie</span><b>' + w.litry + ' l</b></div>' : '') +
+          (w.serwisKategoria ? '<div class="wsz-wiersz"><span>Serwis</span><b>' + w.serwisKategoria + '</b></div>' : '') +
+          (w.licznikSzacowany ? '<div class="wsz-wiersz"><span>Licznik</span><b>wartość szacowana</b></div>' : '') +
+          (w.uwagi ? '<div class="wsz-wiersz"><span>Uwagi</span><b>' + w.uwagi + '</b></div>' : '') +
+          '<div class="wsz-wiersz"><span>Nr wpisu</span><b>' + w.idWpisu + '</b></div>' +
+        '</div></div>' +
+      '</div>' +
+    '</div>';
+  });
+  el('listaHistorii').innerHTML = html;
+  el('listaHistorii').querySelectorAll('.wpis').forEach(function(e){
+    e.querySelector('.wpis-tresc').onclick = function(){ e.classList.toggle('rozwiniety'); };
+  });
+}
+
+/* ---------- dodawanie jednostki ---------- */
+el('dodajJednostkeBtn').onclick = function(){
+  var szukaj = prompt('Podaj numer rejestracyjny albo nazwę jednostki (np. "WP 2542J" albo "DX210"):');
+  if (!szukaj) return;
+  el('overlay').classList.remove('ukryte');
+  wolajAPI('dodajJednostke', { szukaj: szukaj }).then(function(o){
+    el('overlay').classList.add('ukryte');
+    if (o.ok) { odswiezStart(); return; }
+    // E009 = kilka trafień; pokazujemy je, zamiast zgadywać za człowieka.
+    if (o.blad === 'E009' && o.propozycje) {
+      var lista = o.propozycje.map(function(p, i){ return (i+1) + '. ' + p.tytul + ' (' + p.podtytul + ')'; }).join('\n');
+      var wybor = prompt('Znaleziono kilka jednostek — podaj numer z listy:\n\n' + lista);
+      var n = Number(wybor);
+      if (!n || !o.propozycje[n-1]) return;
+      el('overlay').classList.remove('ukryte');
+      wolajAPI('dodajJednostke', { idPojazdu: o.propozycje[n-1].idPojazdu }).then(function(o2){
+        el('overlay').classList.add('ukryte');
+        if (!o2.ok) { alert(o2.wiadomosc || 'Nie udało się dodać.'); return; }
+        odswiezStart();
+      });
+      return;
+    }
+    alert(o.wiadomosc || 'Nie znaleziono takiej jednostki.');
+  }).catch(function(){
+    el('overlay').classList.add('ukryte');
+    alert('Brak połączenia.');
+  });
+};
+
+/* ---------- nawigacja ---------- */
+el('wpisWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
+el('sukcesWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
+el('historiaWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
+el('navStart').onclick = function(){ pokazEkran('ekranStart'); };
+el('navHistoria').onclick = function(){
+  if (STAN.aktywna) otworzHistorie(STAN.aktywna);
+  else if (STAN.jednostki.length) otworzHistorie(STAN.jednostki[0]);
+  else pokazEkran('ekranStart');
+};
+
+/* ---------- service worker ---------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js');
+}
+
+start();
+</script>
+</body>
+</html>
