@@ -7,7 +7,7 @@
  * a Ty stracisz godzinę na szukanie błędu, którego nie ma.
  */
 
-var WERSJA_CACHE = 'ewidencja-v7';
+var WERSJA_CACHE = 'ewidencja-v8';
 
 var PLIKI_SHELL = [
   './',
@@ -20,10 +20,23 @@ var PLIKI_SHELL = [
   './ikona-512-maskable.png'
 ];
 
+/**
+ * Instalacja: pliki cache'ujemy POJEDYNCZO, nie przez cache.addAll().
+ *
+ * addAll() jest „wszystko albo nic": wystarczy, że jeden plik odpowie 404
+ * (literówka w nazwie, nie wgrana ikona) i cała instalacja się wywraca, a
+ * aplikacja zostaje BEZ trybu offline — przy czym nic tego nie sygnalizuje,
+ * bo online działa normalnie. Przy aplikacji, której sens polega na tym, że
+ * da się wpisać bez zasięgu na budowie (D50), to zbyt kruche.
+ */
 self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(WERSJA_CACHE).then(function (cache) {
-      return cache.addAll(PLIKI_SHELL);
+      return Promise.all(PLIKI_SHELL.map(function (plik) {
+        return cache.add(plik).catch(function (err) {
+          console.warn('[SW] Nie udało się zapisać w cache:', plik, err);
+        });
+      }));
     }).then(function () { return self.skipWaiting(); })
   );
 });

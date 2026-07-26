@@ -499,36 +499,129 @@ function wolajAPI(akcja, dane){
     .then(function(r){ return r.json(); });
 }
 
-/* ---------- kolejka offline (D50) ---------- */
+/* ---------- kolejka offline (D50, D65) ----------
+   Model przeniesiony z aplikacji floty: każdy wpis w kolejce ma własny
+   status i własny komunikat błędu, a odrzucony dostaje przyciski
+   „Spróbuj ponownie" i „Usuń".
+
+   Pierwsza wersja tylko liczyła oczekujące wpisy i przy nieudanej wysyłce
+   po cichu przestawała próbować. Marek zgłosił: „dostałem info, że wpis ma
+   się wysłać, ale się nie wysyła" — i nie było żadnego sposobu zobaczyć
+   dlaczego ani ponowić. Wpis wisiał w telefonie bez śladu w arkuszu. */
 function kolejka(){
-  try { return JSON.parse(localStorage.getItem(KLUCZ_KOLEJKA) || '[]'); }
+  var k;
+  try { k = JSON.parse(localStorage.getItem(KLUCZ_KOLEJKA) || '[]'); }
   catch(e){ return []; }
+  if (!Array.isArray(k)) return [];
+  // Migracja ze starego formatu (goły payload bez statusu).
+  return k.map(function(w){
+    if (w && w.dane) return w;
+    return { tmp: Date.now() + Math.floor(Math.random()*1000), dane: w, status: 'oczekuje', blad: '' };
+  });
 }
 function zapiszKolejke(k){ localStorage.setItem(KLUCZ_KOLEJKA, JSON.stringify(k)); }
 function dodajDoKolejki(payload){
-  var k = kolejka(); k.push(payload); zapiszKolejke(k); odswiezKolejkeInfo();
+  var k = kolejka();
+  k.push({ tmp: Date.now(), dane: payload, status: 'oczekuje', blad: '' });
+  zapiszKolejke(k);
+  odswiezKolejkeInfo();
 }
+
 function odswiezKolejkeInfo(){
   var k = kolejka(), e = el('kolejkaInfo');
-  if (!k.length){ e.style.display = 'none'; return; }
+  var oczekuje = k.filter(function(w){ return w.status === 'oczekuje'; }).length;
+  var odrzucone = k.filter(function(w){ return w.status === 'odrzucony'; });
+  if (!oczekuje && !odrzucone.length){ e.style.display = 'none'; e.innerHTML = ''; return; }
   e.style.display = 'block';
-  e.innerHTML = '⏳ ' + k.length + (k.length === 1 ? ' wpis czeka' : ' wpisy czekają') +
-    ' na wysłanie. Wyślą się same, gdy wróci zasięg.';
+
+  var html = '';
+  if (oczekuje) {
+    html += '⏳ ' + oczekuje + (oczekuje === 1 ? ' wpis czeka' : ' wpisy czekają') +
+      ' na wysłanie. Wyślą się same, gdy wróci zasięg.';
+  }
+  odrzucone.forEach(function(w){
+    html += '<div class="odrzucony"><b>Wpis nie został przyjęty</b>' +
+      (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') + ': ' +
+      bezpiecznyTekst(w.blad || 'nieznany błąd') +
+      '<div class="p">' +
+      '<button class="przycisk-maly" data-ponow="' + w.tmp + '">Spróbuj ponownie</button>' +
+      '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń</button>' +
+      '</div></div>';
+  });
+  e.innerHTML = html;
+
+  e.querySelectorAll('[data-ponow]').forEach(function(b){
+    b.onclick = function(){ ponowZKolejki(Number(b.dataset.ponow)); };
+  });
+  e.querySelectorAll('[data-usun]').forEach(function(b){
+    b.onclick = function(){ usunZKolejki(Number(b.dataset.usun)); };
+  });
 }
-function wyslijKolejke(){
+
+function ponowZKolejki(tmp){
   var k = kolejka();
-  if (!k.length) return Promise.resolve();
-  return wolajAPI('nowyWpis', k[0]).then(function(odp){
-    // Błędy trwałe (zamknięty miesiąc, przyszła data) nie mają sensu
-    // w nieskończonej pętli — wyrzucamy wpis z kolejki.
-    if (odp && (odp.ok || odp.blad === 'E008' || odp.blad === 'E010')) {
-      var nowa = kolejka(); nowa.shift(); zapiszKolejke(nowa);
-      odswiezKolejkeInfo();
-      return wyslijKolejke();
-    }
-  }).catch(function(){ /* dalej brak sieci */ });
+  k.forEach(function(w){ if (w.tmp === tmp){ w.status = 'oczekuje'; w.blad = ''; } });
+  zapiszKolejke(k);
+  odswiezKolejkeInfo();
+  wyslijKolejke();
 }
-window.addEventListener('online', wyslijKolejke);
+function usunZKolejki(tmp){
+  if (!confirm('Usunąć ten wpis z kolejki? Nie zapisze się w ewidencji.')) return;
+  zapiszKolejke(kolejka().filter(function(w){ return w.tmp !== tmp; }));
+  odswiezKolejkeInfo();
+}
+
+/* Flaga chroni przed dwoma równoległymi przebiegami (zdarzenie `online`
+   w trakcie wysyłki uruchomionej przy starcie) — bez niej ten sam wpis
+   mógłby polecieć dwa razy. */
+var wysylanieTrwa = false;
+function wyslijKolejke(){
+  if (wysylanieTrwa) return Promise.resolve();
+  var k = kolejka();
+  if (!k.filter(function(w){ return w.status === 'oczekuje'; }).length) {
+    odswiezKolejkeInfo();
+    return Promise.resolve();
+  }
+  wysylanieTrwa = true;
+
+  function nastepny(i){
+    if (i >= k.length) {
+      wysylanieTrwa = false;
+      // Wysłane usuwamy; odrzucone ZOSTAJĄ, żeby kierowca je zobaczył.
+      zapiszKolejke(k.filter(function(w){ return w.status !== 'wyslany'; }));
+      odswiezKolejkeInfo();
+      return;
+    }
+    if (k[i].status !== 'oczekuje') return nastepny(i + 1);
+
+    return wolajAPI('nowyWpis', k[i].dane).then(function(odp){
+      if (odp && odp.ok) {
+        k[i].status = 'wyslany';
+      } else {
+        // Każda odpowiedź serwera inna niż OK jest trwała — ponawianie w
+        // pętli nic nie zmieni. Pokazujemy powód i oddajemy decyzję człowiekowi.
+        k[i].status = 'odrzucony';
+        k[i].blad = (odp && odp.wiadomosc) ? odp.wiadomosc : 'Serwer nie odpowiedział poprawnie.';
+      }
+      zapiszKolejke(k);
+      return nastepny(i + 1);
+    }).catch(function(){
+      // Brak sieci — przerywamy, wpis zostaje „oczekuje" i pójdzie później.
+      wysylanieTrwa = false;
+      zapiszKolejke(k);
+      odswiezKolejkeInfo();
+    });
+  }
+  return Promise.resolve(nastepny(0));
+}
+
+window.addEventListener('online', function(){ wyslijKolejke(); });
+/* Na telefonie zdarzenie `online` bywa niewiarygodne — system potrafi go nie
+   wysłać, gdy aplikacja była w tle. Powrót do aplikacji to drugi, pewniejszy
+   moment na próbę wysyłki. */
+document.addEventListener('visibilitychange', function(){
+  if (!document.hidden && navigator.onLine) wyslijKolejke();
+});
 
 /* ---------- start ---------- */
 function ustalKod(){
@@ -998,10 +1091,7 @@ function rysujWpisy(){
       '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ, j.kolor) + '</div>' +
       '<div style="flex:1; min-width:0;">' +
         '<div class="wpis-tresc">' +
-          '<div class="linia1"><span>' + w.data.slice(8) + '.' + w.data.slice(5,7) + '.' + w.data.slice(0,4) + '</span>' +
-            (w.licznik !== '' && w.licznik != null
-              ? '<span>' + liczba(w.licznik) + ' ' + jed + '</span>' : '') +
-          '</div>' +
+          '<div class="linia1"><span>' + w.data.slice(8) + '.' + w.data.slice(5,7) + '.' + w.data.slice(0,4) + '</span></div>' +
           (plakietki ? '<div>' + plakietki + '</div>' : '') +
           (w.licznik !== '' && w.licznik != null
             ? '<div class="linia-licznik">🔢 Stan licznika: <b>' + liczba(w.licznik) + ' ' + jed + '</b>' +
