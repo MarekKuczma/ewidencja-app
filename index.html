@@ -154,11 +154,14 @@
     font-weight:600; font-size:15px;}
   .wpis .linia1 span:last-child{flex:none;}
   .wpis .linia2{color:var(--szary); font-size:13px; margin-top:2px;}
-  .wpis .linia-licznik{font-size:13px; color:var(--szary); margin-top:3px;}
-  .wpis .linia-licznik b{color:var(--tekst); font-weight:600;}
+  /* Licznik w prawym rogu pierwszej linii kafelka — to po niego kierowca
+     najczęściej tu zagląda, więc ma być widoczny bez czytania reszty. */
+  .wpis .licznik-rog{font-size:13px; font-weight:400; color:var(--szary);
+    white-space:nowrap;}
+  .wpis .licznik-rog b{color:var(--tekst); font-weight:600;}
   .wpis.postoj{border-left-color:var(--linia); background:var(--tlo);}
   .wpis.anulowany{border-left-color:var(--linia); background:var(--tlo);}
-  .wpis.anulowany .linia1,.wpis.anulowany .linia2,.wpis.anulowany .linia-licznik{
+  .wpis.anulowany .linia1,.wpis.anulowany .linia2,.wpis.anulowany .licznik-rog{
     text-decoration:line-through; color:#9ca3af;}
   .wpis.anulowany .ikona-krag{border-color:var(--linia); opacity:.5;}
   .wpis .akcja{display:flex; gap:8px; margin-top:10px;}
@@ -339,8 +342,7 @@
 
       <div class="pole" id="poleBudowaBox">
         <label>🏗️ Budowa <span class="wym">*</span></label>
-        <input type="text" id="poleBudowa" list="listaBudow" placeholder="np. Płock">
-        <datalist id="listaBudow"></datalist>
+        <select id="poleBudowa"></select>
         <div class="blad-pola" id="bladBudowa"></div>
       </div>
 
@@ -833,10 +835,26 @@ function odswiezStart(){
   });
 }
 
-function rysujSlowniki(){
-  el('listaBudow').innerHTML = STAN.budowy.map(function(b){
-    return '<option value="' + bezpiecznyTekst(b) + '">';
-  }).join('');
+/* Budowa jako zwykła lista rozwijana — dokładnie jak w aplikacji floty
+   (`<select id="f-budowa">`). Wcześniej było `input list=datalist`, które na
+   telefonie zachowuje się nieprzewidywalnie: raz podpowiada, raz pozwala
+   wpisać cokolwiek. Marek chce jednego, znanego zachowania w obu aplikacjach.
+
+   `dodatkowa` pozwala dołożyć wartość spoza słownika — np. gdy ostatnia
+   budowa pojazdu została w międzyczasie zdezaktywowana albo jest wpisem
+   łączonym („Płock + Gostynin", D45). Bez tego select nie mógłby jej pokazać. */
+function rysujSlowniki(dodatkowa){
+  var wybrana = el('poleBudowa').value;
+  var lista = STAN.budowy.slice();
+  [dodatkowa, wybrana].forEach(function(v){
+    if (v && lista.indexOf(v) === -1) lista.push(v);
+  });
+  el('poleBudowa').innerHTML = '<option value="">— wybierz —</option>' +
+    lista.map(function(b){
+      return '<option value="' + bezpiecznyTekst(b) + '">' + bezpiecznyTekst(b) + '</option>';
+    }).join('');
+  if (wybrana) el('poleBudowa').value = wybrana;
+
   el('poleSerwis').innerHTML = '<option value="">— brak —</option>' +
     STAN.kategorie.map(function(k){
       return '<option value="' + bezpiecznyTekst(k) + '">' + bezpiecznyTekst(k) + '</option>';
@@ -1023,6 +1041,7 @@ function otworzWpis(j, wpisDoEdycji){
   if (wpisDoEdycji) {
     el('poleData').value = wpisDoEdycji.data;
     el('poleLicznik').value = wpisDoEdycji.licznik || '';
+    rysujSlowniki(wpisDoEdycji.budowa || '');
     el('poleBudowa').value = wpisDoEdycji.budowa || '';
     el('poleSerwis').value = wpisDoEdycji.serwisKategoria || '';
     el('poleUwagi').value = wpisDoEdycji.uwagi || '';
@@ -1031,6 +1050,7 @@ function otworzWpis(j, wpisDoEdycji){
   } else {
     el('poleData').value = dzisiajISO();
     el('poleLicznik').value = '';
+    rysujSlowniki(j.ostatniaBudowa || '');   // D12 — podpowiedź ostatniej budowy
     el('poleBudowa').value = j.ostatniaBudowa || '';
     el('poleSerwis').value = '';
     el('poleUwagi').value = '';
@@ -1306,12 +1326,15 @@ function rysujWpisy(){
       '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ, j.kolor) + '</div>' +
       '<div style="flex:1; min-width:0;">' +
         '<div class="wpis-tresc">' +
-          '<div class="linia1"><span>' + w.data.slice(8) + '.' + w.data.slice(5,7) + '.' + w.data.slice(0,4) + '</span></div>' +
+          // Data z lewej, licznik z PRAWEJ strony tej samej linii (uwaga Marka
+          // 27.07.2026) — bez osobnego wiersza i bez ikony, sam podpis „Licznik:".
+          '<div class="linia1"><span>' + w.data.slice(8) + '.' + w.data.slice(5,7) + '.' + w.data.slice(0,4) + '</span>' +
+            (w.licznik !== '' && w.licznik != null
+              ? '<span class="licznik-rog">Licznik: <b>' + liczba(w.licznik) + ' ' + jed + '</b>' +
+                (w.licznikSzacowany ? ' *' : '') + '</span>'
+              : '') +
+          '</div>' +
           (plakietki ? '<div>' + plakietki + '</div>' : '') +
-          (w.licznik !== '' && w.licznik != null
-            ? '<div class="linia-licznik">🔢 Stan licznika: <b>' + liczba(w.licznik) + ' ' + jed + '</b>' +
-              (w.licznikSzacowany ? ' (szacowany)' : '') + '</div>'
-            : '') +
           '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
             (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
           '<div class="linia-data"><span class="plakietka-id">' + bezpiecznyTekst(w.idWpisu) + '</span>' +
