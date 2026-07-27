@@ -769,6 +769,14 @@ function odrzucKod_(wiadomosc){
     '<b>' + bezpiecznyTekst(wiadomosc || 'Ten kod nie działa.') + '</b><br>' +
     'Sprawdź, czy przepisałeś go dokładnie, albo otwórz swój osobisty link ' +
     'jeszcze raz. Jeśli nadal nie działa — zadzwoń do Marka.';
+  pokazBrakKodu_();
+}
+
+/* Ekran „brak kodu" — JEDNO miejsce, bo prowadzą tu dwie różne drogi:
+   odrzucenie złego kodu (D97) i zwykły start bez zapisanego kodu. Wcześniej
+   każda robiła to po swojemu i druga zapominała schować dolny pasek —
+   człowiek bez działającego kodu widział „Dodaj wpis" i mógł w to kliknąć. */
+function pokazBrakKodu_(){
   el('ekranStart').classList.add('ukryte');
   el('nawigacja').classList.add('ukryte');
   el('widokBrakKodu').classList.remove('ukryte');
@@ -804,8 +812,7 @@ function start(){
       uruchomAplikacje_();
     } else {
       ustawPodpowiedzBrakKodu_();
-      el('ekranStart').classList.add('ukryte');
-      el('widokBrakKodu').classList.remove('ukryte');
+      pokazBrakKodu_();
     }
   });
 }
