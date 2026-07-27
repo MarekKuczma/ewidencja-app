@@ -1059,6 +1059,31 @@ function dodajWierszTankowania(litry, licznik){
    Przy `tylkoSprawdz = true` nie zwraca danych, tylko `true`, jeśli któreś
    pole zawiera coś, co nie jest liczbą — wtedy walidacja pokaże błąd zamiast
    po cichu pominąć wiersz. */
+/* D99: dolna granica to ostatni znany stan licznika PRZED wybraną datą,
+   górna to stan wpisany na koniec tego dnia. Liczymy z tej samej historii,
+   z której bierze się podpowiedź licznika (D82) — bez dodatkowego żądania. */
+function zakresLicznikaLokalnie_(){
+  var min = null, max = null;
+  var data = el('poleData').value;
+
+  (STAN.wpisy || []).forEach(function(w){
+    if (w.anulowany || w.licznik === '' || w.licznik == null) return;
+    if (STAN.edytowanyId && w.idWpisu === STAN.edytowanyId) return;
+    if (data && w.data >= data) return;
+    var v = Number(w.licznik);
+    if (!isNaN(v) && (min === null || v > min)) min = v;
+  });
+  if (min === null && STAN.aktywna && STAN.aktywna.ostatniStanLicznika) {
+    var o = Number(STAN.aktywna.ostatniStanLicznika);
+    if (!isNaN(o) && (!data || !STAN.aktywna.ostatniaData || STAN.aktywna.ostatniaData < data)) min = o;
+  }
+
+  var dnia = naLiczbe_(el('poleLicznik').value);
+  if (dnia !== null && !isNaN(dnia) && dnia > 0) max = dnia;
+
+  return { min: min, max: max };
+}
+
 function zbierzTankowania(tylkoSprawdz){
   var wynik = [], bledne = false;
   el('listaTankowan').querySelectorAll('.tank-item').forEach(function(d){
@@ -1078,6 +1103,18 @@ function zbierzTankowania(tylkoSprawdz){
       bledne = true;
       d.classList.add('tank-blad');
       return;
+    }
+
+    // D99 — licznik przy tankowaniu musi mieścić się w przedziale możliwym
+    // dla tego dnia. Sprawdzamy lokalnie, żeby kierowca zobaczył to przy polu,
+    // a nie dopiero po odesłaniu formularza.
+    if (lic !== null) {
+      var z = zakresLicznikaLokalnie_();
+      if ((z.min !== null && lic < z.min) || (z.max !== null && lic > z.max)) {
+        bledne = true;
+        d.classList.add('tank-blad');
+        return;
+      }
     }
     wynik.push({ litry: litry, licznik: lic === null ? '' : lic });
   });
@@ -1217,8 +1254,16 @@ el('zapiszBtn').onclick = function(){
   // D95 — litry z przecinkiem muszą przejść, ale śmieci już nie.
   var bledneTankowanie = zbierzTankowania(true);
   if (bledneTankowanie) {
-    el('tankPodglad').textContent = 'Sprawdź zaznaczone tankowanie — litry muszą być ' +
-      'liczbą od 0 do ' + (STAN.limity.litryBlokada || 1000) + '.';
+    var z = zakresLicznikaLokalnie_();
+    var podp = 'Sprawdź zaznaczone tankowanie: litry od 0 do ' +
+      (STAN.limity.litryBlokada || 1000) + '.';
+    if (z.min !== null || z.max !== null) {
+      podp += ' Licznik przy tankowaniu musi być ' +
+        (z.min !== null ? 'nie mniejszy niż ' + formatLicznik_(z.min) : '') +
+        (z.min !== null && z.max !== null ? ' i ' : '') +
+        (z.max !== null ? 'nie większy niż ' + formatLicznik_(z.max) : '') + '.';
+    }
+    el('tankPodglad').textContent = podp;
     el('tankPodglad').style.color = 'var(--blad)';
     zlePola.push('Tankowanie');
   } else {
