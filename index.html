@@ -37,8 +37,14 @@
     --metryka-grad:linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
     --paleta-ikona:#fda4af;
   }
+  /* W ciemnym motywie akcent MUSI się rozjaśnić. Paleta grafitowa ma
+     --akcent:#3f3f46, czyli prawie czerń — na ciemnym tle znikały przez to
+     obramowania pól, przycisk „Popraw" i aktywna zakładka w dolnym menu
+     (zgłoszenie Marka 27.07.2026). Paleta burgundowa miała swój blok dla
+     ciemnego motywu od początku, grafitowa nie. */
   [data-motyw="ciemny"]{
-    --tlo:#0f1115; --karta:#1c1f26; --input-tlo:#262b34; --input-brzeg:#3a3f4a;
+    --akcent:#c7c7cf; --akcent-c:#e4e4e7;
+    --tlo:#0f1115; --karta:#1c1f26; --input-tlo:#262b34; --input-brzeg:#4b5262;
     --tekst:#f0f1f3; --szary:#9aa1ad; --linia:#333844;
     --bg-uwaga:#453615; --brzeg-uwaga:#8a5a12; --tekst-uwaga:#fcd34d;
     --bg-ok:#123522; --tekst-ok:#86efac;
@@ -47,6 +53,7 @@
     --metryka-grad:linear-gradient(135deg, #1f2127 0%, #24262c 100%);
   }
   [data-motyw="ciemny"][data-paleta="burgund"]{
+    --akcent:#fb7185; --akcent-c:#fda4af;
     --bg-akcentjasny:#3f1220; --tekst-akcentjasny:#fda4af;
     --metryka-grad:linear-gradient(135deg, #2a1218 0%, #33161d 100%);
   }
@@ -82,7 +89,7 @@
     color:var(--tekst); min-height:48px;}
   input[type="date"]{-webkit-min-logical-width:0; -webkit-appearance:none; appearance:none;}
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--akcent);}
-  textarea{min-height:64px; resize:vertical;}
+  textarea{min-height:96px; resize:vertical; line-height:1.4;}
   /* Błędy pól — wzorzec z aplikacji floty: komunikat pod polem + czerwona ramka */
   .blad-pola{color:var(--blad); font-size:14px; margin-top:4px; display:none;}
   .pole-blad input,.pole-blad select,.pole-blad textarea{border-color:var(--blad);}
@@ -170,6 +177,12 @@
   .wsz-wiersz{display:flex; justify-content:space-between; gap:10px; font-size:13px;
     color:var(--szary); margin-bottom:4px;}
   .wsz-wiersz b{color:var(--tekst); font-weight:600; text-align:right;}
+  /* Dłuższa treść (tankowanie, serwis, uwagi) w DWÓCH liniach: etykieta na
+     szaro nad wartością. W jednej linii zawijało się nieczytelnie — przy
+     „55L / 55236km + 45L / 56236km" etykieta i wartość walczyły o miejsce. */
+  .wsz-wiersz.dwie{display:block;}
+  .wsz-wiersz.dwie b{display:block; text-align:left; margin-top:2px;
+    word-break:break-word; white-space:normal;}
   .wpisy-naglowek-miesiac{font-size:13px; font-weight:700; color:var(--szary);
     text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
   .wpisy-naglowek-miesiac:first-child{margin-top:0;}
@@ -238,6 +251,22 @@
 <main>
   <div class="kolejka-info" id="kolejkaInfo"></div>
 
+  <!-- Brak kodu (D69) — awaryjne wejście, gdy link nie zadziałał -->
+  <div id="widokBrakKodu" class="karta ukryte">
+    <div class="srodek">
+      <p style="font-size:40px; margin:0;">🔑</p>
+      <p><b>Otwórz aplikację ze swojego osobistego linku.</b></p>
+      <p style="font-size:15px;" id="brakKoduPodpowiedz"></p>
+      <div style="margin-top:16px; text-align:left;">
+        <p style="font-size:14px; margin:0 0 6px;">Masz swój kod od Marka? Wpisz go tutaj:</p>
+        <input type="text" id="poleKodRecznie" placeholder="np. TijvKwJhKA" autocomplete="off"
+               autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="blad-pola" id="bladKodRecznie"></div>
+        <button type="button" class="przycisk" style="margin-top:8px;" id="kodRecznieZapisz">Zapisz i kontynuuj</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== EKRAN: START (dashboard pojazdu) ===================== -->
   <section id="ekranStart">
     <div class="karta">
@@ -268,6 +297,7 @@
         <button class="przycisk" id="startNowyWpisBtn">➕ Nowy wpis</button>
         <button class="przycisk-drugi" id="startMojeWpisyBtn">📋 Moje wpisy</button>
         <button class="przycisk-drugi" id="zmienPojazdBtn">🔄 Zmień pojazd</button>
+        <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">🔓 Odepnij ten pojazd</button>
       </div>
 
       <!-- Lista jednostek do wyboru -->
@@ -376,7 +406,7 @@
 
 <div class="overlay-zapis ukryte" id="overlay">
   <div class="spinner"></div>
-  <div class="tekst">Zapisuję…</div>
+  <div class="tekst" id="overlayTekst">Zapisywanie… proszę czekać</div>
 </div>
 
 <script src="./config.js"></script>
@@ -426,6 +456,14 @@ function komunikat(idEl, tekst, typ){
   e.innerHTML = tekst;
 }
 function schowajKomunikat(idEl){ el(idEl).className = 'komunikat'; }
+
+/* Overlay z własnym tekstem — wzorzec z aplikacji floty (pokazOverlay).
+   Przykrywa ekran, więc przy okazji blokuje podwójne kliknięcia. */
+function pokazOverlay(tekst){
+  el('overlayTekst').textContent = tekst || 'Zapisywanie… proszę czekać';
+  el('overlay').classList.remove('ukryte');
+}
+function schowajOverlay(){ el('overlay').classList.add('ukryte'); }
 function bladPola(idBox, idBlad, tekst){
   el(idBox).classList.add('pole-blad');
   el(idBlad).textContent = tekst;
@@ -627,25 +665,103 @@ document.addEventListener('visibilitychange', function(){
   if (!document.hidden && navigator.onLine) wyslijKolejke();
 });
 
-/* ---------- start ---------- */
-function ustalKod(){
-  var zUrl = new URLSearchParams(location.search).get('kod');
-  if (zUrl) { localStorage.setItem(KLUCZ_KOD, zUrl); return zUrl; }
-  return localStorage.getItem(KLUCZ_KOD);
+/* ---------- kod dostępu i przekaźnik iOS (D69) ----------
+
+   Problem: na iPhonie zainstalowana ikonka i karta Safari to DWA OSOBNE
+   konteksty z osobnym `localStorage`. Kierowca klika osobisty link w Safari
+   (kod zapisuje się tam), instaluje ikonkę na ekranie głównym — i ikonka
+   startuje z pustym magazynem, czyli „brak kodu". Bez obejścia część ludzi
+   z iPhone'ami odbije się na pierwszym uruchomieniu, a aplikacja jest
+   dobrowolna (D5a), więc drugi raz nie spróbują.
+
+   Cache Storage, w odróżnieniu od localStorage, jest DZIELONE między tymi
+   kontekstami — używamy go jako przechowalni. Rozwiązanie sprawdzone w becie
+   aplikacji floty. */
+var NAZWA_RELAY_KODU = 'ewidencja-kod-relay';
+
+function zapiszKodDoRelay_(k){
+  if (!('caches' in window) || !k) return;
+  caches.open(NAZWA_RELAY_KODU).then(function(cache){
+    cache.put('/__kod__', new Response(k));
+  }).catch(function(){});
+}
+function odczytajKodZRelay_(){
+  if (!('caches' in window)) return Promise.resolve(null);
+  return caches.open(NAZWA_RELAY_KODU)
+    .then(function(cache){ return cache.match('/__kod__'); })
+    .then(function(resp){ return resp ? resp.text() : null; })
+    .catch(function(){ return null; });
 }
 
+/* Dwie różne przyczyny „braku kodu" wymagają dwóch różnych rad, więc
+   rozpoznajemy je po user agencie zamiast dawać jeden ogólny tekst. */
+function ustawPodpowiedzBrakKodu_(){
+  var ua = navigator.userAgent || '';
+  var wbudowana = /FBAN|FBAV|Instagram|WhatsApp|Messenger/i.test(ua);
+  el('brakKoduPodpowiedz').innerHTML = wbudowana
+    ? 'Wygląda na to, że link otworzył się wewnątrz innej aplikacji (WhatsApp / ' +
+      'Messenger / Instagram) — <b>skopiuj link i otwórz go w przeglądarce</b>, to ' +
+      'zwykle pomaga. Jeśli nadal nie działa — zadzwoń do Marka.'
+    : 'Aplikacja spróbowała sama znaleźć Twój kod i się nie udało. ' +
+      '<b>Otwórz swój osobisty link raz w zwykłej przeglądarce</b> (nie z tej ikonki), ' +
+      'poczekaj aż strona się wczyta, a potem otwórz ikonkę jeszcze raz. ' +
+      'Jeśli nie masz linku — zadzwoń do Marka.';
+}
+
+function zapiszKodRecznie_(){
+  var wpisany = el('poleKodRecznie').value.trim();
+  var blad = el('bladKodRecznie');
+  if (!wpisany) { blad.textContent = 'Wpisz swój kod.'; blad.style.display = 'block'; return; }
+  blad.style.display = 'none';
+  localStorage.setItem(KLUCZ_KOD, wpisany);
+  zapiszKodDoRelay_(wpisany);
+  STAN.kod = wpisany;
+  el('widokBrakKodu').classList.add('ukryte');
+  uruchomAplikacje_();
+}
+el('kodRecznieZapisz').onclick = zapiszKodRecznie_;
+el('poleKodRecznie').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') { e.preventDefault(); zapiszKodRecznie_(); }
+});
+
+/* ---------- start ---------- */
 function start(){
   wczytajMotyw();
   odswiezKolejkeInfo();
   el('poleData').max = dzisiajISO();     // D52 — brak dat z przyszłości
-  STAN.kod = ustalKod();
-  if (!STAN.kod) {
-    el('powitanieImie').textContent = 'Brak kodu dostępu';
-    el('listaJednostek').innerHTML =
-      '<div class="srodek">Otwórz aplikację ze swojego osobistego linku od Marka.<br>' +
-      'Link zawiera Twój kod dostępu.</div>';
+
+  var zUrl = new URLSearchParams(location.search).get('kod');
+  if (zUrl) {
+    localStorage.setItem(KLUCZ_KOD, zUrl);
+    history.replaceState(null, '', location.pathname);
+  }
+  STAN.kod = localStorage.getItem(KLUCZ_KOD);
+
+  if (STAN.kod) {
+    // Zasilamy przekaźnik przy KAŻDYM udanym starcie, nie tylko przy świeżym
+    // `?kod=` w adresie — inaczej wejście w karcie przeglądarki, gdzie link
+    // był już wcześniej otwarty (aplikacja sama czyści adres), nigdy by go
+    // nie uzupełniło.
+    zapiszKodDoRelay_(STAN.kod);
+    uruchomAplikacje_();
     return;
   }
+
+  odczytajKodZRelay_().then(function(zRelay){
+    if (zRelay) {
+      localStorage.setItem(KLUCZ_KOD, zRelay);
+      STAN.kod = zRelay;
+      uruchomAplikacje_();
+    } else {
+      ustawPodpowiedzBrakKodu_();
+      el('ekranStart').classList.add('ukryte');
+      el('widokBrakKodu').classList.remove('ukryte');
+    }
+  });
+}
+
+function uruchomAplikacje_(){
+  el('ekranStart').classList.remove('ukryte');
   // D60: pokaż od razu to, co wiemy z ostatniego razu, i dopiero potem
   // odśwież z serwera. Bez tego przy każdym otwarciu było „Ładowanie…",
   // potem mignięcie listy wyboru, a dopiero na końcu właściwy pojazd —
@@ -740,7 +856,15 @@ function wybierzPojazd(j, zPamieci){
   localStorage.setItem(KLUCZ_POJAZD, j.idPojazdu);
   el('wyborPojazdu').classList.add('ukryte');
   el('dashboardPojazdu').classList.remove('ukryte');
-  el('powitanieData').textContent = 'Moje pojazdy';
+  // To jest pulpit JEDNEGO pojazdu, więc „Moje pojazdy" wprowadzało w błąd
+  // (zgłoszenie Marka). Nazwa pojazdu jest na karcie poniżej, więc tutaj
+  // mówimy tylko, na co się patrzy.
+  el('powitanieData').textContent = STAN.jednostki.length > 1
+    ? 'Pulpit pojazdu · masz ich ' + STAN.jednostki.length
+    : 'Pulpit pojazdu';
+
+  // D70 — odpiąć można tylko to, co kierowca sam sobie dodał.
+  el('odepnijBtn').classList.toggle('ukryte', j.sposob !== 'dodane samodzielnie');
 
   el('kartaWybranego').style.borderLeftColor = j.kolor;
   el('kartaWybranego').innerHTML =
@@ -950,7 +1074,7 @@ el('zapiszBtn').onclick = function(){
     uwagi: el('poleUwagi').value
   };
 
-  el('overlay').classList.remove('ukryte');
+  pokazOverlay(STAN.edytowanyId ? 'Zapisywanie poprawki…' : 'Zapisywanie… proszę czekać');
 
   if (STAN.edytowanyId) {
     // D66: poprawka wymaga sieci — nie da się jej zakolejkować, bo w tym
@@ -958,33 +1082,33 @@ el('zapiszBtn').onclick = function(){
     // czyja wersja jest właściwa. Mówimy to wprost, zanim człowiek
     // wypełni formularz na darmo.
     if (!navigator.onLine) {
-      el('overlay').classList.add('ukryte');
+      schowajOverlay();
       komunikat('wpisKomunikat', 'Brak internetu. Poprawianie wpisu wymaga zasięgu — ' +
         'nowy wpis możesz zapisać offline, ale poprawkę trzeba zrobić online.', 'blad');
       return;
     }
     payload.idWpisu = STAN.edytowanyId;
     wolajAPI('edytujWpis', payload).then(function(odp){
-      el('overlay').classList.add('ukryte');
+      schowajOverlay();
       if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
       el('sukcesTekst').textContent = 'Poprawiono';
       pokazSukces(odp);
       odswiezStart();
     }).catch(function(){
-      el('overlay').classList.add('ukryte');
+      schowajOverlay();
       komunikat('wpisKomunikat', 'Brak połączenia — poprawki nie da się zapisać offline. Spróbuj później.', 'blad');
     });
     return;
   }
 
   wolajAPI('nowyWpis', payload).then(function(odp){
-    el('overlay').classList.add('ukryte');
+    schowajOverlay();
     if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
     el('sukcesTekst').textContent = 'Zapisano';
     pokazSukces(odp);
     odswiezStart();
   }).catch(function(){
-    el('overlay').classList.add('ukryte');
+    schowajOverlay();
     dodajDoKolejki(payload);
     el('sukcesTekst').textContent = 'Zapisano w telefonie';
     pokazSukces({ offline: true });
@@ -1031,19 +1155,19 @@ function rysujPytanieLuka(luka){
       });
       d.setDate(d.getDate() + 1); n++;
     }
-    el('overlay').classList.remove('ukryte');
+    pokazOverlay('Rozpisuję dni…');
     wolajAPI('zamknijLuke', {
       idPojazdu: STAN.aktywna.idPojazdu, sposob: 'rozbicie',
       od: luka.od, do: luka.do, budowa: el('poleBudowa').value, dni: dni
     }).then(function(o){
-      el('overlay').classList.add('ukryte');
+      schowajOverlay();
       box.innerHTML = o.ok
         ? '<div class="komunikat ok" style="display:block">Rozpisano ' + dni.length +
           ' dni. Wartości licznika są oznaczone jako szacowane.</div>'
         : '<div class="komunikat blad" style="display:block">' + bezpiecznyTekst(o.wiadomosc || 'Nie udało się.') + '</div>';
       odswiezStart();
     }).catch(function(){
-      el('overlay').classList.add('ukryte');
+      schowajOverlay();
       box.innerHTML = '<div class="komunikat blad" style="display:block">Brak połączenia — spróbuj później.</div>';
     });
   };
@@ -1116,9 +1240,9 @@ function rysujWpisy(){
           '<div class="linia-data"><span class="plakietka-id">' + bezpiecznyTekst(w.idWpisu) + '</span>' +
             '<span class="wpis-strzalka">&#9662;</span></div>' +
           '<div class="wpis-szczegoly"><div class="wsz-zawartosc">' +
-            (w.tankowanie ? '<div class="wsz-wiersz"><span>⛽ Tankowanie</span><b>' + bezpiecznyTekst(w.tankowanie) + '</b></div>' : '') +
-            (w.serwisKategoria ? '<div class="wsz-wiersz"><span>🔧 Serwis</span><b>' + bezpiecznyTekst(w.serwisKategoria) + '</b></div>' : '') +
-            (w.uwagi ? '<div class="wsz-wiersz"><span>📝 Uwagi</span><b>' + bezpiecznyTekst(w.uwagi) + '</b></div>' : '') +
+            (w.tankowanie ? '<div class="wsz-wiersz dwie"><span>⛽ Tankowanie</span><b>' + bezpiecznyTekst(w.tankowanie) + '</b></div>' : '') +
+            (w.serwisKategoria ? '<div class="wsz-wiersz dwie"><span>🔧 Serwis</span><b>' + bezpiecznyTekst(w.serwisKategoria) + '</b></div>' : '') +
+            (w.uwagi ? '<div class="wsz-wiersz dwie"><span>📝 Uwagi</span><b>' + bezpiecznyTekst(w.uwagi) + '</b></div>' : '') +
             (!w.tankowanie && !w.serwisKategoria && !w.uwagi
               ? '<div class="wsz-wiersz"><span>Brak dodatkowych informacji</span><b></b></div>' : '') +
           '</div></div>' +
@@ -1147,14 +1271,14 @@ function rysujWpisy(){
         return;
       }
       if (!confirm('Anulować wpis z ' + w.data + '?\n\nWpis zostanie przekreślony, ale zostanie w ewidencji.')) return;
-      el('overlay').classList.remove('ukryte');
+      pokazOverlay('Anuluję wpis…');
       wolajAPI('anulujWpis', { idWpisu: w.idWpisu }).then(function(o){
-        el('overlay').classList.add('ukryte');
+        schowajOverlay();
         if (!o.ok) { alert(o.wiadomosc || 'Nie udało się anulować.'); return; }
         otworzWpisy(STAN.aktywna);
         odswiezStart();
       }).catch(function(){
-        el('overlay').classList.add('ukryte');
+        schowajOverlay();
         alert('Brak połączenia.');
       });
     };
@@ -1170,8 +1294,10 @@ el('dodajJednostkeBtn').onclick = function(){
   el('dodajJednostkeBtn').classList.add('ukryte');
   var sel = el('wyborNowej');
   sel.innerHTML = '<option value="">— ładowanie… —</option>';
+  pokazOverlay('Wczytuję listę pojazdów…');
 
   wolajAPI('dostepneJednostki', {}).then(function(o){
+    schowajOverlay();
     if (!o.ok || !o.jednostki || !o.jednostki.length) {
       sel.innerHTML = '<option value="">— brak pojazdów do dodania —</option>';
       return;
@@ -1191,6 +1317,7 @@ el('dodajJednostkeBtn').onclick = function(){
           }).join('') + '</optgroup>';
       }).join('');
   }).catch(function(){
+    schowajOverlay();
     sel.innerHTML = '<option value="">— brak połączenia —</option>';
   });
 };
@@ -1201,15 +1328,15 @@ el('anulujDodanieBtn').onclick = function(){
 el('potwierdzDodanieBtn').onclick = function(){
   var id = el('wyborNowej').value;
   if (!id) { alert('Wybierz pojazd z listy.'); return; }
-  el('overlay').classList.remove('ukryte');
+  pokazOverlay('Dodaję pojazd…');
   wolajAPI('dodajJednostke', { idPojazdu: id }).then(function(o){
-    el('overlay').classList.add('ukryte');
+    schowajOverlay();
     if (!o.ok) { alert(o.wiadomosc || 'Nie udało się dodać.'); return; }
     el('dodajBox').classList.add('ukryte');
     el('dodajJednostkeBtn').classList.remove('ukryte');
     odswiezStart();
   }).catch(function(){
-    el('overlay').classList.add('ukryte');
+    schowajOverlay();
     alert('Brak połączenia.');
   });
 };
@@ -1218,6 +1345,30 @@ el('potwierdzDodanieBtn').onclick = function(){
 el('startNowyWpisBtn').onclick = function(){ otworzWpis(STAN.aktywna); };
 el('startMojeWpisyBtn').onclick = function(){ otworzWpisy(STAN.aktywna); };
 el('zmienPojazdBtn').onclick = function(){ localStorage.removeItem(KLUCZ_POJAZD); pokazWyborPojazdu(); };
+
+/* D70: odpiąć można tylko pojazd dodany samodzielnie — przypisania z
+   arkusza zostają. Przycisk chowa się przy pojazdach przypisanych na stałe,
+   żeby nikt nie klikał w ślepy zaułek. */
+el('odepnijBtn').onclick = function(){
+  var j = STAN.aktywna;
+  if (!j) return;
+  if (!navigator.onLine) { alert('Brak internetu.\n\nOdpięcie pojazdu wymaga zasięgu.'); return; }
+  if (!confirm('Odpiąć „' + j.tytul + '" od Twojej listy?\n\n' +
+      'Twoje dotychczasowe wpisy zostaną w ewidencji — znika tylko z Twojego widoku. ' +
+      'Możesz go później dodać z powrotem.')) return;
+
+  pokazOverlay('Odpinam…');
+  wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
+    schowajOverlay();
+    if (!o.ok) { alert(o.wiadomosc || 'Nie udało się odpiąć.'); return; }
+    localStorage.removeItem(KLUCZ_POJAZD);
+    STAN.aktywna = null;
+    odswiezStart();
+  }).catch(function(){
+    schowajOverlay();
+    alert('Brak połączenia.');
+  });
+};
 el('wpisWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
 el('sukcesWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
 el('navStart').onclick = function(){ pokazEkran('ekranStart'); };

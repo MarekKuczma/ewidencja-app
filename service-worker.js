@@ -7,7 +7,14 @@
  * a Ty stracisz godzinę na szukanie błędu, którego nie ma.
  */
 
-var WERSJA_CACHE = 'ewidencja-v9';
+var WERSJA_CACHE = 'ewidencja-v11';
+
+// Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
+// (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
+// sprzątaniu starych cache — to jedyne miejsce, w którym kod „przeżywa"
+// między kontekstami na iOS; musi zostać dokładnie ta sama nazwa co w
+// index.html.
+var NAZWA_RELAY_KODU = 'ewidencja-kod-relay';
 
 var PLIKI_SHELL = [
   './',
@@ -45,7 +52,9 @@ self.addEventListener('activate', function (e) {
   e.waitUntil(
     caches.keys().then(function (klucze) {
       return Promise.all(klucze.map(function (k) {
-        if (k !== WERSJA_CACHE) return caches.delete(k);
+        // Przekaźnik kodu przeżywa sprzątanie — inaczej kasowalibyśmy
+        // kierowcy kod przy każdej aktualizacji aplikacji.
+        if (k !== WERSJA_CACHE && k !== NAZWA_RELAY_KODU) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
