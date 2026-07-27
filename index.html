@@ -433,7 +433,9 @@
 
 var STAN = {
   kod: null, imie: null, jednostki: [], budowy: [], kategorie: [],
-  aktywna: null, wpisy: [], edytowanyId: null
+  aktywna: null, wpisy: [], edytowanyId: null,
+  // D98 — wartości domyślne; prawdziwe przychodzą ze `status`.
+  limity: { litryOstrzezenie: 300, litryBlokada: 1000 }
 };
 var KLUCZ_KOD = 'ewidencja_kod';
 var KLUCZ_KOLEJKA = 'ewidencja_kolejka';
@@ -831,6 +833,7 @@ function pokazZPamieci(){
   STAN.jednostki = cache.jednostki;
   STAN.budowy = cache.budowy || [];
   STAN.kategorie = cache.kategorie || [];
+  STAN.limity = cache.limity || STAN.limity;
   el('naglowekKto').textContent = cache.imie || '';
   el('avatar').textContent = inicjaly(cache.imie);
   el('powitanieImie').textContent = cache.imie
@@ -857,11 +860,12 @@ function odswiezStart(){
     STAN.jednostki = odp.jednostki || [];
     STAN.budowy = odp.budowy || [];
     STAN.kategorie = odp.kategorie || [];
+    STAN.limity = odp.limity || STAN.limity;
     // Zapisujemy na następne otwarcie (D60) — patrz pokazZPamieci().
     try {
       localStorage.setItem(KLUCZ_CACHE, JSON.stringify({
         imie: odp.imie, jednostki: STAN.jednostki,
-        budowy: STAN.budowy, kategorie: STAN.kategorie
+        budowy: STAN.budowy, kategorie: STAN.kategorie, limity: STAN.limity
       }));
     } catch(e){ /* pełny localStorage — trudno, cache jest opcjonalny */ }
     el('naglowekKto').textContent = odp.imie;
@@ -1068,7 +1072,9 @@ function zbierzTankowania(tylkoSprawdz){
     // Pusty wiersz jest w porządku — to po prostu nieużyta linijka.
     if (litry === null && lic === null) return;
 
-    if (isNaN(litry) || litry === null || litry <= 0 || isNaN(lic)) {
+    // D98 — absurdalne tankowanie łapiemy od razu, bez czekania na serwer.
+    if (isNaN(litry) || litry === null || litry <= 0 || isNaN(lic) ||
+        litry > (STAN.limity.litryBlokada || 1000)) {
       bledne = true;
       d.classList.add('tank-blad');
       return;
@@ -1210,7 +1216,14 @@ el('zapiszBtn').onclick = function(){
 
   // D95 — litry z przecinkiem muszą przejść, ale śmieci już nie.
   var bledneTankowanie = zbierzTankowania(true);
-  if (bledneTankowanie) zlePola.push('Tankowanie');
+  if (bledneTankowanie) {
+    el('tankPodglad').textContent = 'Sprawdź zaznaczone tankowanie — litry muszą być ' +
+      'liczbą od 0 do ' + (STAN.limity.litryBlokada || 1000) + '.';
+    el('tankPodglad').style.color = 'var(--blad)';
+    zlePola.push('Tankowanie');
+  } else {
+    el('tankPodglad').style.color = '';
+  }
 
   if (zlePola.length) {
     // D96: komunikat MUSI wymieniać pola i przewinąć do siebie. Wzorzec
