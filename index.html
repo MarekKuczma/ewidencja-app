@@ -89,7 +89,7 @@
     color:var(--tekst); min-height:48px;}
   input[type="date"]{-webkit-min-logical-width:0; -webkit-appearance:none; appearance:none;}
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--akcent);}
-  textarea{min-height:96px; resize:vertical; line-height:1.4;}
+  textarea{min-height:130px; resize:vertical; line-height:1.45; font-size:16px;}
   /* Błędy pól — wzorzec z aplikacji floty: komunikat pod polem + czerwona ramka */
   .blad-pola{color:var(--blad); font-size:14px; margin-top:4px; display:none;}
   .pole-blad input,.pole-blad select,.pole-blad textarea{border-color:var(--blad);}
@@ -337,10 +337,11 @@
         <div class="plakietka" id="ostatniLicznikInfo"></div>
       </div>
 
-      <div class="pole">
-        <label>🏗️ Budowa</label>
+      <div class="pole" id="poleBudowaBox">
+        <label>🏗️ Budowa <span class="wym">*</span></label>
         <input type="text" id="poleBudowa" list="listaBudow" placeholder="np. Płock">
         <datalist id="listaBudow"></datalist>
+        <div class="blad-pola" id="bladBudowa"></div>
       </div>
 
       <!-- Tankowanie, serwis i uwagi są widoczne od razu, bez rozwijania
@@ -469,7 +470,7 @@ function bladPola(idBox, idBlad, tekst){
   el(idBlad).textContent = tekst;
 }
 function wyczyscBledy(){
-  ['poleDataBox','poleLicznikBox'].forEach(function(i){ el(i).classList.remove('pole-blad'); });
+  ['poleDataBox','poleLicznikBox','poleBudowaBox'].forEach(function(i){ el(i).classList.remove('pole-blad'); });
   schowajKomunikat('wpisKomunikat');
 }
 function dzisiajISO(){
@@ -946,10 +947,23 @@ function rysujJednostki(){
       '<div class="tresc">' +
         '<div class="linia1">' + bezpiecznyTekst(j.tytul) + '</div>' +
         '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + ' &middot; ' + opis + '</div>' +
-      '</div></div>';
+      '</div>' +
+      (j.sposob === 'dodane samodzielnie'
+        ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">🔓</button>'
+        : '') +
+    '</div>';
   }).join('');
   box.querySelectorAll('[data-wybierz]').forEach(function(e){
-    e.onclick = function(){ wybierzPojazd(STAN.jednostki[Number(e.dataset.wybierz)]); };
+    e.onclick = function(ev){
+      if (ev.target.closest('[data-odepnij]')) return;   // klik w 🔓 to nie wybór
+      wybierzPojazd(STAN.jednostki[Number(e.dataset.wybierz)]);
+    };
+  });
+  box.querySelectorAll('[data-odepnij]').forEach(function(b){
+    b.onclick = function(ev){
+      ev.stopPropagation();
+      odepnijZListy_(STAN.jednostki[Number(b.dataset.odepnij)]);
+    };
   });
 }
 
@@ -1020,10 +1034,7 @@ function otworzWpis(j, wpisDoEdycji){
     el('poleBudowa').value = j.ostatniaBudowa || '';
     el('poleSerwis').value = '';
     el('poleUwagi').value = '';
-    el('ostatniLicznikInfo').textContent = j.ostatniStanLicznika
-      ? 'Ostatnio: ' + liczba(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika +
-        (j.ostatniaData ? ' (' + j.ostatniaData + ')' : '')
-      : '';
+    odswiezPodpowiedzLicznika();
   }
   dodajWierszTankowania();
   el('poleLicznikBox').style.display = (j.maLicznik === 'NIE') ? 'none' : '';
@@ -1038,6 +1049,46 @@ function rozbijTankowanie(tekst){
     if (m) dodajWierszTankowania(m[1], m[2] || '');
   });
 }
+
+/* Podpowiedź „ostatnio X km" musi dotyczyć dnia POPRZEDZAJĄCEGO wybraną datę,
+   nie po prostu najnowszego wpisu. Marek zgłosił, że przy wpisie wstecznym
+   aplikacja pokazywała (i porównywała do) najświeższy licznik, przez co
+   sygnalizowała błąd tam, gdzie wszystko było w porządku.
+
+   Liczymy z lokalnie wczytanej historii — bez dodatkowego żądania. Gdy
+   historii nie ma (np. zaraz po zapisie), pokazujemy stan ogólny z dopiskiem,
+   żeby nie udawać precyzji, której nie mamy. */
+function odswiezPodpowiedzLicznika(){
+  var j = STAN.aktywna, e = el('ostatniLicznikInfo');
+  if (!j) { e.textContent = ''; return; }
+  var data = el('poleData').value;
+
+  var wpisy = (STAN.wpisy || []).filter(function(w){
+    return !w.anulowany && w.licznik !== '' && w.licznik != null &&
+           (!STAN.edytowanyId || w.idWpisu !== STAN.edytowanyId);
+  });
+
+  if (data && wpisy.length) {
+    var przed = null;
+    wpisy.forEach(function(w){
+      if (w.data >= data) return;
+      if (!przed || w.data > przed.data) przed = w;
+    });
+    if (przed) {
+      e.textContent = 'Poprzedni dzień z wpisem: ' + przed.data + ' — ' +
+        liczba(przed.licznik) + ' ' + j.jednostkaLicznika;
+      return;
+    }
+    e.textContent = 'Brak wcześniejszego wpisu przed ' + data + '.';
+    return;
+  }
+
+  e.textContent = j.ostatniStanLicznika
+    ? 'Ostatni znany stan: ' + liczba(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika +
+      (j.ostatniaData ? ' (' + j.ostatniaData + ')' : '')
+    : '';
+}
+el('poleData').addEventListener('change', odswiezPodpowiedzLicznika);
 
 el('zapiszBtn').onclick = function(){
   var j = STAN.aktywna;
@@ -1056,6 +1107,11 @@ el('zapiszBtn').onclick = function(){
   }
   if (j.maLicznik === 'TAK' && !licznik) {
     bladPola('poleLicznikBox','bladLicznik','Podaj stan licznika.'); bledy++;
+  }
+  // Budowa jest wymagana (zgłoszenie Marka 27.07.2026) — na papierowym
+  // druczku zawsze była wypełniona i jest kolumną wydruku miesięcznego.
+  if (!el('poleBudowa').value.trim()) {
+    bladPola('poleBudowaBox','bladBudowa','Podaj budowę.'); bledy++;
   }
   if (bledy) {
     komunikat('wpisKomunikat', bledy === 1
@@ -1093,7 +1149,7 @@ el('zapiszBtn').onclick = function(){
       if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
       el('sukcesTekst').textContent = 'Poprawiono';
       pokazSukces(odp);
-      odswiezStart();
+      odswiezStart();   // przy poprawce stan jednostki może się zmienić dowolnie
     }).catch(function(){
       schowajOverlay();
       komunikat('wpisKomunikat', 'Brak połączenia — poprawki nie da się zapisać offline. Spróbuj później.', 'blad');
@@ -1105,8 +1161,10 @@ el('zapiszBtn').onclick = function(){
     schowajOverlay();
     if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
     el('sukcesTekst').textContent = 'Zapisano';
+    // D81: nie wołamy `status` po zapisie — serwer oddał już nowy stan
+    // jednostki. Trzy żądania jedno po drugim to było kilka sekund czekania.
+    zastosujStanPo_(odp.stanPo);
     pokazSukces(odp);
-    odswiezStart();
   }).catch(function(){
     schowajOverlay();
     dodajDoKolejki(payload);
@@ -1114,6 +1172,25 @@ el('zapiszBtn').onclick = function(){
     pokazSukces({ offline: true });
   });
 };
+
+/* D81: lokalna aktualizacja po zapisie — bez dodatkowego żądania.
+   Odświeżenie z serwera i tak nastąpi, gdy kierowca wróci na Start. */
+function zastosujStanPo_(stanPo){
+  if (!stanPo) return;
+  STAN.jednostki.forEach(function(j){
+    if (j.idPojazdu !== stanPo.idPojazdu) return;
+    if (stanPo.ostatniStanLicznika !== null) j.ostatniStanLicznika = stanPo.ostatniStanLicznika;
+    j.ostatniaData = stanPo.ostatniaData;
+    j.ostatniaBudowa = stanPo.ostatniaBudowa;
+    j.dniOdWpisu = stanPo.dniOdWpisu;
+    j.brakUwaga = false;
+  });
+  try {
+    var c = JSON.parse(localStorage.getItem(KLUCZ_CACHE) || 'null');
+    if (c) { c.jednostki = STAN.jednostki; localStorage.setItem(KLUCZ_CACHE, JSON.stringify(c)); }
+  } catch(e){}
+  STAN.wpisy = [];   // historia wymaga przeładowania
+}
 
 function pokazSukces(odp){
   el('sukcesLuka').innerHTML = '';
@@ -1285,6 +1362,37 @@ function rysujWpisy(){
   });
 }
 
+/* Po odpięciu kierowca MUSI wylądować na liście pojazdów. Zostawienie go na
+   pulpicie właśnie odpiętej jednostki wyglądało, jakby nic się nie stało
+   (zgłoszenie Marka 27.07.2026). Usuwamy ją też z lokalnego stanu, żeby nie
+   mignęła ponownie, zanim serwer odpowie. */
+function poOdpieciu_(idPojazdu){
+  localStorage.removeItem(KLUCZ_POJAZD);
+  STAN.jednostki = STAN.jednostki.filter(function(x){ return x.idPojazdu !== idPojazdu; });
+  STAN.aktywna = null;
+  STAN.wpisy = [];
+  try {
+    var c = JSON.parse(localStorage.getItem(KLUCZ_CACHE) || 'null');
+    if (c) { c.jednostki = STAN.jednostki; localStorage.setItem(KLUCZ_CACHE, JSON.stringify(c)); }
+  } catch(e){}
+  pokazEkran('ekranStart');
+  pokazWyborPojazdu();
+  odswiezStart();
+}
+
+/* Odpięcie prosto z listy pojazdów — nie trzeba najpierw wchodzić na pulpit. */
+function odepnijZListy_(j){
+  if (!navigator.onLine) { alert('Brak internetu.\n\nOdpięcie pojazdu wymaga zasięgu.'); return; }
+  if (!confirm('Odpiąć „' + j.tytul + '" od Twojej listy?\n\n' +
+      'Twoje dotychczasowe wpisy zostaną w ewidencji — znika tylko z Twojego widoku.')) return;
+  pokazOverlay('Odpinam…');
+  wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
+    schowajOverlay();
+    if (!o.ok) { alert(o.wiadomosc || 'Nie udało się odpiąć.'); return; }
+    poOdpieciu_(j.idPojazdu);
+  }).catch(function(){ schowajOverlay(); alert('Brak połączenia.'); });
+}
+
 /* ---------- dodawanie pojazdu z listy (D59) ----------
    Wpisywanie z ręki („WP 2542J") było podatne na literówki, a operator
    koparki nie zna numeru rejestracyjnego swojej maszyny. Lista rozwijana
@@ -1342,7 +1450,18 @@ el('potwierdzDodanieBtn').onclick = function(){
 };
 
 /* ---------- nawigacja ---------- */
-el('startNowyWpisBtn').onclick = function(){ otworzWpis(STAN.aktywna); };
+el('startNowyWpisBtn').onclick = function(){
+  // Historia zasila podpowiedź licznika dla wybranej daty — jeśli jej nie ma,
+  // dociągamy w tle i odświeżamy podpowiedź, gdy dojdzie.
+  if (STAN.aktywna && !(STAN.wpisy || []).length) dociagnijHistorie_(STAN.aktywna);
+  otworzWpis(STAN.aktywna);
+};
+
+function dociagnijHistorie_(j){
+  wolajAPI('historiaPojazdu', { idPojazdu: j.idPojazdu }).then(function(odp){
+    if (odp && odp.ok) { STAN.wpisy = odp.wpisy || []; odswiezPodpowiedzLicznika(); }
+  }).catch(function(){});
+}
 el('startMojeWpisyBtn').onclick = function(){ otworzWpisy(STAN.aktywna); };
 el('zmienPojazdBtn').onclick = function(){ localStorage.removeItem(KLUCZ_POJAZD); pokazWyborPojazdu(); };
 
@@ -1361,9 +1480,7 @@ el('odepnijBtn').onclick = function(){
   wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
     schowajOverlay();
     if (!o.ok) { alert(o.wiadomosc || 'Nie udało się odpiąć.'); return; }
-    localStorage.removeItem(KLUCZ_POJAZD);
-    STAN.aktywna = null;
-    odswiezStart();
+    poOdpieciu_(j.idPojazdu);
   }).catch(function(){
     schowajOverlay();
     alert('Brak połączenia.');
