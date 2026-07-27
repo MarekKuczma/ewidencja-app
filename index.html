@@ -94,6 +94,10 @@
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--akcent);}
   textarea{min-height:130px; resize:vertical; line-height:1.45; font-size:16px;}
   /* Błędy pól — wzorzec z aplikacji floty: komunikat pod polem + czerwona ramka */
+  /* D98 — ostrzeżenie przy polu: coś wygląda podejrzanie, ale zapisać można.
+     Celowo inny kolor niż `.blad-pola`, żeby nie mylić z blokadą zapisu. */
+  .ostrzezenie-pola{font-size:13px; color:#b06000; margin-top:6px; line-height:1.35;}
+  .ostrzezenie-pola:empty{display:none;}
   .blad-pola{color:var(--blad); font-size:14px; margin-top:4px; display:none;}
   .pole-blad input,.pole-blad select,.pole-blad textarea{border-color:var(--blad);}
   .pole-blad .blad-pola{display:block;}
@@ -343,6 +347,7 @@
         <input type="text" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
         <div class="blad-pola" id="bladLicznik"></div>
         <div class="plakietka" id="ostatniLicznikInfo"></div>
+        <div class="ostrzezenie-pola" id="ostrzezeniePrzyrost"></div>
       </div>
 
       <div class="pole" id="poleBudowaBox">
@@ -433,7 +438,7 @@ var STAN = {
   kod: null, imie: null, jednostki: [], budowy: [], kategorie: [],
   aktywna: null, wpisy: [], edytowanyId: null,
   // D98 — wartości domyślne; prawdziwe przychodzą ze `status`.
-  limity: { litryOstrzezenie: 300, litryBlokada: 1000 }
+  limity: { litryOstrzezenie: 300, litryBlokada: 1000, przyrostKm: 1500, przyrostMth: 24 }
 };
 var KLUCZ_KOD = 'ewidencja_kod';
 var KLUCZ_KOLEJKA = 'ewidencja_kolejka';
@@ -479,6 +484,7 @@ function bladPola(idBox, idBlad, tekst){
 }
 function wyczyscBledy(){
   ['poleDataBox','poleLicznikBox','poleBudowaBox'].forEach(function(i){ el(i).classList.remove('pole-blad'); });
+  if (el('ostrzezeniePrzyrost')) el('ostrzezeniePrzyrost').textContent = '';
   schowajKomunikat('wpisKomunikat');
 }
 function dzisiajISO(){
@@ -665,9 +671,20 @@ function wyslijKolejke(){
     return wolajAPI('nowyWpis', k[i].dane).then(function(odp){
       if (odp && odp.ok) {
         k[i].status = 'wyslany';
+      } else if (odp && odp.blad === 'E018') {
+        // WYJĄTEK: E018 znaczy „serwer zajęty, spróbuj za chwilę" — to jedyny
+        // błąd z definicji przejściowy. Oznaczenie go jako odrzucony kazałoby
+        // kierowcy klikać ręcznie coś, co samo by przeszło. Dotyczy dokładnie
+        // sytuacji, dla której powstała blokada zapisu (D89): paczka zaległych
+        // wpisów wysyłana jeden po drugim.
+        k[i].status = 'oczekuje';
+        zapiszKolejke(k);
+        wysylanieTrwa = false;
+        odswiezKolejkeInfo();
+        return;
       } else {
-        // Każda odpowiedź serwera inna niż OK jest trwała — ponawianie w
-        // pętli nic nie zmieni. Pokazujemy powód i oddajemy decyzję człowiekowi.
+        // Pozostałe odpowiedzi serwera są trwałe — ponawianie w pętli nic
+        // nie zmieni. Pokazujemy powód i oddajemy decyzję człowiekowi.
         k[i].status = 'odrzucony';
         k[i].blad = (odp && odp.wiadomosc) ? odp.wiadomosc : 'Serwer nie odpowiedział poprawnie.';
       }
@@ -1224,6 +1241,44 @@ function odswiezPodpowiedzLicznika(){
     : '';
 }
 el('poleData').addEventListener('change', odswiezPodpowiedzLicznika);
+
+/* D98 — ostrzeżenie o podejrzanie dużym przyroście licznika, liczone NA
+   MIEJSCU, zanim wpis pojedzie na serwer. Wcześniej ten próg istniał tylko
+   po stronie serwera, więc kierowca dowiadywał się o literówce dopiero
+   po zapisaniu — a to jest moment, w którym najtrudniej ją poprawić.
+   To ostrzeżenie, nie blokada: duży przyrost bywa prawdziwy (długa trasa). */
+function ostrzezOPrzyroscie(){
+  var e = el('ostrzezeniePrzyrost');
+  if (!e) return;
+  e.textContent = '';
+  var j = STAN.aktywna;
+  if (!j || STAN.edytowanyId) return;
+
+  var teraz = naLiczbe_(el('poleLicznik').value);
+  var poprzedni = Number(j.ostatniStanLicznika);
+  if (teraz === null || isNaN(teraz) || !j.ostatniStanLicznika || isNaN(poprzedni)) return;
+  if (teraz <= poprzedni) return;   // cofnięcie ma własne ostrzeżenie serwera (W001)
+
+  var jed = j.jednostkaLicznika || 'km';
+  var prog = jed === 'mth'
+    ? (STAN.limity.przyrostMth || 24)
+    : (STAN.limity.przyrostKm || 1500);
+
+  var dni = 1;
+  if (j.ostatniaData && el('poleData').value) {
+    var r = Math.round((new Date(el('poleData').value) - new Date(j.ostatniaData)) / 86400000);
+    if (r > 0) dni = r;
+  }
+
+  var przyrost = teraz - poprzedni;
+  if (przyrost > prog * dni) {
+    e.textContent = 'Uwaga: to o ' + formatLicznik_(przyrost) + ' ' + jed +
+      ' więcej niż ostatnio' + (dni > 1 ? ' (przez ' + dni + ' dni)' : '') +
+      '. Sprawdź, czy nie ma literówki — zapisać i tak można.';
+  }
+}
+el('poleLicznik').addEventListener('input', ostrzezOPrzyroscie);
+el('poleData').addEventListener('change', ostrzezOPrzyroscie);
 
 el('zapiszBtn').onclick = function(){
   var j = STAN.aktywna;
