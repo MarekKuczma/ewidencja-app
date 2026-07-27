@@ -64,7 +64,7 @@
     padding-top:calc(14px + env(safe-area-inset-top)); position:sticky; top:0; z-index:5;
     display:flex; align-items:center; gap:12px;}
   header img{width:40px; height:40px; border-radius:10px; flex:none;}
-  header h1{margin:0; font-size:18px; font-weight:600;}
+  header h1{margin:0; font-size:19px; font-weight:600;}
   header .kto{font-size:14px; opacity:.9; margin-top:2px;}
   header .naglowek-tekst{flex:1; min-width:0;}
   #motywBtn,#paletaBtn{background:rgba(255,255,255,.2); border:none; border-radius:10px;
@@ -83,11 +83,14 @@
   label{display:block; font-size:14px; font-weight:600; color:var(--szary); margin:0 0 6px;}
   label .wym{color:var(--blad);}
   label .opcjonalne{font-weight:400; color:var(--szary); opacity:.8;}
-  .pole + .pole{margin-top:20px;}
+  .pole + .pole{margin-top:22px;}
   input,select,textarea{width:100%; max-width:100%; min-width:0; font-size:18px; padding:12px;
     border:1.5px solid var(--input-brzeg); border-radius:10px; background:var(--input-tlo);
     color:var(--tekst); min-height:48px;}
   input[type="date"]{-webkit-min-logical-width:0; -webkit-appearance:none; appearance:none;}
+  /* iOS potrafi wyrównać wartość do środka i uciąć ją w wąskim polu — flota
+     natrafiła na to w becie (FEEDBACK pkt 7). */
+  input[type="date"]::-webkit-date-and-time-value{text-align:left;}
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--akcent);}
   textarea{min-height:130px; resize:vertical; line-height:1.45; font-size:16px;}
   /* Błędy pól — wzorzec z aplikacji floty: komunikat pod polem + czerwona ramka */
@@ -96,18 +99,18 @@
   .pole-blad .blad-pola{display:block;}
   button{font-family:inherit; cursor:pointer;}
   .przycisk{display:block; width:100%; background:var(--gradient); color:#fff;
-    font-size:18px; font-weight:600; border:none; border-radius:12px;
+    font-size:19px; font-weight:600; border:none; border-radius:12px;
     padding:15px; min-height:54px; margin-top:18px;
     box-shadow:0 4px 12px var(--przycisk-cien);}
-  .przycisk:active{opacity:.85;}
+  .przycisk:active{opacity:.85; box-shadow:0 2px 6px var(--przycisk-cien);}
   .przycisk[disabled]{opacity:.6;}
   .przycisk-drugi{display:block; width:100%; background:var(--karta); color:var(--akcent);
     border:1.5px solid var(--akcent); font-size:16px; font-weight:600;
     border-radius:12px; padding:12px; min-height:48px; margin-top:10px;}
   .przycisk-maly{background:var(--karta); color:var(--akcent); border:1.5px solid var(--akcent);
-    border-radius:10px; font-size:14px; font-weight:600; padding:8px 14px; min-height:40px;}
+    border-radius:10px; font-size:15px; font-weight:600; padding:8px 14px; min-height:40px;}
   .przycisk-czerwony{background:var(--karta); color:var(--blad); border:1.5px solid var(--blad);
-    border-radius:10px; font-size:14px; font-weight:600; padding:8px 14px; min-height:40px;}
+    border-radius:10px; font-size:15px; font-weight:600; padding:8px 14px; min-height:40px;}
   .komunikat{border-radius:12px; padding:14px; margin:12px 0; font-size:16px; display:none;}
   .komunikat.ok{display:block; background:var(--bg-ok); border:1px solid var(--ok); color:var(--tekst-ok);}
   .komunikat.blad{display:block; background:var(--bg-blad); border:1px solid var(--blad); color:var(--tekst-blad);}
@@ -135,6 +138,8 @@
   .jedn.uwaga .linia2{color:var(--tekst-blad);}
   .plakietka{display:inline-block; background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);
     font-size:13px; font-weight:600; border-radius:8px; padding:3px 10px; margin-top:6px;}
+  /* Brakowało — plakietka „Anulowany" była szara jak zwykła (wzorzec z floty). */
+  .plakietka.plakietka-blad{background:var(--bg-blad); color:var(--tekst-blad);}
   /* Terminy i serwis na pulpicie pojazdu (D56) */
   .terminy{border-top:1px solid var(--linia); margin-top:4px; padding-top:10px; margin-bottom:12px;}
   .terminy .t-naglowek{font-size:13px; font-weight:700; color:var(--szary);
@@ -192,6 +197,7 @@
   /* Tankowanie — powtarzalne pary litry + licznik (D51) */
   .tank-item{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
   .tank-item input{min-height:44px; font-size:16px; padding:10px;}
+  .tank-item.tank-blad input{border-color:var(--blad);}
   .tank-usun{background:none; border:none; color:var(--blad); font-size:22px;
     line-height:1; padding:4px 8px; flex:none; min-height:auto;}
   .tank-podglad{font-size:14px; color:var(--szary); margin-top:6px;}
@@ -218,7 +224,7 @@
   .wpis .linia-data{display:flex; justify-content:space-between; align-items:center;
     gap:8px; color:var(--szary); font-size:12px; margin-top:6px;}
   .ukryte{display:none !important;}
-  .srodek{text-align:center; padding:36px 20px; color:var(--szary);}
+  .srodek{text-align:center; padding:40px 20px; color:var(--szary);}
   h2{font-size:18px; margin:0 0 12px;}
   .sukces-ikona{font-size:52px; text-align:center; margin:6px 0 0;}
   .sukces-tekst{text-align:center; font-size:18px; font-weight:600; margin:6px 0 2px;}
@@ -297,7 +303,7 @@
           </div>
         </div>
         <div id="terminyBox"></div>
-        <button class="przycisk" id="startNowyWpisBtn">➕ Nowy wpis</button>
+        <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
         <button class="przycisk-drugi" id="startMojeWpisyBtn">📋 Moje wpisy</button>
         <button class="przycisk-drugi" id="zmienPojazdBtn">🔄 Zmień pojazd</button>
         <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">🔓 Odepnij ten pojazd</button>
@@ -306,7 +312,7 @@
       <!-- Lista jednostek do wyboru -->
       <div id="wyborPojazdu">
         <div id="listaJednostek"></div>
-        <button class="przycisk-drugi" id="dodajJednostkeBtn">➕ Dodaj auto lub koparkę</button>
+        <button class="przycisk-drugi" id="dodajJednostkeBtn">＋ Dodaj auto lub koparkę</button>
       </div>
 
       <!-- Dodawanie pojazdu z listy (D59) — zamiast wpisywania z ręki -->
@@ -335,7 +341,7 @@
 
       <div class="pole" id="poleLicznikBox">
         <label>🔢 Stan licznika na koniec dnia <span id="jednLicznika">(km)</span> <span class="wym">*</span></label>
-        <input type="number" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
+        <input type="text" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
         <div class="blad-pola" id="bladLicznik"></div>
         <div class="plakietka" id="ostatniLicznikInfo"></div>
       </div>
@@ -401,7 +407,7 @@
 <!-- Dolna nawigacja — emoji, dokładnie jak w aplikacji floty. Płaskie SVG
      są tu celowo NIE używane: Marek prosił o ikony SVG tylko dla pojazdów
      i maszyn, nawigacja ma zostać spójna z flotą. -->
-<nav>
+<nav id="nawigacja" class="ukryte">
   <button id="navStart" class="aktywna"><span class="i">🏠</span>Start</button>
   <button id="navNowy"><span class="i">📝</span>Nowy wpis</button>
   <button id="navWpisy"><span class="i">📋</span>Moje wpisy</button>
@@ -484,7 +490,24 @@ function inicjaly(imie){
   var c = String(imie).trim().split(/\s+/);
   return ((c[0]?c[0].charAt(0):'') + (c[1]?c[1].charAt(0):'')).toUpperCase() || '?';
 }
-function liczba(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+/* D94: NAZWA `formatLicznik_()` znaczy w aplikacji floty COŚ PRZECIWNEGO — tam
+   parsuje tekst na liczbę, tutaj formatuje liczbę na tekst. To pułapka przy
+   przenoszeniu kodu między aplikacjami, więc tutejsza dostaje nazwę mówiącą
+   wprost, co robi. */
+function formatLicznik_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+
+/* D95: pola liczbowe są typu `text`, nie `number` — i to jest świadome.
+   `<input type="number">` z wartością „45,5" zwraca PUSTY STRING (sprawdzone),
+   bo standard uznaje przecinek za nieprawidłowy. Kierowca wpisywał litry po
+   polsku, widział „Zapisano" i tankowania nie było w arkuszu — cicha utrata
+   danych, najgorszy możliwy błąd w dobrowolnej aplikacji.
+   Ta funkcja przyjmuje przecinek i spacje, tak samo jak `formatLicznik_()` we flocie. */
+function naLiczbe_(v){
+  var s = String(v == null ? '' : v).trim().replace(/\s+/g, '').replace(',', '.');
+  if (s === '') return null;
+  if (!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
+  return parseFloat(s);
+}
 
 /* Ikony PRZENIESIONE 1:1 z „Panel Floty.html" (funkcja rodzajIcon), na
    wyraźną prośbę Marka — to są kształty, które już zna z panelu kosztów
@@ -727,6 +750,30 @@ el('poleKodRecznie').addEventListener('keydown', function(e){
   if (e.key === 'Enter') { e.preventDefault(); zapiszKodRecznie_(); }
 });
 
+/* D97: zły kod dostępu przestaje być ślepym zaułkiem.
+   Ręczne wpisanie kodu istnieje właśnie dla ludzi, którym link nie zadziałał —
+   a jedna literówka zapisywała zły kod na stałe, bez żadnego sposobu
+   wyczyszczenia go z poziomu aplikacji. Człowiek, który już raz miał problem,
+   zostawał z nim na dobre. */
+function odrzucKod_(wiadomosc){
+  localStorage.removeItem(KLUCZ_KOD);
+  localStorage.removeItem(KLUCZ_CACHE);
+  localStorage.removeItem(KLUCZ_POJAZD);
+  if ('caches' in window) caches.delete(NAZWA_RELAY_KODU).catch(function(){});
+  STAN.kod = null;
+  STAN.jednostki = [];
+  STAN.aktywna = null;
+
+  ustawPodpowiedzBrakKodu_();
+  el('brakKoduPodpowiedz').innerHTML =
+    '<b>' + bezpiecznyTekst(wiadomosc || 'Ten kod nie działa.') + '</b><br>' +
+    'Sprawdź, czy przepisałeś go dokładnie, albo otwórz swój osobisty link ' +
+    'jeszcze raz. Jeśli nadal nie działa — zadzwoń do Marka.';
+  el('ekranStart').classList.add('ukryte');
+  el('nawigacja').classList.add('ukryte');
+  el('widokBrakKodu').classList.remove('ukryte');
+}
+
 /* ---------- start ---------- */
 function start(){
   wczytajMotyw();
@@ -765,6 +812,7 @@ function start(){
 
 function uruchomAplikacje_(){
   el('ekranStart').classList.remove('ukryte');
+  el('nawigacja').classList.remove('ukryte');   // D97 — pokazujemy dopiero z kodem
   // D60: pokaż od razu to, co wiemy z ostatniego razu, i dopiero potem
   // odśwież z serwera. Bez tego przy każdym otwarciu było „Ładowanie…",
   // potem mignięcie listy wyboru, a dopiero na końcu właściwy pojazd —
@@ -798,6 +846,8 @@ function pokazZPamieci(){
 function odswiezStart(){
   return wolajAPI('status', {}).then(function(odp){
     if (!odp.ok) {
+      // D97 — kod nieznany albo konto wyłączone: wracamy na ekran wpisywania.
+      if (odp.blad === 'E002' || odp.blad === 'E004') { odrzucKod_(odp.wiadomosc); return; }
       el('powitanieImie').textContent = 'Błąd';
       el('listaJednostek').innerHTML = '<div class="srodek">' +
         bezpiecznyTekst(odp.wiadomosc || 'Nie udało się wczytać danych.') + '</div>';
@@ -892,7 +942,7 @@ function wybierzPojazd(j, zPamieci){
     '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + '</div></div>';
 
   el('mLicznik').textContent = j.ostatniStanLicznika
-    ? liczba(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika : '—';
+    ? formatLicznik_(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika : '—';
   el('mLicznikData').textContent = j.ostatniaData ? 'z ' + j.ostatniaData : 'brak wpisów';
   el('mOstatniaBudowa').textContent = j.ostatniaBudowa ? 'ostatnio: ' + j.ostatniaBudowa : '';
   rysujTerminy(j);
@@ -925,9 +975,9 @@ function rysujTerminy(j){
     lista.map(function(t){
       var wartosc, klasa = t.uwaga ? ' pilny' : '';
       if (t.nazwa === 'Serwis') {
-        if (t.zostalo < 0) { wartosc = 'przekroczony o ' + liczba(Math.abs(t.zostalo)) + ' ' + jed; klasa = ' pominiety'; }
-        else wartosc = 'za ' + liczba(t.zostalo) + ' ' + jed;
-        wartosc += ' <span style="color:var(--szary); font-weight:400;">(' + liczba(t.wartosc) + ' ' + jed + ')</span>';
+        if (t.zostalo < 0) { wartosc = 'przekroczony o ' + formatLicznik_(Math.abs(t.zostalo)) + ' ' + jed; klasa = ' pominiety'; }
+        else wartosc = 'za ' + formatLicznik_(t.zostalo) + ' ' + jed;
+        wartosc += ' <span style="color:var(--szary); font-weight:400;">(' + formatLicznik_(t.wartosc) + ' ' + jed + ')</span>';
       } else {
         if (t.dni < 0) { wartosc = 'minął ' + t.data; klasa = ' pominiety'; }
         else if (t.dni === 0) { wartosc = 'dziś!'; }
@@ -991,9 +1041,9 @@ function dodajWierszTankowania(litry, licznik){
   var div = document.createElement('div');
   div.className = 'tank-item';
   div.innerHTML =
-    '<input type="number" step="0.01" inputmode="decimal" class="t-litry" placeholder="litry" value="' +
+    '<input type="text" inputmode="decimal" class="t-litry" placeholder="litry" value="' +
       bezpiecznyTekst(litry || '') + '">' +
-    '<input type="number" inputmode="numeric" class="t-licznik" placeholder="licznik (' + jed + ')" value="' +
+    '<input type="text" inputmode="numeric" class="t-licznik" placeholder="licznik (' + jed + ')" value="' +
       bezpiecznyTekst(licznik || '') + '">' +
     '<button type="button" class="tank-usun" aria-label="Usuń">&times;</button>';
   div.querySelector('.tank-usun').onclick = function(){ div.remove(); odswiezPodgladTankowania(); };
@@ -1001,14 +1051,31 @@ function dodajWierszTankowania(litry, licznik){
   el('listaTankowan').appendChild(div);
   odswiezPodgladTankowania();
 }
-function zbierzTankowania(){
-  var wynik = [];
+/* D95: zbiera tankowania, normalizując przecinek na kropkę.
+   Przy `tylkoSprawdz = true` nie zwraca danych, tylko `true`, jeśli któreś
+   pole zawiera coś, co nie jest liczbą — wtedy walidacja pokaże błąd zamiast
+   po cichu pominąć wiersz. */
+function zbierzTankowania(tylkoSprawdz){
+  var wynik = [], bledne = false;
   el('listaTankowan').querySelectorAll('.tank-item').forEach(function(d){
-    var l = d.querySelector('.t-litry').value.trim();
-    if (l === '') return;
-    wynik.push({ litry: l, licznik: d.querySelector('.t-licznik').value.trim() });
+    var poleL = d.querySelector('.t-litry');
+    var poleK = d.querySelector('.t-licznik');
+    var litry = naLiczbe_(poleL.value);
+    var lic = naLiczbe_(poleK.value);
+
+    d.classList.remove('tank-blad');
+
+    // Pusty wiersz jest w porządku — to po prostu nieużyta linijka.
+    if (litry === null && lic === null) return;
+
+    if (isNaN(litry) || litry === null || litry <= 0 || isNaN(lic)) {
+      bledne = true;
+      d.classList.add('tank-blad');
+      return;
+    }
+    wynik.push({ litry: litry, licznik: lic === null ? '' : lic });
   });
-  return wynik;
+  return tylkoSprawdz ? bledne : wynik;
 }
 function odswiezPodgladTankowania(){
   var t = zbierzTankowania();
@@ -1096,7 +1163,7 @@ function odswiezPodpowiedzLicznika(){
     });
     if (przed) {
       e.textContent = 'Poprzedni dzień z wpisem: ' + przed.data + ' — ' +
-        liczba(przed.licznik) + ' ' + j.jednostkaLicznika;
+        formatLicznik_(przed.licznik) + ' ' + j.jednostkaLicznika;
       return;
     }
     e.textContent = 'Brak wcześniejszego wpisu przed ' + data + '.';
@@ -1104,7 +1171,7 @@ function odswiezPodpowiedzLicznika(){
   }
 
   e.textContent = j.ostatniStanLicznika
-    ? 'Ostatni znany stan: ' + liczba(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika +
+    ? 'Ostatni znany stan: ' + formatLicznik_(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika +
       (j.ostatniaData ? ' (' + j.ostatniaData + ')' : '')
     : '';
 }
@@ -1117,33 +1184,50 @@ el('zapiszBtn').onclick = function(){
 
   var data = el('poleData').value;
   var licznik = el('poleLicznik').value;
-  var bledy = 0;
+  var zlePola = [];   // D96 — nazwy pól do wypisania w komunikacie
 
   if (!STAN.edytowanyId) {
-    if (!data) { bladPola('poleDataBox','bladData','Podaj datę.'); bledy++; }
+    if (!data) { bladPola('poleDataBox','bladData','Podaj datę.'); zlePola.push('Data'); }
     else if (data > dzisiajISO()) {
-      bladPola('poleDataBox','bladData','Nie można wpisać daty z przyszłości.'); bledy++;
+      bladPola('poleDataBox','bladData','Nie można wpisać daty z przyszłości.'); zlePola.push('Data');
     }
   }
-  if (j.maLicznik === 'TAK' && !licznik) {
-    bladPola('poleLicznikBox','bladLicznik','Podaj stan licznika.'); bledy++;
+
+  // D95 — licznik jest polem tekstowym, więc trzeba go sprawdzić samodzielnie.
+  var licznikLiczba = naLiczbe_(licznik);
+  if (j.maLicznik === 'TAK' && licznikLiczba === null) {
+    bladPola('poleLicznikBox','bladLicznik','Podaj stan licznika.'); zlePola.push('Stan licznika');
+  } else if (licznikLiczba !== null && (isNaN(licznikLiczba) || licznikLiczba < 0)) {
+    bladPola('poleLicznikBox','bladLicznik','Stan licznika musi być liczbą (bez minusów).');
+    zlePola.push('Stan licznika');
   }
-  // Budowa jest wymagana (zgłoszenie Marka 27.07.2026) — na papierowym
-  // druczku zawsze była wypełniona i jest kolumną wydruku miesięcznego.
+
+  // Budowa jest wymagana (D83) — na papierowym druczku zawsze była wypełniona
+  // i jest kolumną wydruku miesięcznego.
   if (!el('poleBudowa').value.trim()) {
-    bladPola('poleBudowaBox','bladBudowa','Podaj budowę.'); bledy++;
+    bladPola('poleBudowaBox','bladBudowa','Wybierz budowę.'); zlePola.push('Budowa');
   }
-  if (bledy) {
-    komunikat('wpisKomunikat', bledy === 1
-      ? 'Popraw zaznaczone pole i zapisz ponownie.'
-      : 'Popraw zaznaczone pola i zapisz ponownie.', 'blad');
+
+  // D95 — litry z przecinkiem muszą przejść, ale śmieci już nie.
+  var bledneTankowanie = zbierzTankowania(true);
+  if (bledneTankowanie) zlePola.push('Tankowanie');
+
+  if (zlePola.length) {
+    // D96: komunikat MUSI wymieniać pola i przewinąć do siebie. Wzorzec
+    // z aplikacji floty, powstały w becie po zgłoszeniu „kierowca klikał
+    // ZAPISZ w kółko" — formularz jest dłuższy niż ekran, więc czerwone pole
+    // bywa poza kadrem i człowiek nie wie, dlaczego nic się nie dzieje.
+    komunikat('wpisKomunikat',
+      'Nie zapisano — sprawdź zaznaczone na czerwono pola: <b>' +
+      zlePola.join(', ') + '</b>.', 'blad');
+    el('wpisKomunikat').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
   var payload = {
     idPojazdu: j.idPojazdu,
     data: data,
-    licznik: licznik,
+    licznik: licznikLiczba === null ? '' : licznikLiczba,
     budowa: el('poleBudowa').value,
     tankowania: zbierzTankowania(),
     serwisKategoria: el('poleSerwis').value,
@@ -1330,7 +1414,7 @@ function rysujWpisy(){
           // 27.07.2026) — bez osobnego wiersza i bez ikony, sam podpis „Licznik:".
           '<div class="linia1"><span>' + w.data.slice(8) + '.' + w.data.slice(5,7) + '.' + w.data.slice(0,4) + '</span>' +
             (w.licznik !== '' && w.licznik != null
-              ? '<span class="licznik-rog">Licznik: <b>' + liczba(w.licznik) + ' ' + jed + '</b>' +
+              ? '<span class="licznik-rog">Licznik: <b>' + formatLicznik_(w.licznik) + ' ' + jed + '</b>' +
                 (w.licznikSzacowany ? ' *' : '') + '</span>'
               : '') +
           '</div>' +
@@ -1523,7 +1607,7 @@ el('navWpisy').onclick = function(){
 
 /* ---------- service worker ---------- */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js');
+  navigator.serviceWorker.register('./service-worker.js').catch(function(){});
 }
 
 start();
