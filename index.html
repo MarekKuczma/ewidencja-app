@@ -164,7 +164,6 @@
   .wpis .licznik-rog{font-size:13px; font-weight:400; color:var(--szary);
     white-space:nowrap;}
   .wpis .licznik-rog b{color:var(--tekst); font-weight:600;}
-  .wpis.postoj{border-left-color:var(--linia); background:var(--tlo);}
   .wpis.anulowany{border-left-color:var(--linia); background:var(--tlo);}
   .wpis.anulowany .linia1,.wpis.anulowany .linia2,.wpis.anulowany .licznik-rog{
     text-decoration:line-through; color:#9ca3af;}
@@ -385,7 +384,6 @@
       <div class="sukces-ikona">✅</div>
       <div class="sukces-tekst" id="sukcesTekst">Zapisano</div>
       <div class="komunikat" id="sukcesKomunikat"></div>
-      <div id="sukcesLuka"></div>
       <button class="przycisk" id="sukcesWrocBtn">Gotowe</button>
     </div>
   </section>
@@ -425,8 +423,8 @@
 
    Zasady:
    - Kod dostępu z adresu (?kod=XXXX), zapamiętywany lokalnie (D7).
-   - Wpis nie ma przełącznika Pracowała/Postój — luki domyka backend
-     automatycznie na podstawie licznika (D47).
+   - Wpis = dzień pracy. Dzień bez wpisu = postój i nie zostawia śladu
+     w arkuszu, dokładnie jak na papierowym druczku (D102).
    - Brak zasięgu nie może zgubić wpisu: kolejka w localStorage (D50).
    - Kierowca poprawia i anuluje tylko własne wpisy (D53).
    ===================================================================== */
@@ -1355,62 +1353,20 @@ function zastosujStanPo_(stanPo){
 }
 
 function pokazSukces(odp){
-  el('sukcesLuka').innerHTML = '';
   schowajKomunikat('sukcesKomunikat');
 
   if (odp.offline) {
     komunikat('sukcesKomunikat', 'Brak zasięgu — wpis zapisany w telefonie i wyśle się sam, gdy sieć wróci.', 'uwaga');
   } else {
-    if (odp.lukaAutoZamknieta && odp.lukaAutoZamknieta.dni > 0) {
-      komunikat('sukcesKomunikat', 'Uzupełniono też ' + odp.lukaAutoZamknieta.dni +
-        ' dni postoju (licznik był bez zmian).', 'ok');
-    }
     if (odp.ostrzezenia && odp.ostrzezenia.length) {
       komunikat('sukcesKomunikat', '<ul><li>' +
         odp.ostrzezenia.map(bezpiecznyTekst).join('</li><li>') + '</li></ul>', 'uwaga');
     }
-    if (odp.pytanieLuka) rysujPytanieLuka(odp.pytanieLuka);
   }
   pokazEkran('ekranSukces');
 }
 
 /* D47: pytanie o lukę pojawia się DOPIERO po zapisie i jest opcjonalne. */
-function rysujPytanieLuka(luka){
-  var box = el('sukcesLuka');
-  box.innerHTML =
-    '<div class="komunikat uwaga" style="display:block">' + bezpiecznyTekst(luka.wiadomosc) + '</div>' +
-    '<button class="przycisk-drugi" id="lukaRozbij">Rozpisz te dni (' + luka.dniLuki + ')</button>' +
-    '<button class="przycisk-drugi" id="lukaPomin">Zostaw jako lukę</button>';
-  el('lukaPomin').onclick = function(){ box.innerHTML = ''; };
-  el('lukaRozbij').onclick = function(){
-    var dni = [], krok = luka.przyrostLicznika / (luka.dniLuki + 1);
-    var d = new Date(luka.od), koniec = new Date(luka.do);
-    var bazowy = Number(STAN.aktywna.ostatniStanLicznika) || 0, n = 1;
-    while (d <= koniec) {
-      dni.push({
-        data: d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2),
-        licznik: Math.round(bazowy + krok * n),
-        licznikSzacowany: true
-      });
-      d.setDate(d.getDate() + 1); n++;
-    }
-    pokazOverlay('Rozpisuję dni…');
-    wolajAPI('zamknijLuke', {
-      idPojazdu: STAN.aktywna.idPojazdu, sposob: 'rozbicie',
-      od: luka.od, do: luka.do, budowa: el('poleBudowa').value, dni: dni
-    }).then(function(o){
-      schowajOverlay();
-      box.innerHTML = o.ok
-        ? '<div class="komunikat ok" style="display:block">Rozpisano ' + dni.length +
-          ' dni. Wartości licznika są oznaczone jako szacowane.</div>'
-        : '<div class="komunikat blad" style="display:block">' + bezpiecznyTekst(o.wiadomosc || 'Nie udało się.') + '</div>';
-      odswiezStart();
-    }).catch(function(){
-      schowajOverlay();
-      box.innerHTML = '<div class="komunikat blad" style="display:block">Brak połączenia — spróbuj później.</div>';
-    });
-  };
-}
 
 /* ---------- moje wpisy (D34: cała jednostka, nie tylko własne) ---------- */
 function otworzWpisy(j){
@@ -1454,17 +1410,16 @@ function rysujWpisy(){
       html += '<div class="wpisy-naglowek-miesiac">' +
         MIESIACE[Number(m.slice(5,7)) - 1] + ' ' + m.slice(0,4) + '</div>';
     }
-    var klasy = 'wpis' + (w.anulowany ? ' anulowany' : (w.statusDnia === 'Postój' ? ' postoj' : ''));
+    var klasy = 'wpis' + (w.anulowany ? ' anulowany' : '');
     var jed = w.jednostkaLicznika || j.jednostkaLicznika;
     var plakietki = '';
-    if (w.statusDnia === 'Postój') plakietki += '<span class="plakietka">Postój</span> ';
     if (w.anulowany) plakietki += '<span class="plakietka plakietka-blad">Anulowany</span>';
 
     // Kolejność wg Marka (26.07.2026): data → stan licznika → kierowca i budowa.
     // Najważniejsza jest liczba, po którą kierowca tu wchodzi; kto i gdzie
     // to kontekst, więc schodzi niżej.
     html += '<div class="' + klasy + '" style="border-left-color:' +
-        (w.anulowany || w.statusDnia === 'Postój' ? '' : j.kolor) + '" data-i="' + i + '">' +
+        (w.anulowany ? '' : j.kolor) + '" data-i="' + i + '">' +
       '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ, j.kolor) + '</div>' +
       '<div style="flex:1; min-width:0;">' +
         '<div class="wpis-tresc">' +
