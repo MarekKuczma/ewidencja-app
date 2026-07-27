@@ -7,7 +7,7 @@
  * a Ty stracisz godzinę na szukanie błędu, którego nie ma.
  */
 
-var WERSJA_CACHE = 'ewidencja-v19';
+var WERSJA_CACHE = 'ewidencja-v20';
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
