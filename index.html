@@ -677,8 +677,9 @@ function wyslijKolejke(){
     return wolajAPI('nowyWpis', k[i].dane).then(function(odp){
       if (odp && odp.ok) {
         k[i].status = 'wyslany';
-      } else if (odp && odp.blad === 'E018') {
-        // WYJĄTEK: E018 znaczy „serwer zajęty, spróbuj za chwilę" — to jedyny
+      } else if (odp && odp.blad === 'E013') {
+        // W-01 (01.08.2026): było E018, teraz E013 jak we flocie.
+        // WYJĄTEK: E013 znaczy „serwer zajęty, spróbuj za chwilę" — to jedyny
         // błąd z definicji przejściowy. Oznaczenie go jako odrzucony kazałoby
         // kierowcy klikać ręcznie coś, co samo by przeszło. Dotyczy dokładnie
         // sytuacji, dla której powstała blokada zapisu (D89): paczka zaległych
@@ -878,7 +879,8 @@ function odswiezStart(){
   return wolajAPI('status', {}).then(function(odp){
     if (!odp.ok) {
       // D97 — kod nieznany albo konto wyłączone: wracamy na ekran wpisywania.
-      if (odp.blad === 'E002' || odp.blad === 'E004') { odrzucKod_(odp.wiadomosc); return; }
+      // W-01 (01.08.2026): było E002/E004, teraz E011/E015 jak we flocie.
+      if (odp.blad === 'E011' || odp.blad === 'E015') { odrzucKod_(odp.wiadomosc); return; }
       el('powitanieImie').textContent = 'Błąd';
       el('listaJednostek').innerHTML = '<div class="srodek">' +
         bezpiecznyTekst(odp.wiadomosc || 'Nie udało się wczytać danych.') + '</div>';
