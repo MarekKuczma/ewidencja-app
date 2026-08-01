@@ -307,7 +307,6 @@
         </div>
         <div id="terminyBox"></div>
         <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
-        <button class="przycisk-drugi" id="startMojeWpisyBtn">📋 Moje wpisy</button>
         <button class="przycisk-drugi" id="zmienPojazdBtn">🔄 Zmień pojazd</button>
         <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">🔓 Odepnij ten pojazd</button>
       </div>
@@ -1681,7 +1680,6 @@ function dociagnijHistorie_(j){
     if (odp && odp.ok) { STAN.wpisy = odp.wpisy || []; odswiezPodpowiedzLicznika(); }
   }).catch(function(){});
 }
-el('startMojeWpisyBtn').onclick = function(){ otworzWpisy(STAN.aktywna); };
 el('zmienPojazdBtn').onclick = function(){ localStorage.removeItem(KLUCZ_POJAZD); pokazWyborPojazdu(); };
 
 /* D70: odpiąć można tylko pojazd dodany samodzielnie — przypisania z
