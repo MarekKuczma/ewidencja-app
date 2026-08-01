@@ -1664,8 +1664,11 @@ el('dodajJednostkeBtn').onclick = function(){
       kolejnosc.map(function(typ){
         return '<optgroup label="' + bezpiecznyTekst(typ) + '">' +
           grupy[typ].map(function(p){
+            // E-19 (01.08.2026): maszyny (koparki) dostają pusty podtytul
+            // z etykietaDropdownu_ — bez tego wychodziło „Hidromek (1) · ”
+            // z samotną kropką na końcu.
             return '<option value="' + bezpiecznyTekst(p.idPojazdu) + '">' +
-              bezpiecznyTekst(p.tytul) + ' · ' + bezpiecznyTekst(p.podtytul) + '</option>';
+              bezpiecznyTekst(p.tytul) + (p.podtytul ? ' · ' + bezpiecznyTekst(p.podtytul) : '') + '</option>';
           }).join('') + '</optgroup>';
       }).join('');
   }).catch(function(){
