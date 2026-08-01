@@ -197,6 +197,11 @@
   .wpisy-naglowek-miesiac{font-size:13px; font-weight:700; color:var(--szary);
     text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
   .wpisy-naglowek-miesiac:first-child{margin-top:0;}
+  /* E-14 (01.08.2026): nagłówek sekcji listy jednostek (Twoje pojazdy /
+     Podpięte) — sam styl co nagłówek miesiąca, ale nieklikalny. */
+  .sekcja-jednostek-naglowek{font-size:13px; font-weight:700; color:var(--szary);
+    text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
+  .sekcja-jednostek-naglowek:first-child{margin-top:0;}
   /* E-12 (01.08.2026): nagłówek zamkniętego miesiąca — klikalny, rozwija/
      zwija podgląd wpisów bez możliwości edycji (wzorzec z floty, F-49). */
   .wpisy-naglowek-miesiac.zwijalny{cursor:pointer; display:flex; align-items:center;
@@ -1054,26 +1059,49 @@ function opisOstatniegoWpisu(j){
   return 'brak wpisu od ' + d + ' dni';
 }
 
+// E-14 (01.08.2026): renderuje jedną pozycję listy jednostek — wydzielone
+// z rysujJednostki, żeby dało się to wywołać osobno dla dwóch sekcji
+// (główne / podpięte) bez powtarzania szablonu.
+function jednostkaHtml_(j, i){
+  var opis = opisOstatniegoWpisu(j);
+  return '<div class="jedn' + (j.brakUwaga ? ' uwaga' : '') + '" style="border-left-color:' +
+      j.kolor + '" data-wybierz="' + i + '">' +
+    '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ, j.kolor) + '</div>' +
+    '<div class="tresc">' +
+      '<div class="linia1">' + bezpiecznyTekst(j.tytul) + '</div>' +
+      '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + ' &middot; ' + opis + '</div>' +
+    '</div>' +
+    (j.sposob === 'dodane samodzielnie'
+      ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">📌</button>'
+      : '') +
+  '</div>';
+}
 function rysujJednostki(){
   var box = el('listaJednostek');
   if (!STAN.jednostki.length) {
     box.innerHTML = '<div class="srodek">Dodaj auto lub koparkę, żeby zacząć wpisywać.</div>';
     return;
   }
-  box.innerHTML = STAN.jednostki.map(function(j, i){
-    var opis = opisOstatniegoWpisu(j);
-    return '<div class="jedn' + (j.brakUwaga ? ' uwaga' : '') + '" style="border-left-color:' +
-        j.kolor + '" data-wybierz="' + i + '">' +
-      '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ, j.kolor) + '</div>' +
-      '<div class="tresc">' +
-        '<div class="linia1">' + bezpiecznyTekst(j.tytul) + '</div>' +
-        '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + ' &middot; ' + opis + '</div>' +
-      '</div>' +
-      (j.sposob === 'dodane samodzielnie'
-        ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">📌</button>'
-        : '') +
-    '</div>';
-  }).join('');
+  // E-14: dwie sekcje — pojazdy przypisane na stałe (Sprzęt.F „Kierowca
+  // główny") i podpięte samodzielnie (zakładka „Moje jednostki"). Kolejność
+  // wewnątrz sekcji bez zmian (porownajJednostki_ z backendu, D71). Nagłówki
+  // tylko gdy obie sekcje faktycznie mają coś do pokazania — kierowca z
+  // samymi głównymi/samymi podpiętymi widzi listę bez podziału, jak dotąd.
+  var glowneI = [], podpieteI = [];
+  STAN.jednostki.forEach(function(j, i){
+    (j.sposob === 'dodane samodzielnie' ? podpieteI : glowneI).push(i);
+  });
+  var dwieSekcje = glowneI.length > 0 && podpieteI.length > 0;
+  var html = '';
+  if (glowneI.length) {
+    if (dwieSekcje) html += '<div class="sekcja-jednostek-naglowek">Twoje pojazdy</div>';
+    html += glowneI.map(function(i){ return jednostkaHtml_(STAN.jednostki[i], i); }).join('');
+  }
+  if (podpieteI.length) {
+    if (dwieSekcje) html += '<div class="sekcja-jednostek-naglowek">Podpięte</div>';
+    html += podpieteI.map(function(i){ return jednostkaHtml_(STAN.jednostki[i], i); }).join('');
+  }
+  box.innerHTML = html;
   box.querySelectorAll('[data-wybierz]').forEach(function(e){
     e.onclick = function(ev){
       if (ev.target.closest('[data-odepnij]')) return;   // klik w 📌 to nie wybór
