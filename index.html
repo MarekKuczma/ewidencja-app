@@ -314,7 +314,7 @@
         <div id="terminyBox"></div>
         <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
         <button class="przycisk-drugi" id="zmienPojazdBtn">🔄 Zmień pojazd</button>
-        <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">🔓 Odepnij ten pojazd</button>
+        <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">📌 Odepnij ten pojazd</button>
       </div>
 
       <!-- Lista jednostek do wyboru -->
@@ -1070,13 +1070,13 @@ function rysujJednostki(){
         '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + ' &middot; ' + opis + '</div>' +
       '</div>' +
       (j.sposob === 'dodane samodzielnie'
-        ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">🔓</button>'
+        ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">📌</button>'
         : '') +
     '</div>';
   }).join('');
   box.querySelectorAll('[data-wybierz]').forEach(function(e){
     e.onclick = function(ev){
-      if (ev.target.closest('[data-odepnij]')) return;   // klik w 🔓 to nie wybór
+      if (ev.target.closest('[data-odepnij]')) return;   // klik w 📌 to nie wybór
       wybierzPojazd(STAN.jednostki[Number(e.dataset.wybierz)]);
     };
   });
