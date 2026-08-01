@@ -655,6 +655,21 @@ function usunZKolejki(tmp){
    w trakcie wysyłki uruchomionej przy starcie) — bez niej ten sam wpis
    mógłby polecieć dwa razy. */
 var wysylanieTrwa = false;
+// W-03 (01.08.2026): naprawa wyścigu — funkcja NIE trzyma już jednej
+// „zamrożonej" kopii listy `k` przez cały czas wysyłki. Każdy zapis do
+// localStorage najpierw odczytuje AKTUALNY stan i zmienia w nim tylko
+// jeden konkretny wpis (po `tmp`) — inaczej wpis dodany w trakcie
+// wysyłki trafiał do localStorage, ale kolejny zapis z tej funkcji
+// nadpisywał całość starą kopią i nowy wpis znikał bez śladu.
+function ustawStatusWKolejce_(tmp, zmiany){
+  var aktualna = kolejka();
+  var wpis = aktualna.filter(function(w){ return w.tmp === tmp; })[0];
+  if (wpis) {
+    for (var klucz in zmiany) wpis[klucz] = zmiany[klucz];
+    zapiszKolejke(aktualna);
+  }
+  return aktualna;
+}
 function wyslijKolejke(){
   if (wysylanieTrwa) return Promise.resolve();
   var k = kolejka();
@@ -668,7 +683,7 @@ function wyslijKolejke(){
     if (i >= k.length) {
       wysylanieTrwa = false;
       // Wysłane usuwamy; odrzucone ZOSTAJĄ, żeby kierowca je zobaczył.
-      zapiszKolejke(k.filter(function(w){ return w.status !== 'wyslany'; }));
+      zapiszKolejke(kolejka().filter(function(w){ return w.status !== 'wyslany'; }));
       odswiezKolejkeInfo();
       return;
     }
@@ -676,7 +691,7 @@ function wyslijKolejke(){
 
     return wolajAPI('nowyWpis', k[i].dane).then(function(odp){
       if (odp && odp.ok) {
-        k[i].status = 'wyslany';
+        ustawStatusWKolejce_(k[i].tmp, { status: 'wyslany' });
       } else if (odp && odp.blad === 'E013') {
         // W-01 (01.08.2026): było E018, teraz E013 jak we flocie.
         // WYJĄTEK: E013 znaczy „serwer zajęty, spróbuj za chwilę" — to jedyny
@@ -684,23 +699,22 @@ function wyslijKolejke(){
         // kierowcy klikać ręcznie coś, co samo by przeszło. Dotyczy dokładnie
         // sytuacji, dla której powstała blokada zapisu (D89): paczka zaległych
         // wpisów wysyłana jeden po drugim.
-        k[i].status = 'oczekuje';
-        zapiszKolejke(k);
+        ustawStatusWKolejce_(k[i].tmp, { status: 'oczekuje' });
         wysylanieTrwa = false;
         odswiezKolejkeInfo();
         return;
       } else {
         // Pozostałe odpowiedzi serwera są trwałe — ponawianie w pętli nic
         // nie zmieni. Pokazujemy powód i oddajemy decyzję człowiekowi.
-        k[i].status = 'odrzucony';
-        k[i].blad = (odp && odp.wiadomosc) ? odp.wiadomosc : 'Serwer nie odpowiedział poprawnie.';
+        ustawStatusWKolejce_(k[i].tmp, {
+          status: 'odrzucony',
+          blad: (odp && odp.wiadomosc) ? odp.wiadomosc : 'Serwer nie odpowiedział poprawnie.'
+        });
       }
-      zapiszKolejke(k);
       return nastepny(i + 1);
     }).catch(function(){
       // Brak sieci — przerywamy, wpis zostaje „oczekuje" i pójdzie później.
       wysylanieTrwa = false;
-      zapiszKolejke(k);
       odswiezKolejkeInfo();
     });
   }
@@ -1387,6 +1401,18 @@ el('zapiszBtn').onclick = function(){
       schowajOverlay();
       komunikat('wpisKomunikat', 'Brak połączenia — poprawki nie da się zapisać offline. Spróbuj później.', 'blad');
     });
+    return;
+  }
+
+  // W-03 (01.08.2026, przeniesione z floty): gdy telefon JUŻ wie, że nie ma
+  // sieci, nie ma sensu czekać, aż `fetch` sam się nie powiedzie — na słabym
+  // zasięgu to potrafi trwać długo, zanim przeglądarka odda błąd. Prosto do
+  // kolejki, bez próby.
+  if (!navigator.onLine) {
+    schowajOverlay();
+    dodajDoKolejki(payload);
+    el('sukcesTekst').textContent = 'Zapisano w telefonie';
+    pokazSukces({ offline: true });
     return;
   }
 
