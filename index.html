@@ -1664,11 +1664,12 @@ el('dodajJednostkeBtn').onclick = function(){
       kolejnosc.map(function(typ){
         return '<optgroup label="' + bezpiecznyTekst(typ) + '">' +
           grupy[typ].map(function(p){
-            // E-19 (01.08.2026): maszyny (koparki) dostają pusty podtytul
-            // z etykietaDropdownu_ — bez tego wychodziło „Hidromek (1) · ”
-            // z samotną kropką na końcu.
+            // E-19 (01.08.2026): separator „—" jak we flocie (Marek zgłosił,
+            // że ewidencja miała „·" — niespójny styl). Maszyny (koparki)
+            // dostają pusty podtytul z etykietaDropdownu_ — bez warunku
+            // wychodziło „Hidromek (1) — " z samotną kreską na końcu.
             return '<option value="' + bezpiecznyTekst(p.idPojazdu) + '">' +
-              bezpiecznyTekst(p.tytul) + (p.podtytul ? ' · ' + bezpiecznyTekst(p.podtytul) : '') + '</option>';
+              bezpiecznyTekst(p.tytul) + (p.podtytul ? ' — ' + bezpiecznyTekst(p.podtytul) : '') + '</option>';
           }).join('') + '</optgroup>';
       }).join('');
   }).catch(function(){
