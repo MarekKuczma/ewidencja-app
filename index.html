@@ -197,6 +197,12 @@
   .wpisy-naglowek-miesiac{font-size:13px; font-weight:700; color:var(--szary);
     text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
   .wpisy-naglowek-miesiac:first-child{margin-top:0;}
+  /* E-12 (01.08.2026): nagłówek zamkniętego miesiąca — klikalny, rozwija/
+     zwija podgląd wpisów bez możliwości edycji (wzorzec z floty, F-49). */
+  .wpisy-naglowek-miesiac.zwijalny{cursor:pointer; display:flex; align-items:center;
+    justify-content:space-between; user-select:none;}
+  .naglowek-strzalka{transition:transform .15s ease; margin-left:auto;}
+  .wpisy-naglowek-miesiac.rozwiniety .naglowek-strzalka{transform:rotate(90deg);}
   /* Tankowanie — powtarzalne pary litry + licznik (D51) */
   .tank-item{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
   .tank-item input{min-height:44px; font-size:16px; padding:10px;}
@@ -1500,13 +1506,25 @@ function rysujWpisy(){
     return;
   }
 
-  var html = '', ostatniMiesiac = '';
+  var html = '', ostatniMiesiac = '', grupaOtwarta = false;
   lista.forEach(function(w, i){
     var m = w.data.slice(0, 7);
     if (m !== ostatniMiesiac) {
+      if (grupaOtwarta) html += '</div>';
       ostatniMiesiac = m;
-      html += '<div class="wpisy-naglowek-miesiac">' +
-        MIESIACE[Number(m.slice(5,7)) - 1] + ' ' + m.slice(0,4) + '</div>';
+      // E-12 (01.08.2026): miesiąc zamknięty przez Marka — nagłówek klikalny,
+      // grupa domyślnie zwinięta (tylko podgląd, bez rozwiniętych szczegółów).
+      // Zwijanie "bo kierowca zadeklarował" czeka na E-08 (ewidencja nie ma
+      // dziś takiej deklaracji).
+      var zwiniety = !!w.zwiniety;
+      html += '<div class="wpisy-naglowek-miesiac' + (zwiniety ? ' zwijalny' : '') +
+          '" data-toggle-miesiac="' + m + '">' +
+        MIESIACE[Number(m.slice(5,7)) - 1] + ' ' + m.slice(0,4) +
+        (zwiniety ? ' <span class="plakietka">zamknięty — podgląd</span> <span class="naglowek-strzalka">▸</span>' : '') +
+        '</div>';
+      html += '<div class="wpisy-grupa-miesiaca' + (zwiniety ? ' ukryte' : '') +
+        '" data-grupa-miesiaca="' + m + '">';
+      grupaOtwarta = true;
     }
     var klasy = 'wpis' + (w.anulowany ? ' anulowany' : '');
     var jed = w.jednostkaLicznika || j.jednostkaLicznika;
@@ -1549,8 +1567,16 @@ function rysujWpisy(){
       '</div>' +
     '</div>';
   });
+  if (grupaOtwarta) html += '</div>';
   el('listaWpisow').innerHTML = html;
 
+  el('listaWpisow').querySelectorAll('[data-toggle-miesiac].zwijalny').forEach(function(h){
+    h.addEventListener('click', function(){
+      var grupa = el('listaWpisow').querySelector('[data-grupa-miesiaca="' + h.dataset.toggleMiesiac + '"]');
+      if (grupa) grupa.classList.toggle('ukryte');
+      h.classList.toggle('rozwiniety');
+    });
+  });
   el('listaWpisow').querySelectorAll('.wpis').forEach(function(e){
     e.querySelector('.wpis-tresc').onclick = function(){ e.classList.toggle('rozwiniety'); };
   });
