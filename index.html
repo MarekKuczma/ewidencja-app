@@ -379,7 +379,13 @@
 
       <div class="komunikat" id="wpisKomunikat"></div>
       <button class="przycisk" id="zapiszBtn">Zapisz wpis</button>
+      <!-- Wzorzec z aplikacji flota (F-22, 01.08.2026): dwa osobne przyciski
+           zamiast jednego uniwersalnego „Anuluj" — „Anuluj" przy nowym wpisie
+           (czyści pola, wraca na dashboard), „Anuluj poprawianie" w edycji
+           (wraca do „Moje wpisy", skąd wszedł użytkownik). Oba bez pytania
+           o potwierdzenie. -->
       <button class="przycisk-drugi" id="wpisWrocBtn">Anuluj</button>
+      <button class="przycisk-drugi ukryte" id="wpisAnulujEdycjeBtn">Anuluj poprawianie</button>
     </div>
   </section>
 
@@ -1166,6 +1172,9 @@ function otworzWpis(j, wpisDoEdycji){
   el('wpisPodtytul').textContent = j.tytul + ' · ' + j.podtytul;
   el('jednLicznika').textContent = '(' + j.jednostkaLicznika + ')';
   el('zapiszBtn').textContent = wpisDoEdycji ? 'Zapisz poprawkę' : 'Zapisz wpis';
+  // F-22 (wzorzec floty, 01.08.2026): odpowiedni przycisk „Anuluj" wg trybu.
+  el('wpisWrocBtn').classList.toggle('ukryte', !!wpisDoEdycji);
+  el('wpisAnulujEdycjeBtn').classList.toggle('ukryte', !wpisDoEdycji);
   // Daty przy edycji nie ruszamy — jeden dzień = jeden wiersz (D1).
   el('poleDataBox').style.display = wpisDoEdycji ? 'none' : '';
   el('listaTankowan').innerHTML = '';
@@ -1668,7 +1677,18 @@ el('odepnijBtn').onclick = function(){
     alert('Brak połączenia.');
   });
 };
-el('wpisWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
+// F-22 (wzorzec floty, 01.08.2026): „Anuluj" przy nowym wpisie — bez pytania
+// wraca na dashboard (pola i tak dostają domyślne wartości przy kolejnym
+// otworzWpis()). „Anuluj poprawianie" w edycji — wraca do „Moje wpisy",
+// skąd wszedł użytkownik, i czyści tryb edycji.
+el('wpisWrocBtn').onclick = function(){
+  STAN.edytowanyId = null;
+  pokazEkran('ekranStart');
+};
+el('wpisAnulujEdycjeBtn').onclick = function(){
+  STAN.edytowanyId = null;
+  otworzWpisy(STAN.aktywna);
+};
 el('sukcesWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
 el('navStart').onclick = function(){ pokazEkran('ekranStart'); };
 el('navNowy').onclick = function(){
