@@ -2,12 +2,19 @@
  * EWIDENCJA FLOTY RINKON — service worker
  *
  * ŻELAZNA ZASADA: każda zmiana czegokolwiek w folderze pwa/ wymaga
- * podbicia WERSJA_CACHE poniżej. Shell działa cache-first, więc bez
- * podbicia telefony będą uparcie pokazywać starą wersję aplikacji,
- * a Ty stracisz godzinę na szukanie błędu, którego nie ma.
+ * podbicia WERSJA_CACHE poniżej. Bez podbicia telefony będą uparcie
+ * pokazywać starą wersję aplikacji, a Ty stracisz godzinę na szukanie
+ * błędu, którego nie ma.
+ *
+ * W-02 (01.08.2026): wzorzec ujednolicony z aplikacją flota — obie appki
+ * miały tylko połowę tego samego rozwiązania. Instalacja pojedynczych
+ * plików (poniżej) już była tu zrobiona dobrze; dołożone: cichy odświeżacz
+ * w tle (stale-while-revalidate) przy każdym żądaniu app shellu,
+ * przeniesiony z floty — wcześniej raz zapisany plik zostawał w cache aż
+ * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v24';
+var WERSJA_CACHE = 'ewidencja-v25';
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
@@ -60,16 +67,36 @@ self.addEventListener('activate', function (e) {
   );
 });
 
-self.addEventListener('fetch', function (e) {
-  // Żądania do API nigdy nie idą z cache — dane muszą być świeże.
-  // Brak sieci obsługuje kolejka w index.html, nie service worker.
-  if (e.request.method !== 'GET' || e.request.url.indexOf('script.google') !== -1) return;
+self.addEventListener('fetch', function (event) {
+  var zadanie = event.request;
 
-  e.respondWith(
-    caches.match(e.request).then(function (odp) {
-      return odp || fetch(e.request).catch(function () {
-        return caches.match('./index.html');
+  // Żądania do API i wszystko spoza naszej domeny: tylko sieć
+  // (network-only), nigdy z cache. Brak sieci obsługuje kolejka
+  // w index.html, nie service worker. (W-02: sprawdzenie po originie,
+  // jak we flocie, zamiast dopasowania fragmentu URL-a „script.google" —
+  // ogólniejsze, zadziała też, gdyby domena API kiedyś się zmieniła.)
+  if (zadanie.method !== 'GET' ||
+      new URL(zadanie.url).origin !== self.location.origin) {
+    return;
+  }
+
+  // App shell: cache-first + ciche odświeżenie kopii w tle (W-02,
+  // przeniesione z floty) — kolejne otwarcie appki dostaje świeży plik,
+  // bez czekania na podbicie WERSJA_CACHE.
+  event.respondWith(
+    caches.match(zadanie, { ignoreSearch: true }).then(function (zCache) {
+      var zSieci = fetch(zadanie).then(function (odpowiedz) {
+        if (odpowiedz && odpowiedz.ok) {
+          var kopia = odpowiedz.clone();
+          caches.open(WERSJA_CACHE).then(function (cache) {
+            cache.put(zadanie, kopia);
+          });
+        }
+        return odpowiedz;
+      }).catch(function () {
+        return zCache || caches.match('./index.html');
       });
+      return zCache || zSieci;
     })
   );
 });
