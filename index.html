@@ -191,14 +191,17 @@
   .wpis.rozwiniety .wpis-szczegoly{grid-template-rows:1fr; opacity:1;
     margin-top:8px; padding-top:8px; border-top-color:var(--linia);}
   .wpis-szczegoly .wsz-zawartosc{min-height:0; overflow:hidden;}
+  /* E-17 (01.08.2026): odstępy zwiększone (4px → 12px) — Marek zgłosił, że
+     rozwinięty wpis był mało czytelny, informacje zbyt blisko siebie. */
   .wsz-wiersz{display:flex; justify-content:space-between; gap:10px; font-size:13px;
-    color:var(--szary); margin-bottom:4px;}
+    color:var(--szary); margin-bottom:12px;}
+  .wsz-wiersz:last-child{margin-bottom:0;}
   .wsz-wiersz b{color:var(--tekst); font-weight:600; text-align:right;}
   /* Dłuższa treść (tankowanie, serwis, uwagi) w DWÓCH liniach: etykieta na
      szaro nad wartością. W jednej linii zawijało się nieczytelnie — przy
      „55L / 55236km + 45L / 56236km" etykieta i wartość walczyły o miejsce. */
   .wsz-wiersz.dwie{display:block;}
-  .wsz-wiersz.dwie b{display:block; text-align:left; margin-top:2px;
+  .wsz-wiersz.dwie b{display:block; text-align:left; margin-top:4px;
     word-break:break-word; white-space:normal;}
   .wpisy-naglowek-miesiac{font-size:13px; font-weight:700; color:var(--szary);
     text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
