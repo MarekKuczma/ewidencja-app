@@ -31,6 +31,13 @@
     --bg-akcentjasny:#f4f4f5; --tekst-akcentjasny:#3f3f46;
     --metryka-grad:linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
     --paleta-ikona:#d4d4d8;
+    /* W-05 (01.08.2026): komunikat Marka ma zawsze bordowo-czerwony akcent
+       (wzięty z palety „burgund"), NIEZALEŻNIE od tego, którą paletę appki
+       wybrał kierowca — Marek zgłosił, że w grafitowej ciemnej wersji
+       zwyczajny --akcent za mało rzuca się w oczy. Osobne zmienne, żeby nie
+       dotykać --akcent/--bg-akcentjasny używanych gdzie indziej. Reaguje
+       tylko na jasny/ciemny motyw, patrz blok [data-motyw="ciemny"] niżej. */
+    --akcent-komunikat:#9f1239; --bg-komunikat:#fff1f2; --tekst-komunikat:#9f1239;
   }
   /* ===== PALETA „burgund" — druga, przełączalna (D49) ===== */
   [data-paleta="burgund"]{
@@ -57,6 +64,11 @@
     --bg-blad:#451a17; --tekst-blad:#fca5a5;
     --bg-akcentjasny:#26262a; --tekst-akcentjasny:#d4d4d8;
     --metryka-grad:linear-gradient(135deg, #1f2127 0%, #24262c 100%);
+    /* W-05: ta sama stała bordowo-czerwona plama co w jasnym motywie, tylko
+       rozjaśniona pod ciemne tło (te same wartości co paleta burgund w
+       ciemnym motywie, patrz blok niżej) — zawsze widoczna, niezależnie od
+       wybranej palety appki. */
+    --akcent-komunikat:#fb7185; --bg-komunikat:#3f1220; --tekst-komunikat:#fda4af;
   }
   [data-motyw="ciemny"][data-paleta="burgund"]{
     --akcent:#fb7185; --akcent-c:#fda4af;
@@ -235,16 +247,17 @@
   .kolejka-info{background:var(--bg-uwaga); color:var(--tekst-uwaga); border-radius:12px;
     padding:10px 14px; margin-bottom:12px; font-size:15px; display:none;}
   /* W-05 (01.08.2026): komunikat Marka — osobny styl od kolejka-info, żeby
-     mocniej rzucał się w oczy (akcent appki zamiast bursztynu). Kolor przez
-     --akcent/--bg-akcentjasny/--tekst-akcentjasny — auto-dopasowuje się do
-     palety i motywu, bez osobnego kodu na ciemny motyw. */
-  .komunikat-marka{background:var(--bg-akcentjasny); border-left:4px solid var(--akcent);
-    border-radius:0 12px 12px 0; padding:12px 14px 14px; margin-bottom:12px; color:var(--tekst-akcentjasny);
+     mocniej rzucał się w oczy. Kolor przez --akcent-komunikat/--bg-komunikat/
+     --tekst-komunikat — stały bordowo-czerwony, NIEZALEŻNY od wybranej
+     palety appki (Marek: w grafitowym ciemnym motywie zwykły akcent za
+     mało widoczny), reaguje tylko na jasny/ciemny motyw. */
+  .komunikat-marka{background:var(--bg-komunikat); border-left:4px solid var(--akcent-komunikat);
+    border-radius:0 12px 12px 0; padding:12px 14px 14px; margin-bottom:12px; color:var(--tekst-komunikat);
     display:none;}
   .km-tytul{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:8px;}
   .km-wiersz{display:flex; align-items:center; gap:8px; font-size:15px; line-height:1.4; margin-bottom:6px;}
   .km-wiersz:last-child{margin-bottom:0;}
-  .km-znaczek{width:20px; height:20px; border-radius:50%; background:var(--akcent); color:#fff;
+  .km-znaczek{width:20px; height:20px; border-radius:50%; background:var(--akcent-komunikat); color:#fff;
     font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex:none;}
   /* Odrzucony wpis z kolejki — wzorzec z aplikacji floty (.odrzucony) */
   .odrzucony{background:var(--bg-blad); color:var(--tekst-blad); border-radius:10px;
