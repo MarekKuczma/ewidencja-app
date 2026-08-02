@@ -292,6 +292,11 @@
   h2{font-size:18px; margin:0 0 12px;}
   .sukces-ikona{font-size:52px; text-align:center; margin:6px 0 0;}
   .sukces-tekst{text-align:center; font-size:18px; font-weight:600; margin:6px 0 2px;}
+  /* W-07 — z floty: numer wpisu pod tekstem, i dwa przyciski obok siebie
+     w drugim rzędzie ekranu sukcesu. */
+  .sukces-id{text-align:center; color:var(--szary); font-size:15px; margin:0 0 8px;}
+  .dwa{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+  .dwa .przycisk-drugi{margin-top:0;}
   .overlay-zapis{position:fixed; inset:0; background:rgba(15,17,21,.55);
     display:flex; align-items:center; justify-content:center; flex-direction:column;
     gap:14px; z-index:50;}
@@ -459,12 +464,22 @@
   </section>
 
   <!-- ===================== EKRAN: SUKCES ===================== -->
+  <!-- W-07 (02.08.2026): ujednolicone z flotą — numer wpisu, ostrzeżenia
+       w ramce z nagłówkiem, trzy przyciski zamieniające role po edycji.
+       Markup i id-eczki celowo tak samo nazwane jak w pwa/index.html floty
+       (sTekst/sId/sOstrzezenia/sKolejny/sWpisy/sStart), żeby ktoś czytający
+       obie appki naraz nie musiał uczyć się dwóch nazw tej samej rzeczy. -->
   <section id="ekranSukces" class="ukryte">
     <div class="karta">
       <div class="sukces-ikona">✅</div>
-      <div class="sukces-tekst" id="sukcesTekst">Zapisano</div>
-      <div class="komunikat" id="sukcesKomunikat"></div>
-      <button class="przycisk" id="sukcesWrocBtn">Gotowe</button>
+      <div class="sukces-tekst" id="sTekst">Zapisano</div>
+      <div class="sukces-id" id="sId"></div>
+      <div class="komunikat uwaga ukryte" id="sOstrzezenia"></div>
+      <button type="button" class="przycisk" id="sKolejny">➕ Dodaj kolejny wpis</button>
+      <div class="dwa">
+        <button type="button" class="przycisk-drugi" id="sWpisy">📋 Moje wpisy</button>
+        <button type="button" class="przycisk-drugi" id="sStart">🏠 Ekran główny</button>
+      </div>
     </div>
   </section>
 
@@ -1573,7 +1588,6 @@ el('zapiszBtn').onclick = function(){
     wolajAPI('edytujWpis', payload).then(function(odp){
       schowajOverlay();
       if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
-      el('sukcesTekst').textContent = 'Poprawiono';
       pokazSukces(odp);
       odswiezStart();   // przy poprawce stan jednostki może się zmienić dowolnie
     }).catch(function(){
@@ -1590,7 +1604,6 @@ el('zapiszBtn').onclick = function(){
   if (!navigator.onLine) {
     schowajOverlay();
     dodajDoKolejki(payload);
-    el('sukcesTekst').textContent = 'Zapisano w telefonie';
     pokazSukces({ offline: true });
     return;
   }
@@ -1598,7 +1611,6 @@ el('zapiszBtn').onclick = function(){
   wolajAPI('nowyWpis', payload).then(function(odp){
     schowajOverlay();
     if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
-    el('sukcesTekst').textContent = 'Zapisano';
     // D81: nie wołamy `status` po zapisie — serwer oddał już nowy stan
     // jednostki. Trzy żądania jedno po drugim to było kilka sekund czekania.
     zastosujStanPo_(odp.stanPo);
@@ -1606,7 +1618,6 @@ el('zapiszBtn').onclick = function(){
   }).catch(function(){
     schowajOverlay();
     dodajDoKolejki(payload);
-    el('sukcesTekst').textContent = 'Zapisano w telefonie';
     pokazSukces({ offline: true });
   });
 };
@@ -1630,17 +1641,41 @@ function zastosujStanPo_(stanPo){
   STAN.wpisy = [];   // historia wymaga przeładowania
 }
 
+/**
+ * W-07 (02.08.2026): ujednolicone z flotą (`pokazSukces` w pwa/index.html
+ * floty) — numer wpisu jako potwierdzenie, ostrzeżenia w ramce z nagłówkiem,
+ * i główny przycisk zamieniający rolę zależnie od tego, czy to nowy wpis
+ * (kierowca prawdopodobnie doda kolejny — częsty przypadek przy kilku
+ * tankowaniach dziennie), czy poprawka istniejącego (naturalnie wraca do
+ * listy, żeby zobaczyć efekt).
+ */
+var sukcesPoEdycji = false;
 function pokazSukces(odp){
-  schowajKomunikat('sukcesKomunikat');
+  el('sTekst').textContent = odp.offline ? 'Zapisano w telefonie'
+    : (STAN.edytowanyId ? 'Poprawiono' : 'Zapisano');
+  el('sId').textContent = odp.idWpisu ? odp.idWpisu : '';
 
+  var so = el('sOstrzezenia');
+  var tresci = [];
   if (odp.offline) {
-    komunikat('sukcesKomunikat', 'Brak zasięgu — wpis zapisany w telefonie i wyśle się sam, gdy sieć wróci.', 'uwaga');
-  } else {
-    if (odp.ostrzezenia && odp.ostrzezenia.length) {
-      komunikat('sukcesKomunikat', '<ul><li>' +
-        odp.ostrzezenia.map(bezpiecznyTekst).join('</li><li>') + '</li></ul>', 'uwaga');
-    }
+    tresci.push('Brak zasięgu — wpis zapisany w telefonie i wyśle się sam, gdy sieć wróci.');
   }
+  if (odp.ostrzezenia && odp.ostrzezenia.length) {
+    tresci = tresci.concat(odp.ostrzezenia);
+  }
+  if (tresci.length) {
+    so.classList.remove('ukryte');
+    so.innerHTML = '<b>Zwróć uwagę:</b><ul><li>' +
+      tresci.map(bezpiecznyTekst).join('</li><li>') + '</li></ul>';
+  } else {
+    so.classList.add('ukryte');
+    so.innerHTML = '';
+  }
+
+  sukcesPoEdycji = !!STAN.edytowanyId;
+  el('sKolejny').textContent = sukcesPoEdycji ? '📋 Moje wpisy' : '➕ Dodaj kolejny wpis';
+  el('sWpisy').textContent = sukcesPoEdycji ? '➕ Dodaj kolejny wpis' : '📋 Moje wpisy';
+
   pokazEkran('ekranSukces');
 }
 
@@ -1942,7 +1977,20 @@ el('wpisAnulujEdycjeBtn').onclick = function(){
   STAN.edytowanyId = null;
   otworzWpisy(STAN.aktywna);
 };
-el('sukcesWrocBtn').onclick = function(){ pokazEkran('ekranStart'); };
+// W-07 (02.08.2026): role przycisków zamieniają się zależnie od tego, skąd
+// przyszedł kierowca — ten sam wzorzec co we flocie (`sukcesPoEdycji`,
+// zdefiniowane w `pokazSukces`). Po nowym wpisie główny przycisk zachęca do
+// dodania kolejnego (częste przy kilku tankowaniach dziennie); po poprawce
+// naturalnie prowadzi z powrotem do listy, gdzie widać efekt.
+el('sKolejny').onclick = function(){
+  if (sukcesPoEdycji) { otworzWpisy(STAN.aktywna); return; }
+  otworzWpis(STAN.aktywna);
+};
+el('sWpisy').onclick = function(){
+  if (sukcesPoEdycji) { otworzWpis(STAN.aktywna); return; }
+  otworzWpisy(STAN.aktywna);
+};
+el('sStart').onclick = function(){ pokazEkran('ekranStart'); };
 el('navStart').onclick = function(){ pokazEkran('ekranStart'); };
 el('navNowy').onclick = function(){
   if (STAN.aktywna) otworzWpis(STAN.aktywna);
