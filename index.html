@@ -287,6 +287,10 @@
 
 <main>
   <div class="kolejka-info" id="kolejkaInfo"></div>
+  <!-- W-05 (01.08.2026): komunikat Marka — ukryty gdy brak treści, ten sam
+       styl co kolejka-info (bg-uwaga/tekst-uwaga), osobny element żeby nie
+       mieszać dwóch różnych powodów wyświetlania. -->
+  <div class="kolejka-info" id="komunikatMarka"></div>
 
   <!-- Brak kodu (D69) — awaryjne wejście, gdy link nie zadziałał -->
   <div id="widokBrakKodu" class="karta ukryte">
@@ -890,6 +894,15 @@ function uruchomAplikacje_(){
   wyslijKolejke().then(odswiezStart);
 }
 
+// W-05 (01.08.2026): jeden i ten sam render dla ścieżki z pamięci
+// (pokazZPamieci) i ze świeżej odpowiedzi serwera (odswiezStart).
+function rysujKomunikaty_(lista){
+  var e = el('komunikatMarka');
+  if (!lista || !lista.length) { e.style.display = 'none'; e.innerHTML = ''; return; }
+  e.style.display = 'block';
+  e.innerHTML = lista.map(function(t){ return '<div>' + bezpiecznyTekst(t) + '</div>'; }).join('');
+}
+
 function pokazZPamieci(){
   var cache;
   try { cache = JSON.parse(localStorage.getItem(KLUCZ_CACHE) || 'null'); }
@@ -901,6 +914,7 @@ function pokazZPamieci(){
   STAN.budowy = cache.budowy || [];
   STAN.kategorie = cache.kategorie || [];
   STAN.limity = cache.limity || STAN.limity;
+  rysujKomunikaty_(cache.komunikaty);
   el('naglowekKto').textContent = cache.imie || '';
   el('avatar').textContent = inicjaly(cache.imie);
   el('powitanieImie').textContent = cache.imie
@@ -929,11 +943,14 @@ function odswiezStart(){
     STAN.budowy = odp.budowy || [];
     STAN.kategorie = odp.kategorie || [];
     STAN.limity = odp.limity || STAN.limity;
+    STAN.komunikaty = odp.komunikaty || [];
+    rysujKomunikaty_(STAN.komunikaty);
     // Zapisujemy na następne otwarcie (D60) — patrz pokazZPamieci().
     try {
       localStorage.setItem(KLUCZ_CACHE, JSON.stringify({
         imie: odp.imie, jednostki: STAN.jednostki,
-        budowy: STAN.budowy, kategorie: STAN.kategorie, limity: STAN.limity
+        budowy: STAN.budowy, kategorie: STAN.kategorie, limity: STAN.limity,
+        komunikaty: STAN.komunikaty
       }));
     } catch(e){ /* pełny localStorage — trudno, cache jest opcjonalny */ }
     el('naglowekKto').textContent = odp.imie;
