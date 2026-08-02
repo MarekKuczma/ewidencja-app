@@ -184,6 +184,11 @@
     display:inline-flex; align-items:center; justify-content:center;
     margin-left:4px; transition:transform .15s;}
   .wpis.rozwiniety .wpis-strzalka{transform:rotate(180deg);}
+  /* E-18 (01.08.2026): ikonki podpowiedzi (⛽🔧📝) obok strzałki — przygasają
+     po rozwinięciu wpisu, bo treść i tak już widoczna niżej. */
+  .wpis-podpowiedzi{font-size:12px; letter-spacing:2px; margin-right:2px;
+    transition:opacity .2s;}
+  .wpis.rozwiniety .wpis-podpowiedzi{opacity:.35;}
   .wpis-szczegoly{display:grid; grid-template-rows:0fr; opacity:0;
     margin-top:0; padding-top:0; border-top:1px dashed transparent;
     transition:grid-template-rows .25s ease, opacity .25s ease,
@@ -1594,7 +1599,19 @@ function rysujWpisy(){
           '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
             (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
           '<div class="linia-data"><span class="plakietka-id">' + bezpiecznyTekst(w.idWpisu) + '</span>' +
-            '<span class="wpis-strzalka">&#9662;</span></div>' +
+            // E-18 (01.08.2026): ikonki podpowiedzi obok strzałki — kierowca
+            // widzi PRZED rozwinięciem, że jest tam coś do zobaczenia (te
+            // same ikonki co w treści szczegółów niżej). Po rozwinięciu
+            // przygasają (.wpis.rozwiniety .wpis-podpowiedzi) — informacja
+            // i tak już widoczna w rozwiniętej treści. Owinięte razem ze
+            // strzałką, żeby zostały sklejone po prawej mimo
+            // justify-content:space-between na .linia-data.
+            '<span style="display:inline-flex; align-items:center; margin-left:auto;">' +
+              '<span class="wpis-podpowiedzi">' +
+                (w.tankowanie ? '⛽' : '') + (w.serwisKategoria ? '🔧' : '') + (w.uwagi ? '📝' : '') +
+              '</span>' +
+              '<span class="wpis-strzalka">&#9662;</span>' +
+            '</span></div>' +
           '<div class="wpis-szczegoly"><div class="wsz-zawartosc">' +
             (w.tankowanie ? '<div class="wsz-wiersz dwie"><span>⛽ Tankowanie</span><b>' + bezpiecznyTekst(w.tankowanie) + '</b></div>' : '') +
             (w.serwisKategoria ? '<div class="wsz-wiersz dwie"><span>🔧 Serwis</span><b>' + bezpiecznyTekst(w.serwisKategoria) + '</b></div>' : '') +
