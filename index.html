@@ -234,6 +234,18 @@
   details.dodatki summary{font-size:14px; font-weight:600; color:var(--szary); cursor:pointer;}
   .kolejka-info{background:var(--bg-uwaga); color:var(--tekst-uwaga); border-radius:12px;
     padding:10px 14px; margin-bottom:12px; font-size:15px; display:none;}
+  /* W-05 (01.08.2026): komunikat Marka — osobny styl od kolejka-info, żeby
+     mocniej rzucał się w oczy (akcent appki zamiast bursztynu). Kolor przez
+     --akcent/--bg-akcentjasny/--tekst-akcentjasny — auto-dopasowuje się do
+     palety i motywu, bez osobnego kodu na ciemny motyw. */
+  .komunikat-marka{background:var(--bg-akcentjasny); border-left:4px solid var(--akcent);
+    border-radius:0 12px 12px 0; padding:12px 14px 14px; margin-bottom:12px; color:var(--tekst-akcentjasny);
+    display:none;}
+  .km-tytul{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:8px;}
+  .km-wiersz{display:flex; align-items:center; gap:8px; font-size:15px; line-height:1.4; margin-bottom:6px;}
+  .km-wiersz:last-child{margin-bottom:0;}
+  .km-znaczek{width:20px; height:20px; border-radius:50%; background:var(--akcent); color:#fff;
+    font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex:none;}
   /* Odrzucony wpis z kolejki — wzorzec z aplikacji floty (.odrzucony) */
   .odrzucony{background:var(--bg-blad); color:var(--tekst-blad); border-radius:10px;
     padding:10px; margin-top:8px; font-size:14px;}
@@ -287,10 +299,8 @@
 
 <main>
   <div class="kolejka-info" id="kolejkaInfo"></div>
-  <!-- W-05 (01.08.2026): komunikat Marka — ukryty gdy brak treści, ten sam
-       styl co kolejka-info (bg-uwaga/tekst-uwaga), osobny element żeby nie
-       mieszać dwóch różnych powodów wyświetlania. -->
-  <div class="kolejka-info" id="komunikatMarka"></div>
+  <!-- W-05 (01.08.2026): komunikat Marka — ukryty gdy brak treści. -->
+  <div class="komunikat-marka" id="komunikatMarka"></div>
 
   <!-- Brak kodu (D69) — awaryjne wejście, gdy link nie zadziałał -->
   <div id="widokBrakKodu" class="karta ukryte">
@@ -895,12 +905,18 @@ function uruchomAplikacje_(){
 }
 
 // W-05 (01.08.2026): jeden i ten sam render dla ścieżki z pamięci
-// (pokazZPamieci) i ze świeżej odpowiedzi serwera (odswiezStart).
+// (pokazZPamieci) i ze świeżej odpowiedzi serwera (odswiezStart). Każda
+// wiadomość dostaje znaczek „›" (prośba Marka — bardziej graficzny niż
+// goły „>", ten sam styl kółka co strzałka rozwijania wpisu).
 function rysujKomunikaty_(lista){
   var e = el('komunikatMarka');
   if (!lista || !lista.length) { e.style.display = 'none'; e.innerHTML = ''; return; }
   e.style.display = 'block';
-  e.innerHTML = lista.map(function(t){ return '<div>' + bezpiecznyTekst(t) + '</div>'; }).join('');
+  e.innerHTML = '<div class="km-tytul"><span>📢</span><span>Wiadomość od Marka</span></div>' +
+    lista.map(function(t){
+      return '<div class="km-wiersz"><span class="km-znaczek">›</span><span>' +
+        bezpiecznyTekst(t) + '</span></div>';
+    }).join('');
 }
 
 function pokazZPamieci(){
