@@ -1649,24 +1649,29 @@ function zastosujStanPo_(stanPo){
  * tankowaniach dziennie), czy poprawka istniejącego (naturalnie wraca do
  * listy, żeby zobaczyć efekt).
  */
+// W-07 (02.08.2026, poprawka po uwadze Marka): teksty i format numeru wpisu
+// MUSZĄ być identyczne jak we flocie, litera po literze — „Wpis dodany" /
+// „Wpis poprawiony", podpis „Numer wpisu: X-000000", a przy offline podpis
+// niesie wyjaśnienie zamiast numeru (numeru jeszcze nie ma — nada go serwer
+// dopiero po wysłaniu z kolejki). To samo dotyczy ostrzeżeń: przy offline
+// ramka „Zwróć uwagę" zostaje pusta, informacja o braku sieci leci do
+// podpisu, tak jak we flocie — nie duplikujemy tej samej wiadomości w dwóch
+// miejscach ekranu.
 var sukcesPoEdycji = false;
 function pokazSukces(odp){
-  el('sTekst').textContent = odp.offline ? 'Zapisano w telefonie'
-    : (STAN.edytowanyId ? 'Poprawiono' : 'Zapisano');
-  el('sId').textContent = odp.idWpisu ? odp.idWpisu : '';
+  if (odp.offline) {
+    el('sTekst').textContent = 'Zapisano w telefonie';
+    el('sId').textContent = 'Brak internetu — wpis wyśle się automatycznie po złapaniu sieci.';
+  } else {
+    el('sTekst').textContent = STAN.edytowanyId ? 'Wpis poprawiony' : 'Wpis dodany';
+    el('sId').textContent = odp.idWpisu ? ('Numer wpisu: ' + odp.idWpisu) : '';
+  }
 
   var so = el('sOstrzezenia');
-  var tresci = [];
-  if (odp.offline) {
-    tresci.push('Brak zasięgu — wpis zapisany w telefonie i wyśle się sam, gdy sieć wróci.');
-  }
   if (odp.ostrzezenia && odp.ostrzezenia.length) {
-    tresci = tresci.concat(odp.ostrzezenia);
-  }
-  if (tresci.length) {
     so.classList.remove('ukryte');
     so.innerHTML = '<b>Zwróć uwagę:</b><ul><li>' +
-      tresci.map(bezpiecznyTekst).join('</li><li>') + '</li></ul>';
+      odp.ostrzezenia.map(bezpiecznyTekst).join('</li><li>') + '</li></ul>';
   } else {
     so.classList.add('ukryte');
     so.innerHTML = '';
