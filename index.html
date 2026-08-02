@@ -392,7 +392,31 @@
           </div>
         </div>
         <div id="terminyBox"></div>
+
+        <!-- E-08 (02.08.2026): baner zaległego miesiąca. Pokazuje się tylko,
+             gdy TA maszyna ma wpisy w zamkniętym już kalendarzowo miesiącu,
+             którego nikt jeszcze nie zgłosił. -->
+        <div class="komunikat" id="banerDeklaracji"></div>
+
         <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
+        <button class="przycisk-drugi" id="zamykamBtn">✅ Zamykam miesiąc</button>
+
+        <!-- E-08: wybór miesiąca. Ten sam wzorzec „rozwijane pudełko" co
+             #dodajBox — ewidencja nie używa <dialog>, więc nie wprowadzamy
+             go tu tylko dla jednego ekranu. -->
+        <div id="zamykamBox" class="ukryte" style="margin-top:12px;">
+          <div class="pole">
+            <label>📅 Który miesiąc zgłaszasz?</label>
+            <select id="wyborMiesiacaDekl"></select>
+          </div>
+          <div style="font-size:13px; color:var(--szary); margin:-4px 0 10px;">
+            Dajesz znać, że skończyłeś wpisywać ten miesiąc dla tej maszyny.
+            Nic to nie blokuje — jeśli coś dopiszesz, zgłoszenie samo się cofnie.
+          </div>
+          <button class="przycisk" id="potwierdzDeklaracjeBtn">Zgłoś koniec miesiąca</button>
+          <button class="przycisk-drugi" id="anulujDeklaracjeBtn">Anuluj</button>
+        </div>
+
         <button class="przycisk-drugi" id="zmienPojazdBtn">🔄 Zmień pojazd</button>
         <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">📌 Odepnij ten pojazd</button>
       </div>
@@ -807,6 +831,12 @@ function wyslijKolejke(){
     return wolajAPI('nowyWpis', k[i].dane).then(function(odp){
       if (odp && odp.ok) {
         ustawStatusWKolejce_(k[i].tmp, { status: 'wyslany' });
+        // E-08 (02.08.2026): wpis wysłany z kolejki tak samo cofa deklarację
+        // „skończyłem wpisywać" jak wpis wysłany od razu. Bez tego telefon
+        // po powrocie zasięgu pokazywałby „✅ Miesiąc zgłoszony" dla miesiąca,
+        // który właśnie przestał być zgłoszony. Ta ścieżka nie przechodzi
+        // przez `zapiszWpis`, więc `zastosujStanPo_` trzeba wywołać tutaj.
+        zastosujStanPo_(odp.stanPo);
       } else if (odp && odp.blad === 'E013') {
         // W-01 (01.08.2026): było E018, teraz E013 jak we flocie.
         // WYJĄTEK: E013 znaczy „serwer zajęty, spróbuj za chwilę" — to jedyny
@@ -1158,6 +1188,12 @@ function pobierzSerwisKategorie_(){
 
 /* ---------- wybór pojazdu i jego pulpit (D54) ---------- */
 function pokazWyborPojazdu(){
+  // Nie ma wybranego pojazdu — `STAN.aktywna` musi to odzwierciedlać.
+  // Inaczej po zniknięciu zapamiętanej maszyny z listy (odpięta, wypisana
+  // z ewidencji) zostawał wskaźnik na obiekt ze STAREJ tablicy `jednostki`,
+  // a `zastosujStanPo_` aktualizowało nowy obiekt, podczas gdy ekran czytał
+  // stary.
+  STAN.aktywna = null;
   el('dashboardPojazdu').classList.add('ukryte');
   el('wyborPojazdu').classList.remove('ukryte');
   el('powitanieData').textContent = STAN.jednostki.length
@@ -1179,6 +1215,8 @@ function wybierzPojazd(j, zPamieci){
 
   // D70 — odpiąć można tylko to, co kierowca sam sobie dodał.
   el('odepnijBtn').classList.toggle('ukryte', j.sposob !== 'dodane samodzielnie');
+
+  rysujDeklaracje_(j);   // E-08
 
   el('kartaWybranego').style.borderLeftColor = j.kolor;
   el('kartaWybranego').innerHTML =
@@ -1207,6 +1245,107 @@ function wybierzPojazd(j, zPamieci){
     }).length;
   }).catch(function(){ el('mWpisy').textContent = '—'; });
 }
+
+/* ---------- E-08 (02.08.2026): „Zamykam miesiąc" ----------
+   Deklaracja dotyczy MASZYNY, nie osoby (decyzja Marka 02.08.2026) — produktem
+   miesiąca jest wydruk pojedynczego pojazdu, a jeden kierowca obsługuje kilka
+   maszyn. Dlatego przycisk siedzi na pulpicie konkretnego pojazdu, a nie
+   w menu ogólnym.
+
+   Słownictwo jest celowe: „daję znać, że skończyłem", nigdy „potwierdzam, że
+   wszystko jest kompletne". W ewidencji brak wpisu znaczy postój (D102), więc
+   nie ma listy do odhaczenia i kierowca nie ma czego potwierdzać. */
+
+var MIESIACE_PL = ['styczeń','luty','marzec','kwiecień','maj','czerwiec',
+  'lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+
+function nazwaMiesiaca_(m){
+  var nr = parseInt(m.substring(5), 10);
+  return (MIESIACE_PL[nr - 1] || m) + ' ' + m.substring(0, 4);
+}
+
+function rysujDeklaracje_(j){
+  var zalegle = j.zalegleMiesiace || [];
+  var baner = el('banerDeklaracji');
+
+  // Baner tylko dla ZALEGŁYCH (przeszły miesiąc z wpisami, jeszcze
+  // niezgłoszony). Bieżącego nie przypominamy — miesiąc trwa, nie ma czego
+  // zgłaszać, a codzienny baner „zgłoś" szybko stałby się tłem.
+  if (zalegle.length){
+    baner.className = 'komunikat uwaga';
+    baner.innerHTML = '<b>Skończył się ' + bezpiecznyTekst(nazwaMiesiaca_(zalegle[0])) + '</b><br>' +
+      'Ta maszyna ma wpisy za tamten miesiąc. Jeśli to już wszystkie — ' +
+      'kliknij „Zamykam miesiąc".';
+  } else {
+    baner.className = 'komunikat';
+    baner.innerHTML = '';
+  }
+
+  // Przycisk zawsze widoczny — zgłoszenie można powtórzyć (np. po dopisaniu
+  // zaległego dnia, które automatycznie cofnęło poprzednie).
+  el('zamykamBtn').textContent = (!zalegle.length && j.biezacyZadeklarowany)
+    ? '✅ Miesiąc zgłoszony — zgłoś ponownie'
+    : '✅ Zamykam miesiąc';
+  schowajBoxDeklaracji_();
+}
+
+function schowajBoxDeklaracji_(){ el('zamykamBox').classList.add('ukryte'); }
+
+el('zamykamBtn').addEventListener('click', function(){
+  var box = el('zamykamBox');
+  if (!box.classList.contains('ukryte')) { schowajBoxDeklaracji_(); return; }
+  if (!STAN.aktywna) return;
+  if (!navigator.onLine){
+    alert('„Zamykam miesiąc" wymaga internetu — to zgłoszenie nie idzie przez kolejkę offline.');
+    return;
+  }
+
+  // Lista = zaległe policzone przez serwer + zawsze bieżący miesiąc.
+  // Poprawka przeniesiona z floty (20.07.2026): nie pokazujemy sztywno kilku
+  // miesięcy wstecz z kalendarza — w miesiącach sprzed wdrożenia aplikacji
+  // maszyna nie ma ani jednego wpisu i takie puste pozycje tylko myliły.
+  var sel = el('wyborMiesiacaDekl');
+  sel.innerHTML = '';
+  (STAN.aktywna.zalegleMiesiace || []).forEach(function(m){
+    var o = document.createElement('option');
+    o.value = m; o.textContent = nazwaMiesiaca_(m);
+    sel.appendChild(o);
+  });
+  var biez = dzisiajISO().slice(0, 7);
+  var ob = document.createElement('option');
+  ob.value = biez;
+  ob.textContent = nazwaMiesiaca_(biez) + ' (bieżący)';
+  sel.appendChild(ob);
+  sel.selectedIndex = 0;   // najstarszy zaległy, a jak brak — bieżący
+
+  box.classList.remove('ukryte');
+});
+
+el('anulujDeklaracjeBtn').addEventListener('click', schowajBoxDeklaracji_);
+
+el('potwierdzDeklaracjeBtn').addEventListener('click', function(){
+  if (!STAN.aktywna) return;
+  var m = el('wyborMiesiacaDekl').value;
+  if (!m) return;
+  schowajBoxDeklaracji_();          // zamyka też drogę do podwójnego kliknięcia
+  pokazOverlay('Zgłaszam koniec miesiąca…');
+  wolajAPI('deklaracja', { idPojazdu: STAN.aktywna.idPojazdu, miesiac: m })
+    .then(function(odp){
+      schowajOverlay();
+      if (!odp.ok){
+        alert('Nie udało się zgłosić miesiąca:\n' + (odp.wiadomosc || 'Nieznany błąd'));
+        return;
+      }
+      alert('Dziękujemy! Zgłoszone: ' + nazwaMiesiaca_(m) + '.\n\n' +
+        'Jeśli okaże się, że czegoś brakuje — po prostu dopisz wpis, ' +
+        'zgłoszenie samo się cofnie.');
+      odswiezStart();               // przeliczy zaległe i stan przycisku
+    })
+    .catch(function(){
+      schowajOverlay();
+      alert('Brak połączenia — spróbuj za chwilę.');
+    });
+});
 
 /* D56: terminy i serwis. Aplikacja tylko POKAZUJE to, co już jest w arkuszu
    — nie przypomina, nie wysyła powiadomień, nie liczy nic ponad odejmowanie. */
@@ -1684,12 +1823,27 @@ function zastosujStanPo_(stanPo){
   if (!stanPo) return;
   STAN.jednostki.forEach(function(j){
     if (j.idPojazdu !== stanPo.idPojazdu) return;
-    if (stanPo.ostatniStanLicznika !== null) j.ostatniStanLicznika = stanPo.ostatniStanLicznika;
-    j.ostatniaData = stanPo.ostatniaData;
-    j.ostatniaBudowa = stanPo.ostatniaBudowa;
-    j.dniOdWpisu = stanPo.dniOdWpisu;
-    j.brakUwaga = false;
+    // E-08: „ostatni wpis" nadpisujemy TYLKO wpisem nie starszym niż to, co
+    // już mamy. Ta funkcja jest teraz wołana także przy wysyłce z kolejki
+    // offline, a stamtąd przychodzą wpisy sprzed kilku dni — bez tego
+    // warunku pulpit po odzyskaniu zasięgu cofałby datę i stan licznika.
+    var swiezszy = !j.ostatniaData || !stanPo.ostatniaData ||
+      stanPo.ostatniaData >= j.ostatniaData;
+    if (swiezszy) {
+      if (stanPo.ostatniStanLicznika !== null) j.ostatniStanLicznika = stanPo.ostatniStanLicznika;
+      j.ostatniaData = stanPo.ostatniaData;
+      j.ostatniaBudowa = stanPo.ostatniaBudowa;
+      j.dniOdWpisu = stanPo.dniOdWpisu;
+      j.brakUwaga = false;
+    }
+    // E-08: nowy wpis cofa deklarację tej maszyny na ten miesiąc — serwer
+    // liczy to za nas i oddaje stan po cofnięciu (pola mogą nie przyjść ze
+    // starszego backendu, stąd sprawdzenie `undefined`).
+    if (stanPo.zalegleMiesiace !== undefined) j.zalegleMiesiace = stanPo.zalegleMiesiace;
+    if (stanPo.biezacyZadeklarowany !== undefined) j.biezacyZadeklarowany = stanPo.biezacyZadeklarowany;
   });
+  // Pulpit pokazuje właśnie tę maszynę — przerysuj baner i etykietę przycisku.
+  if (STAN.aktywna && STAN.aktywna.idPojazdu === stanPo.idPojazdu) rysujDeklaracje_(STAN.aktywna);
   try {
     var c = JSON.parse(localStorage.getItem(KLUCZ_CACHE) || 'null');
     if (c) { c.jednostki = STAN.jednostki; localStorage.setItem(KLUCZ_CACHE, JSON.stringify(c)); }
