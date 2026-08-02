@@ -21,6 +21,11 @@
     --tekst:#1f2937; --szary:#6b7280; --blad:#d93025; --ok:#188038;
     --linia:#e5e7eb;
     --bg-uwaga:#fef3c7; --brzeg-uwaga:#f59e0b; --tekst-uwaga:#92400e;
+    /* E-15 (01.08.2026): --tekst-uwaga jest specjalnie przyciemniony do
+       brązu dla czytelności tekstu na jasnym tle (banery, plakietki) —
+       Marek zgłosił, że w terminach/serwisie wygląda na zbyt brązowy,
+       za mało pomarańczowy. Osobna, żywsza zmienna tylko do tego widoku. */
+    --tekst-pilny-termin:#c2410c;
     --bg-ok:#e6f4ea; --tekst-ok:#135c26;
     --bg-blad:#fce8e6; --tekst-blad:#a50e0e;
     --bg-akcentjasny:#f4f4f5; --tekst-akcentjasny:#3f3f46;
@@ -47,6 +52,7 @@
     --tlo:#0f1115; --karta:#1c1f26; --input-tlo:#262b34; --input-brzeg:#4b5262;
     --tekst:#f0f1f3; --szary:#9aa1ad; --linia:#333844;
     --bg-uwaga:#453615; --brzeg-uwaga:#8a5a12; --tekst-uwaga:#fcd34d;
+    --tekst-pilny-termin:#fb923c;
     --bg-ok:#123522; --tekst-ok:#86efac;
     --bg-blad:#451a17; --tekst-blad:#fca5a5;
     --bg-akcentjasny:#26262a; --tekst-akcentjasny:#d4d4d8;
@@ -152,8 +158,8 @@
     font-size:14px; padding:5px 0;}
   .termin .t-nazwa{color:var(--szary);}
   .termin .t-wartosc{font-weight:600; text-align:right;}
-  .termin.pilny .t-wartosc{color:var(--tekst-uwaga);}
-  .termin.pilny .t-nazwa::before{content:"⚠ "; color:var(--brzeg-uwaga);}
+  .termin.pilny .t-wartosc{color:var(--tekst-pilny-termin);}
+  .termin.pilny .t-nazwa::before{content:"⚠ "; color:var(--tekst-pilny-termin);}
   .termin.pominiety .t-wartosc{color:var(--tekst-blad);}
   .wpis{display:flex; gap:12px; background:var(--karta); border-radius:12px;
     border-left:3px solid var(--szary); box-shadow:0 1px 2px rgba(0,0,0,.06);
