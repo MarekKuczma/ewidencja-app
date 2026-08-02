@@ -134,6 +134,17 @@
     background:var(--bg-uwaga); border:1px solid var(--brzeg-uwaga); color:var(--tekst-uwaga);
     font-size:13px; line-height:1.35;}
   .wpis-uwaga b{display:block; margin-bottom:2px;}
+  /* E-22 (02.08.2026): siatka checkboxów-chipów, wariant zaakceptowany przez
+     Marka na mockupie. 2 kolumny — przy dłuższych nazwach kategorii
+     (np. „Konserwacja ślizgów") tekst zawija się na dwie linie w chipie,
+     to celowe, lepsze niż ścieśniać czcionkę. */
+  .serwis-siatka{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .serwis-chip{cursor:pointer; -webkit-tap-highlight-color:transparent;
+    padding:10px 10px; border-radius:10px; font-size:13px; line-height:1.3;
+    text-align:center; border:1.5px solid var(--linia);
+    background:var(--input-tlo); color:var(--tekst); user-select:none;}
+  .serwis-chip.zaznaczony{border-color:var(--akcent);
+    background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny); font-weight:500;}
   .blad-pola{color:var(--blad); font-size:14px; margin-top:4px; display:none;}
   .pole-blad input,.pole-blad select,.pole-blad textarea{border-color:var(--blad);}
   .pole-blad .blad-pola{display:block;}
@@ -448,9 +459,18 @@
         <div class="tank-podglad" id="tankPodglad"></div>
       </div>
 
+      <!-- E-22 (02.08.2026): checkboxy (wielokrotny wybór) zamiast <select>.
+           Realny przypadek zgłoszony przez Marka: jednego dnia przy tej samej
+           koparce może wystąpić tankowanie + konserwacja codzienna +
+           konserwacja ślizgów naraz — dawny <select> pozwalał zaznaczyć tylko
+           jedną pozycję. Etykieta dłuższa niż gdzie indziej w formularzu
+           celowo — to jedyne miejsce, gdzie trzeba wprost powiedzieć, że
+           można zaznaczyć kilka LUB nic (Marek: „zaznacz co miało miejsce
+           lub pomiń"). W karcie wpisu (lista „Moje wpisy") zostaje osobny,
+           krótki tag „🔧 Serwis" — ta dłuższa etykieta go nie dotyczy. -->
       <div class="pole">
-        <label>🔧 Serwis <span class="opcjonalne">(jeśli był)</span></label>
-        <select id="poleSerwis"><option value="">— brak —</option></select>
+        <label>🔧 Serwis i inne czynności <span class="opcjonalne">— zaznacz, co dotyczy, albo pomiń</span></label>
+        <div class="serwis-siatka" id="poleSerwis"></div>
       </div>
 
       <div class="pole">
@@ -1100,11 +1120,40 @@ function rysujSlowniki(dodatkowa){
       return '<option value="' + bezpiecznyTekst(b) + '">' + bezpiecznyTekst(b) + '</option>';
     }).join('');
   if (wybrana) el('poleBudowa').value = wybrana;
+}
 
-  el('poleSerwis').innerHTML = '<option value="">— brak —</option>' +
-    STAN.kategorie.map(function(k){
-      return '<option value="' + bezpiecznyTekst(k) + '">' + bezpiecznyTekst(k) + '</option>';
-    }).join('');
+/**
+ * E-22 (02.08.2026): siatka checkboxów-chipów zamiast `<select>` — kierowca
+ * może zaznaczyć kilka kategorii naraz (np. tankowanie + konserwacja
+ * codzienna + konserwacja ślizgów tego samego dnia, czego pojedynczy wybór
+ * nie pozwalał zapisać razem).
+ *
+ * `zaznaczone` to sklejony przecinkiem string z zapisanego wpisu (albo pusty
+ * przy nowym) — dokładnie to, co zapisuje `pobierzSerwisKategorie_`. Lista
+ * kategorii i ich kolejność żywo z `STAN.kategorie` (zakładka „Kategorie
+ * serwisu" — dopisanie/usunięcie/przestawienie wiersza w arkuszu od razu
+ * widać tutaj, bez zmian w kodzie).
+ */
+function rysujSerwisKategorie_(zaznaczone){
+  var wybrane = {};
+  String(zaznaczone || '').split(',').forEach(function(s){
+    var t = s.trim();
+    if (t) wybrane[t] = true;
+  });
+  el('poleSerwis').innerHTML = STAN.kategorie.map(function(k){
+    var on = !!wybrane[k];
+    return '<div class="serwis-chip' + (on ? ' zaznaczony' : '') + '" data-k="' +
+      bezpiecznyTekst(k) + '">' + bezpiecznyTekst(k) + '</div>';
+  }).join('');
+  el('poleSerwis').querySelectorAll('.serwis-chip').forEach(function(chip){
+    chip.onclick = function(){ chip.classList.toggle('zaznaczony'); };
+  });
+}
+
+/** Zbiera zaznaczone chipy z powrotem w sklejony przecinkiem string (D51-owy wzorzec). */
+function pobierzSerwisKategorie_(){
+  return Array.prototype.slice.call(el('poleSerwis').querySelectorAll('.serwis-chip.zaznaczony'))
+    .map(function(chip){ return chip.dataset.k; }).join(', ');
 }
 
 /* ---------- wybór pojazdu i jego pulpit (D54) ---------- */
@@ -1401,7 +1450,7 @@ function otworzWpis(j, wpisDoEdycji){
     el('poleLicznik').value = wpisDoEdycji.licznik || '';
     rysujSlowniki(wpisDoEdycji.budowa || '');
     el('poleBudowa').value = wpisDoEdycji.budowa || '';
-    el('poleSerwis').value = wpisDoEdycji.serwisKategoria || '';
+    rysujSerwisKategorie_(wpisDoEdycji.serwisKategoria || '');
     el('poleUwagi').value = wpisDoEdycji.uwagi || '';
     rozbijTankowanie(wpisDoEdycji.tankowanie);
     el('ostatniLicznikInfo').textContent = '';
@@ -1410,7 +1459,7 @@ function otworzWpis(j, wpisDoEdycji){
     el('poleLicznik').value = '';
     rysujSlowniki(j.ostatniaBudowa || '');   // D12 — podpowiedź ostatniej budowy
     el('poleBudowa').value = j.ostatniaBudowa || '';
-    el('poleSerwis').value = '';
+    rysujSerwisKategorie_('');
     el('poleUwagi').value = '';
     odswiezPodpowiedzLicznika();
   }
@@ -1574,7 +1623,7 @@ el('zapiszBtn').onclick = function(){
     licznik: licznikLiczba === null ? '' : licznikLiczba,
     budowa: el('poleBudowa').value,
     tankowania: zbierzTankowania(),
-    serwisKategoria: el('poleSerwis').value,
+    serwisKategoria: pobierzSerwisKategorie_(),
     uwagi: el('poleUwagi').value
   };
 
