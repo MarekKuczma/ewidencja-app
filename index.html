@@ -127,6 +127,13 @@
     background:var(--bg-blad); border:1px solid var(--blad); color:var(--tekst-blad);
     font-size:13px; line-height:1.35;}
   .wpis-poprawa b{display:block; margin-bottom:2px;}
+  /* E-24 (02.08.2026): ten sam wzorzec co .wpis-poprawa, ale OSTRZEŻENIE
+     („sprawdź, czy to nie pomyłka"), nie pewny błąd — stąd pomarańczowa
+     paleta „uwaga" (współdzielona z resztą appki), nie czerwona „błąd". */
+  .wpis-uwaga{margin-top:8px; padding:8px 10px; border-radius:8px;
+    background:var(--bg-uwaga); border:1px solid var(--brzeg-uwaga); color:var(--tekst-uwaga);
+    font-size:13px; line-height:1.35;}
+  .wpis-uwaga b{display:block; margin-bottom:2px;}
   .blad-pola{color:var(--blad); font-size:14px; margin-top:4px; display:none;}
   .pole-blad input,.pole-blad select,.pole-blad textarea{border-color:var(--blad);}
   .pole-blad .blad-pola{display:block;}
@@ -1772,6 +1779,15 @@ function rysujWpisy(){
           (w.doPoprawy
             ? '<div class="wpis-poprawa"><b>⚠ Do poprawy</b>' +
               bezpiecznyTekst(w.doPoprawy) + '</div>'
+            : '') +
+          // E-24 (02.08.2026): cofnięty licznik względem poprzedniego wpisu —
+          // ostrzeżenie („sprawdź, czy to nie pomyłka"), nie pewny błąd jak
+          // wyżej, stąd osobna, pomarańczowa plakietka zamiast czerwonej.
+          // Ten sam mechanizm co Panel Marka („Cofnięty stan licznika"),
+          // teraz też widoczny kierowcy — nie tylko w arkuszu.
+          (w.cofniety
+            ? '<div class="wpis-uwaga"><b>⚠ Wymaga uwagi</b>' +
+              bezpiecznyTekst(w.cofniety) + '</div>'
             : '') +
           '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
             (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
