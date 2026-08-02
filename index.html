@@ -116,6 +116,17 @@
      Celowo inny kolor niż `.blad-pola`, żeby nie mylić z blokadą zapisu. */
   .ostrzezenie-pola{font-size:13px; color:#b06000; margin-top:6px; line-height:1.35;}
   .ostrzezenie-pola:empty{display:none;}
+  /* E-16: neutralna podpowiedź pod polem — to nie ostrzeżenie, więc nie
+     bierze koloru uwagi, tylko szarość jak reszta tekstów pomocniczych. */
+  .podpowiedz-pola{font-size:13px; color:var(--szary); margin-top:6px; line-height:1.35;}
+  .podpowiedz-pola:empty{display:none;}
+  /* E-16: plakietka „do poprawy" na wpisie, którego tankowanie kłóci się ze
+     stanem porannym następnego dnia. Kolory błędu, bo to realnie liczba do
+     naprawienia, a nie sugestia. */
+  .wpis-poprawa{margin-top:8px; padding:8px 10px; border-radius:8px;
+    background:var(--bg-blad); border:1px solid var(--blad); color:var(--tekst-blad);
+    font-size:13px; line-height:1.35;}
+  .wpis-poprawa b{display:block; margin-bottom:2px;}
   .blad-pola{color:var(--blad); font-size:14px; margin-top:4px; display:none;}
   .pole-blad input,.pole-blad select,.pole-blad textarea{border-color:var(--blad);}
   .pole-blad .blad-pola{display:block;}
@@ -394,8 +405,15 @@
       </div>
 
       <div class="pole" id="poleLicznikBox">
-        <label>🔢 Stan licznika na koniec dnia <span id="jednLicznika">(km)</span> <span class="wym">*</span></label>
+        <!-- E-16: napis podmienia `zastosujEtykieteLicznika_` wartością z API
+             (ustawienie LICZNIK_MOMENT w arkuszu). Tu jest tylko wartość
+             startowa na wypadek, gdyby pierwszy odczyt statusu jeszcze nie
+             wrócił — celowo ta sama, co domyślne ustawienie. -->
+        <label>🔢 <span id="etykietaLicznika">Stan licznika na początek dnia</span>
+          <span id="jednLicznika">(km)</span> <span class="wym">*</span></label>
         <input type="text" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
+        <!-- E-16: treść wstawia `zastosujEtykieteLicznika_` — zależy od trybu. -->
+        <div class="podpowiedz-pola" id="podpowiedzLicznik"></div>
         <div class="blad-pola" id="bladLicznik"></div>
         <div class="plakietka" id="ostatniLicznikInfo"></div>
         <div class="ostrzezenie-pola" id="ostrzezeniePrzyrost"></div>
@@ -495,7 +513,11 @@ var STAN = {
   kod: null, imie: null, jednostki: [], budowy: [], kategorie: [],
   aktywna: null, wpisy: [], edytowanyId: null,
   // D98 — wartości domyślne; prawdziwe przychodzą ze `status`.
-  limity: { litryOstrzezenie: 300, litryBlokada: 1000, przyrostKm: 1500, przyrostMth: 24 }
+  limity: { litryOstrzezenie: 300, litryBlokada: 1000, przyrostKm: 1500, przyrostMth: 24 },
+  // E-16 — jw.: to tylko wartość na czas przed pierwszą odpowiedzią serwera.
+  // Musi się zgadzać z domyślnym LICZNIK_MOMENT w Setup.gs.
+  etykietaLicznika: 'Stan licznika na początek dnia',
+  momentLicznika: 'poczatek'
 };
 var KLUCZ_KOD = 'ewidencja_kod';
 var KLUCZ_KOLEJKA = 'ewidencja_kolejka';
@@ -932,6 +954,33 @@ function rysujKomunikaty_(lista){
     }).join('');
 }
 
+/**
+ * E-16 (02.08.2026): etykieta pola licznika jest ustawieniem po stronie
+ * arkusza (LICZNIK_MOMENT), nie stałą we froncie. Odwrócenie D73 — kierowcy
+ * potwierdzili, że wpisują stan z rana i dopisują tankowania w ciągu dnia.
+ *
+ * Napis MUSI iść w parze z walidacją na serwerze: gdyby został zaszyty tutaj,
+ * przestawienie ustawienia w arkuszu zmieniłoby sprawdzanie tankowań, a pole
+ * dalej mówiłoby kierowcy coś przeciwnego. Podpowiedź pod polem zmienia się
+ * razem z nim z tego samego powodu.
+ */
+function zastosujEtykieteLicznika_(etykieta, moment){
+  if (etykieta) {
+    STAN.etykietaLicznika = etykieta;
+    var e = el('etykietaLicznika');
+    if (e) e.textContent = etykieta;
+  }
+  if (moment) STAN.momentLicznika = moment;
+
+  var p = el('podpowiedzLicznik');
+  if (p) {
+    p.textContent = STAN.momentLicznika === 'koniec'
+      ? 'Wpisz stan, jaki licznik pokazuje teraz, po skończonej pracy.'
+      : 'Wpisz stan z rana, sprzed wyjazdu. Tankowanie z tego dnia dopisz ' +
+        'w sekcji niżej — jego licznik będzie wyższy niż ten poranny.';
+  }
+}
+
 function pokazZPamieci(){
   var cache;
   try { cache = JSON.parse(localStorage.getItem(KLUCZ_CACHE) || 'null'); }
@@ -943,6 +992,7 @@ function pokazZPamieci(){
   STAN.budowy = cache.budowy || [];
   STAN.kategorie = cache.kategorie || [];
   STAN.limity = cache.limity || STAN.limity;
+  zastosujEtykieteLicznika_(cache.etykietaLicznika, cache.momentLicznika);
   rysujKomunikaty_(cache.komunikaty);
   el('naglowekKto').textContent = cache.imie || '';
   el('avatar').textContent = inicjaly(cache.imie);
@@ -973,13 +1023,19 @@ function odswiezStart(){
     STAN.kategorie = odp.kategorie || [];
     STAN.limity = odp.limity || STAN.limity;
     STAN.komunikaty = odp.komunikaty || [];
+    STAN.etykietaLicznika = odp.etykietaLicznika || STAN.etykietaLicznika;
+    STAN.momentLicznika = odp.momentLicznika || STAN.momentLicznika;
+    zastosujEtykieteLicznika_(STAN.etykietaLicznika, STAN.momentLicznika);
     rysujKomunikaty_(STAN.komunikaty);
     // Zapisujemy na następne otwarcie (D60) — patrz pokazZPamieci().
     try {
       localStorage.setItem(KLUCZ_CACHE, JSON.stringify({
         imie: odp.imie, jednostki: STAN.jednostki,
         budowy: STAN.budowy, kategorie: STAN.kategorie, limity: STAN.limity,
-        komunikaty: STAN.komunikaty
+        komunikaty: STAN.komunikaty,
+        // E-16: etykieta jedzie do cache razem z resztą, żeby po starcie
+        // offline nie mrugała domyślną wartością z HTML-a.
+        etykietaLicznika: STAN.etykietaLicznika, momentLicznika: STAN.momentLicznika
       }));
     } catch(e){ /* pełny localStorage — trudno, cache jest opcjonalny */ }
     el('naglowekKto').textContent = odp.imie;
@@ -1202,29 +1258,53 @@ function dodajWierszTankowania(litry, licznik){
    Przy `tylkoSprawdz = true` nie zwraca danych, tylko `true`, jeśli któreś
    pole zawiera coś, co nie jest liczbą — wtedy walidacja pokaże błąd zamiast
    po cichu pominąć wiersz. */
-/* D99: dolna granica to ostatni znany stan licznika PRZED wybraną datą,
-   górna to stan wpisany na koniec tego dnia. Liczymy z tej samej historii,
-   z której bierze się podpowiedź licznika (D82) — bez dodatkowego żądania. */
-function zakresLicznikaLokalnie_(){
-  var min = null, max = null;
-  var data = el('poleData').value;
+/* D99: dopuszczalny przedział licznika przy tankowaniu. Liczymy z tej samej
+   historii, z której bierze się podpowiedź licznika (D82) — bez dodatkowego
+   żądania.
 
+   E-16 (02.08.2026): który koniec przedziału wyznacza odczyt z TEGO dnia,
+   zależy od trybu (STAN.momentLicznika, ustawienie LICZNIK_MOMENT w arkuszu).
+   MUSI zachowywać się identycznie jak `zakresLicznika_` w API.gs — rozjazd
+   znaczyłby, że appka blokuje zapis, który serwer by przyjął, albo odwrotnie.
+
+     tryb `koniec`   — odczyt to stan wieczorny → GÓRNA granica,
+                       dolną daje ostatni wpis sprzed tej daty.
+     tryb `poczatek` — odczyt to stan poranny → DOLNA granica,
+                       górną daje najbliższy wpis PO tej dacie. Zwykle jeszcze
+                       nie istnieje, więc górnej granicy po prostu nie ma —
+                       przekroczenie wychodzi dopiero następnego dnia, jako
+                       plakietka „do poprawy" (wpisyDoPoprawy_ w API.gs). */
+function zakresLicznikaLokalnie_(){
+  var data = el('poleData').value;
+  var naPoczatek = STAN.momentLicznika !== 'koniec';
+
+  var zPoprzedniego = null, zNastepnego = null;
   (STAN.wpisy || []).forEach(function(w){
     if (w.anulowany || w.licznik === '' || w.licznik == null) return;
     if (STAN.edytowanyId && w.idWpisu === STAN.edytowanyId) return;
-    if (data && w.data >= data) return;
+    if (!data) return;
     var v = Number(w.licznik);
-    if (!isNaN(v) && (min === null || v > min)) min = v;
+    if (isNaN(v)) return;
+    if (w.data < data) {
+      if (zPoprzedniego === null || v > zPoprzedniego) zPoprzedniego = v;
+    } else if (w.data > data) {
+      if (zNastepnego === null || v < zNastepnego) zNastepnego = v;
+    }
   });
-  if (min === null && STAN.aktywna && STAN.aktywna.ostatniStanLicznika) {
+  if (zPoprzedniego === null && STAN.aktywna && STAN.aktywna.ostatniStanLicznika) {
     var o = Number(STAN.aktywna.ostatniStanLicznika);
-    if (!isNaN(o) && (!data || !STAN.aktywna.ostatniaData || STAN.aktywna.ostatniaData < data)) min = o;
+    if (!isNaN(o) && (!data || !STAN.aktywna.ostatniaData || STAN.aktywna.ostatniaData < data)) {
+      zPoprzedniego = o;
+    }
   }
 
   var dnia = naLiczbe_(el('poleLicznik').value);
-  if (dnia !== null && !isNaN(dnia) && dnia > 0) max = dnia;
+  if (dnia === null || isNaN(dnia) || dnia <= 0) dnia = null;
 
-  return { min: min, max: max };
+  if (naPoczatek) {
+    return { min: dnia !== null ? dnia : zPoprzedniego, max: zNastepnego };
+  }
+  return { min: zPoprzedniego, max: dnia };
 }
 
 function zbierzTankowania(tylkoSprawdz){
@@ -1642,6 +1722,17 @@ function rysujWpisy(){
               : '') +
           '</div>' +
           (plakietki ? '<div>' + plakietki + '</div>' : '') +
+          // E-16 (02.08.2026): tankowanie z licznikiem wyższym niż stan
+          // poranny następnego dnia. Świadomie POZA `.wpis-szczegoly` —
+          // to jedyna rzecz na liście, która wymaga działania kierowcy, więc
+          // nie może wymagać rozwinięcia wpisu, żeby ją w ogóle zobaczyć.
+          // Kontrola jest retroaktywna (górnej granicy nie było w chwili
+          // zapisu), liczona po stronie serwera przy każdym odczycie —
+          // plakietka znika sama, gdy wpis zostanie poprawiony.
+          (w.doPoprawy
+            ? '<div class="wpis-poprawa"><b>⚠ Do poprawy</b>' +
+              bezpiecznyTekst(w.doPoprawy) + '</div>'
+            : '') +
           '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
             (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
           '<div class="linia-data"><span class="plakietka-id">' + bezpiecznyTekst(w.idWpisu) + '</span>' +
