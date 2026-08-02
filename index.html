@@ -1029,17 +1029,23 @@ function rysujTerminy(j){
   if (!lista.length) { box.innerHTML = ''; return; }
 
   var jed = j.jednostkaLicznika;
+  // E-15 (01.08.2026): kolor wg `t.poziom` liczonego w API.gs (poziomDni_/
+  // poziomKm_) — 'krytyczny' obejmuje też przeterminowane (dni/km < 0),
+  // 'pilny' to żółty/pomarańczowy próg, 'normalny' zostaje w kolorystyce
+  // appki (bez zielonego). Format ujednolicony: „za X dni (DATA)" i
+  // „za X km (próg)" — wcześniej data i licznik dni były w odwrotnej
+  // kolejności.
   box.innerHTML = '<div class="terminy"><div class="t-naglowek">Terminy i serwis</div>' +
     lista.map(function(t){
-      var wartosc, klasa = t.uwaga ? ' pilny' : '';
+      var wartosc, klasa = t.poziom === 'krytyczny' ? ' pominiety' : (t.poziom === 'pilny' ? ' pilny' : '');
       if (t.nazwa === 'Serwis') {
-        if (t.zostalo < 0) { wartosc = 'przekroczony o ' + formatLicznik_(Math.abs(t.zostalo)) + ' ' + jed; klasa = ' pominiety'; }
+        if (t.zostalo < 0) wartosc = 'przekroczony o ' + formatLicznik_(Math.abs(t.zostalo)) + ' ' + jed;
         else wartosc = 'za ' + formatLicznik_(t.zostalo) + ' ' + jed;
         wartosc += ' <span style="color:var(--szary); font-weight:400;">(' + formatLicznik_(t.wartosc) + ' ' + jed + ')</span>';
       } else {
-        if (t.dni < 0) { wartosc = 'minął ' + t.data; klasa = ' pominiety'; }
-        else if (t.dni === 0) { wartosc = 'dziś!'; }
-        else wartosc = t.data + ' <span style="color:var(--szary); font-weight:400;">(za ' + t.dni + ' dni)</span>';
+        if (t.dni < 0) wartosc = 'minął ' + t.data;
+        else if (t.dni === 0) wartosc = 'dziś! <span style="color:var(--szary); font-weight:400;">(' + t.data + ')</span>';
+        else wartosc = 'za ' + t.dni + ' dni <span style="color:var(--szary); font-weight:400;">(' + t.data + ')</span>';
       }
       return '<div class="termin' + klasa + '"><span class="t-nazwa">' + bezpiecznyTekst(t.nazwa) +
         '</span><span class="t-wartosc">' + wartosc + '</span></div>';
