@@ -1944,15 +1944,16 @@ function nastepnyWpisJednostki_(w){
   kandydaci.forEach(function(x){ if (x.data < nastepny.data) nastepny = x; });
   return nastepny;
 }
-function kmDniaHtml_(w, jed){
+function kmDniaHtml_(w, jed, kolor){
   if (w.anulowany || w.licznik === '' || w.licznik == null) return '';
+  var strzalka = '<span style="color:' + kolor + '">↳</span> ';
   var nastepny = nastepnyWpisJednostki_(w);
   if (!nastepny) return '<div class="km-dnia km-dnia-brak">brak następnego wpisu — nie liczymy</div>';
   var roznica = Number(nastepny.licznik) - Number(w.licznik);
   // Cofnięty licznik (roznica ujemna) ma już własne ostrzeżenie (E-24,
   // plakietka "Wymaga uwagi") — nie dublujemy mylącą liczbą tutaj.
   if (isNaN(roznica) || roznica < 0) return '';
-  return '<div class="km-dnia">↳ ' + formatLicznik_(roznica) + ' ' + jed + ' tego dnia</div>';
+  return '<div class="km-dnia">' + strzalka + formatLicznik_(roznica) + ' ' + jed + ' tego dnia</div>';
 }
 // ========== E-26 KONIEC ==========
 
@@ -2007,7 +2008,7 @@ function rysujWpisy(){
                 '</span>'
               : '') +
           '</div>' +
-          kmDniaHtml_(w, jed) +
+          kmDniaHtml_(w, jed, j.kolor) +
           (plakietki ? '<div>' + plakietki + '</div>' : '') +
           // E-16 (02.08.2026): tankowanie z licznikiem wyższym niż stan
           // poranny następnego dnia. Świadomie POZA `.wpis-szczegoly` —
