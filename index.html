@@ -215,6 +215,11 @@
   .wpis .licznik-rog{font-size:13px; font-weight:400; color:var(--szary);
     white-space:nowrap;}
   .wpis .licznik-rog b{color:var(--tekst); font-weight:600;}
+  /* E-26 (05.08.2026): "km/mtg tego dnia" — pod plakietką licznika, tym
+     samym wyrównaniem do prawej, wyciszone (to podpowiedź, nie fakt do
+     zapisania jak licznik). */
+  .wpis .km-dnia{text-align:right; font-size:12px; color:var(--szary); margin-top:2px;}
+  .wpis .km-dnia-brak{color:#a1a1aa;}
   .wpis.anulowany{border-left-color:var(--linia); background:var(--tlo);}
   .wpis.anulowany .linia1,.wpis.anulowany .linia2,.wpis.anulowany .licznik-rog{
     text-decoration:line-through; color:#9ca3af;}
@@ -1920,6 +1925,37 @@ el('pokazAnulowane').onchange = rysujWpisy;
 var MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec',
   'sierpień','wrzesień','październik','listopad','grudzień'];
 
+// ========== E-26 (05.08.2026) START: "km/mtg tego dnia" ==========
+// Licznik u Was jest poranny (LICZNIK_MOMENT='rano', potwierdzone przez
+// Marka 05.08.2026) — stan z wpisu to początek dnia, więc "ile
+// przejechano/przepracowano tego dnia" to różnica do NASTĘPNEGO
+// (późniejszego) wpisu tej samej jednostki, nie poprzedniego. Jednostka
+// (km/mtg) sama się dopasowuje — to ten sam `jed`, którego appka już
+// używa przy plakietce "Licznik: X". Front-only: liczone z STAN.wpisy,
+// już wczytanego dla otwartej jednostki — bez nowych żądań do API.
+// Usuwalne: skasować ten blok + wywołanie kmDniaHtml_ w rysujWpisy niżej.
+function nastepnyWpisJednostki_(w){
+  var kandydaci = (STAN.wpisy || []).filter(function(x){
+    return !x.anulowany && x.licznik !== '' && x.licznik != null &&
+      x.data > w.data && x.idWpisu !== w.idWpisu;
+  });
+  if (!kandydaci.length) return null;
+  var nastepny = kandydaci[0];
+  kandydaci.forEach(function(x){ if (x.data < nastepny.data) nastepny = x; });
+  return nastepny;
+}
+function kmDniaHtml_(w, jed){
+  if (w.anulowany || w.licznik === '' || w.licznik == null) return '';
+  var nastepny = nastepnyWpisJednostki_(w);
+  if (!nastepny) return '<div class="km-dnia km-dnia-brak">brak następnego wpisu — nie liczymy</div>';
+  var roznica = Number(nastepny.licznik) - Number(w.licznik);
+  // Cofnięty licznik (roznica ujemna) ma już własne ostrzeżenie (E-24,
+  // plakietka "Wymaga uwagi") — nie dublujemy mylącą liczbą tutaj.
+  if (isNaN(roznica) || roznica < 0) return '';
+  return '<div class="km-dnia">↳ ' + formatLicznik_(roznica) + ' ' + jed + ' tego dnia</div>';
+}
+// ========== E-26 KONIEC ==========
+
 function rysujWpisy(){
   var j = STAN.aktywna;
   var pokazAnul = el('pokazAnulowane').checked;
@@ -1971,6 +2007,7 @@ function rysujWpisy(){
                 '</span>'
               : '') +
           '</div>' +
+          kmDniaHtml_(w, jed) +
           (plakietki ? '<div>' + plakietki + '</div>' : '') +
           // E-16 (02.08.2026): tankowanie z licznikiem wyższym niż stan
           // poranny następnego dnia. Świadomie POZA `.wpis-szczegoly` —
