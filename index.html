@@ -2032,6 +2032,11 @@ function rysujWpisy(){
             : '') +
           '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
             (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
+          // E-27 (07.08.2026): współkierowcy dnia — widoczni od razu na
+          // liście, bez rozwijania (jak kierowca i budowa wyżej).
+          (w.wspolkierowcy
+            ? '<div class="linia2">+ współkierowca: ' + bezpiecznyTekst(w.wspolkierowcy) + '</div>'
+            : '') +
           '<div class="linia-data"><span class="plakietka-id">' + bezpiecznyTekst(w.idWpisu) + '</span>' +
             // E-18 (01.08.2026): ikonki podpowiedzi obok strzałki — kierowca
             // widzi PRZED rozwinięciem, że jest tam coś do zobaczenia (te
@@ -2057,6 +2062,16 @@ function rysujWpisy(){
         (w.edytowalny
           ? '<div class="akcja"><button class="przycisk-maly" data-edytuj="' + i + '">✏️ Popraw</button>' +
             '<button class="przycisk-czerwony" data-anuluj="' + i + '">🗑 Anuluj wpis</button></div>'
+          : '') +
+        // E-27: przycisk współkierowcy — wyłącznie przy CUDZYM wpisie
+        // (mogeWspolkierowac z serwera: nie-autor, nie anulowany, nie
+        // zablokowany, miesiąc otwarty). Nazwy zatwierdzone przez Marka.
+        (w.mogeWspolkierowac
+          ? '<div class="akcja"><button class="' +
+            (w.jestemWspolkierowca ? 'przycisk-czerwony' : 'przycisk-maly') +
+            '" data-wspol="' + i + '">' +
+            (w.jestemWspolkierowca ? '🗑 Usuń mnie jako kierowcę' : '➕ Dodaj mnie jako kierowcę') +
+            '</button></div>'
           : '') +
       '</div>' +
     '</div>';
@@ -2092,6 +2107,34 @@ function rysujWpisy(){
         if (!o.ok) { alert(o.wiadomosc || 'Nie udało się anulować.'); return; }
         otworzWpisy(STAN.aktywna);
         odswiezStart();
+      }).catch(function(){
+        schowajOverlay();
+        alert('Brak połączenia.');
+      });
+    };
+  });
+  // E-27 (07.08.2026): dopisanie/zdjęcie SIEBIE jako współkierowcy dnia.
+  // Tylko online (decyzja Marka — akcja rzadka i nieczasowa, bez kolejki);
+  // serwer bierze imię z kodu dostępu, front nie wysyła żadnego imienia.
+  // Po sukcesie aktualizujemy wpis lokalnie z odpowiedzi (serwer odsyła
+  // nową listę) i przerysowujemy — bez ponownego żądania historii.
+  el('listaWpisow').querySelectorAll('[data-wspol]').forEach(function(b){
+    b.onclick = function(){
+      var w = lista[Number(b.dataset.wspol)];
+      if (!navigator.onLine) {
+        alert('Brak internetu.\n\nDopisanie się jako kierowca wymaga zasięgu. Spróbuj, gdy wróci sieć.');
+        return;
+      }
+      var usuwam = w.jestemWspolkierowca;
+      if (usuwam && !confirm('Usunąć Cię z wpisu z ' + w.data + '?')) return;
+      pokazOverlay(usuwam ? 'Usuwam z wpisu…' : 'Dopisuję do wpisu…');
+      wolajAPI(usuwam ? 'usunWspolkierowce' : 'dopiszWspolkierowce',
+        { idWpisu: w.idWpisu }).then(function(o){
+        schowajOverlay();
+        if (!o.ok) { alert(o.wiadomosc || 'Nie udało się.'); return; }
+        w.wspolkierowcy = o.wspolkierowcy;
+        w.jestemWspolkierowca = o.jestemWspolkierowca;
+        rysujWpisy();
       }).catch(function(){
         schowajOverlay();
         alert('Brak połączenia.');
