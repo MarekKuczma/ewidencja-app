@@ -266,7 +266,14 @@
      zwija podgląd wpisów bez możliwości edycji (wzorzec z floty, F-49). */
   .wpisy-naglowek-miesiac.zwijalny{cursor:pointer; display:flex; align-items:center;
     justify-content:space-between; user-select:none;}
-  .naglowek-strzalka{transition:transform .15s ease; margin-left:auto;}
+  /* W-11 (07.08.2026): to samo kółko z tłem co przy strzałce rozwijania
+     wpisu (.wpis-strzalka) — wcześniej był tu goły znak bez tła i dwa
+     bardzo podobne elementy wyglądały inaczej. Sama rotacja bez zmian. */
+  .naglowek-strzalka{width:24px; height:24px; border-radius:50%;
+    background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);
+    font-size:13px; font-weight:700; flex:none;
+    display:inline-flex; align-items:center; justify-content:center;
+    transition:transform .15s ease; margin-left:auto;}
   .wpisy-naglowek-miesiac.rozwiniety .naglowek-strzalka{transform:rotate(90deg);}
   /* Tankowanie — powtarzalne pary litry + licznik (D51) */
   .tank-item{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
@@ -312,6 +319,13 @@
     gap:8px; color:var(--szary); font-size:12px; margin-top:6px;}
   .ukryte{display:none !important;}
   .srodek{text-align:center; padding:40px 20px; color:var(--szary);}
+  /* W-12 (07.08.2026): okno „Zamykam miesiąc" — te same reguły co we flocie. */
+  dialog{border:none; border-radius:14px; padding:20px; max-width:340px; width:90%;
+    background:var(--karta); color:var(--tekst);}
+  dialog::backdrop{background:rgba(0,0,0,.4);}
+  dialog p{margin:0 0 14px; font-size:16px;}
+  dialog .p{display:flex; gap:10px;}
+  dialog .p button{flex:1;}
   h2{font-size:18px; margin:0 0 12px;}
   .sukces-ikona{font-size:52px; text-align:center; margin:6px 0 0;}
   .sukces-tekst{text-align:center; font-size:18px; font-weight:600; margin:6px 0 2px;}
@@ -406,21 +420,10 @@
         <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
         <button class="przycisk-drugi" id="zamykamBtn">✅ Zamykam miesiąc</button>
 
-        <!-- E-08: wybór miesiąca. Ten sam wzorzec „rozwijane pudełko" co
-             #dodajBox — ewidencja nie używa <dialog>, więc nie wprowadzamy
-             go tu tylko dla jednego ekranu. -->
-        <div id="zamykamBox" class="ukryte" style="margin-top:12px;">
-          <div class="pole">
-            <label>📅 Który miesiąc zgłaszasz?</label>
-            <select id="wyborMiesiacaDekl"></select>
-          </div>
-          <div style="font-size:13px; color:var(--szary); margin:-4px 0 10px;">
-            Dajesz znać, że skończyłeś wpisywać ten miesiąc dla tej maszyny.
-            Nic to nie blokuje — jeśli coś dopiszesz, zgłoszenie samo się cofnie.
-          </div>
-          <button class="przycisk" id="potwierdzDeklaracjeBtn">Zgłoś koniec miesiąca</button>
-          <button class="przycisk-drugi" id="anulujDeklaracjeBtn">Anuluj</button>
-        </div>
+        <!-- W-12 (07.08.2026): rozwijane pudełko zastąpione oknem <dialog>
+             — patrz #dialogMiesiac niżej. Cały przebieg „Zamykam miesiąc"
+             ujednolicony z flotą (decyzja Marka: kierowcy znają ten proces
+             z floty, ma wyglądać i działać tak samo w obu appkach). -->
 
         <button class="przycisk-drugi" id="zmienPojazdBtn">🔄 Zmień pojazd</button>
         <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">📌 Odepnij ten pojazd</button>
@@ -566,6 +569,27 @@
   <div class="spinner"></div>
   <div class="tekst" id="overlayTekst">Zapisywanie… proszę czekać</div>
 </div>
+
+<!-- W-12 (07.08.2026): okno „Zamykam miesiąc" — markup, id-eczki i teksty
+     celowo takie same jak w pwa/index.html floty (dialogMiesiac,
+     wyborMiesiaca, dialogNie, dialogTak), żeby oba procesy wyglądały
+     i działały identycznie. Różnica wyłącznie w słownictwie wymuszonym
+     przez D112: tu deklaracja dotyczy MASZYNY, nie osoby, i mówi „daję
+     znać, że skończyłem", nigdy „potwierdzam kompletność" — w ewidencji
+     brak wpisu znaczy postój (D102), więc nie ma listy do odhaczenia. -->
+<dialog id="dialogMiesiac">
+  <p><b>Zamykam miesiąc</b></p>
+  <p style="font-size:15px;">Który miesiąc masz skończony dla tej maszyny?</p>
+  <select id="wyborMiesiaca" style="margin-bottom:14px;"></select>
+  <p style="font-size:14px; color:var(--szary);">Dajesz znać Markowi, że to koniec
+    wpisów tej maszyny na ten miesiąc. Nic to nie blokuje — jeśli coś dopiszesz,
+    zgłoszenie samo się cofnie.</p>
+  <div class="p">
+    <button class="przycisk-maly" id="dialogNie" type="button">Nie</button>
+    <button class="przycisk" style="margin-top:0; padding:10px; font-size:16px;"
+            id="dialogTak" type="button">Tak</button>
+  </div>
+</dialog>
 
 <script src="./config.js"></script>
 <script>
@@ -1291,48 +1315,68 @@ function rysujDeklaracje_(j){
   el('zamykamBtn').textContent = (!zalegle.length && j.biezacyZadeklarowany)
     ? '✅ Miesiąc zgłoszony — zgłoś ponownie'
     : '✅ Zamykam miesiąc';
-  schowajBoxDeklaracji_();
 }
 
-function schowajBoxDeklaracji_(){ el('zamykamBox').classList.add('ukryte'); }
+/* W-12 (07.08.2026): cały przebieg przeniesiony 1:1 z floty (decyzja Marka —
+   kierowcy znają ten proces z floty, ma być identyczny w obu appkach):
+   okno <dialog> zamiast rozwijanego pudełka, ŚWIEŻY status z serwera przed
+   pokazaniem listy miesięcy, ekran sukcesu zamiast alert().
 
-el('zamykamBtn').addEventListener('click', function(){
-  var box = el('zamykamBox');
-  if (!box.classList.contains('ukryte')) { schowajBoxDeklaracji_(); return; }
+   Świeży status ma znaczenie: `STAN.aktywna.zalegleMiesiace` pochodzi
+   z ostatniego odświeżenia, a wpis mógł w międzyczasie dopisać ktoś inny
+   (D34 — jednostkę prowadzi kilka osób) i lista byłaby nieaktualna.
+   Dialog i tak wymaga internetu, więc odświeżenie nic nie kosztuje. */
+function otworzDialogMiesiaca(){
   if (!STAN.aktywna) return;
   if (!navigator.onLine){
     alert('„Zamykam miesiąc" wymaga internetu — to zgłoszenie nie idzie przez kolejkę offline.');
     return;
   }
+  var idPojazdu = STAN.aktywna.idPojazdu;
+  pokazOverlay('Chwileczkę…');   // przykrywa przycisk = blokuje kolejne kliknięcia
+  odswiezStart().then(function(){
+    // `odswiezStart` przeładowuje STAN.jednostki, więc bierzemy jednostkę
+    // na nowo po ID — stary obiekt jest już nieaktualnym wskaźnikiem.
+    var j = (STAN.jednostki || []).filter(function(x){ return x.idPojazdu === idPojazdu; })[0];
+    if (!j) { schowajOverlay(); alert('Nie znaleziono tej maszyny — odśwież aplikację.'); return; }
+    STAN.aktywna = j;
 
-  // Lista = zaległe policzone przez serwer + zawsze bieżący miesiąc.
-  // Poprawka przeniesiona z floty (20.07.2026): nie pokazujemy sztywno kilku
-  // miesięcy wstecz z kalendarza — w miesiącach sprzed wdrożenia aplikacji
-  // maszyna nie ma ani jednego wpisu i takie puste pozycje tylko myliły.
-  var sel = el('wyborMiesiacaDekl');
-  sel.innerHTML = '';
-  (STAN.aktywna.zalegleMiesiace || []).forEach(function(m){
-    var o = document.createElement('option');
-    o.value = m; o.textContent = nazwaMiesiaca_(m);
-    sel.appendChild(o);
+    // Lista = zaległe policzone przez serwer + zawsze bieżący miesiąc.
+    // Poprawka przeniesiona z floty (20.07.2026): nie pokazujemy sztywno kilku
+    // miesięcy wstecz z kalendarza — w miesiącach sprzed wdrożenia aplikacji
+    // maszyna nie ma ani jednego wpisu i takie puste pozycje tylko myliły.
+    var sel = el('wyborMiesiaca');
+    sel.innerHTML = '';
+    (j.zalegleMiesiace || []).slice().sort().forEach(function(m){  // najstarszy u góry
+      var o = document.createElement('option');
+      o.value = m; o.textContent = nazwaMiesiaca_(m);
+      sel.appendChild(o);
+    });
+    var biez = dzisiajISO().slice(0, 7);
+    var ob = document.createElement('option');
+    ob.value = biez;
+    ob.textContent = nazwaMiesiaca_(biez) + ' (bieżący)';
+    sel.appendChild(ob);
+    sel.selectedIndex = 0;   // najstarszy zaległy, a jak brak — bieżący
+
+    schowajOverlay();
+    el('dialogMiesiac').showModal();
+  }).catch(function(){
+    schowajOverlay();
+    alert('Serwer chwilowo niedostępny — spróbuj za chwilę.');
   });
-  var biez = dzisiajISO().slice(0, 7);
-  var ob = document.createElement('option');
-  ob.value = biez;
-  ob.textContent = nazwaMiesiaca_(biez) + ' (bieżący)';
-  sel.appendChild(ob);
-  sel.selectedIndex = 0;   // najstarszy zaległy, a jak brak — bieżący
+}
 
-  box.classList.remove('ukryte');
-});
-
-el('anulujDeklaracjeBtn').addEventListener('click', schowajBoxDeklaracji_);
-
-el('potwierdzDeklaracjeBtn').addEventListener('click', function(){
+el('zamykamBtn').addEventListener('click', otworzDialogMiesiaca);
+el('dialogNie').addEventListener('click', function(){ el('dialogMiesiac').close(); });
+el('dialogTak').addEventListener('click', function(){
   if (!STAN.aktywna) return;
-  var m = el('wyborMiesiacaDekl').value;
+  var m = el('wyborMiesiaca').value;
   if (!m) return;
-  schowajBoxDeklaracji_();          // zamyka też drogę do podwójnego kliknięcia
+  // Zamykamy dialog PRZED overlayem — dialog (showModal) jest w warstwie
+  // wierzchniej, więc overlay pod nim by nie było widać (ta sama kolejność
+  // co we flocie). Zamknięcie blokuje też podwójne kliknięcie.
+  el('dialogMiesiac').close();
   pokazOverlay('Zgłaszam koniec miesiąca…');
   wolajAPI('deklaracja', { idPojazdu: STAN.aktywna.idPojazdu, miesiac: m })
     .then(function(odp){
@@ -1341,10 +1385,9 @@ el('potwierdzDeklaracjeBtn').addEventListener('click', function(){
         alert('Nie udało się zgłosić miesiąca:\n' + (odp.wiadomosc || 'Nieznany błąd'));
         return;
       }
-      alert('Dziękujemy! Zgłoszone: ' + nazwaMiesiaca_(m) + '.\n\n' +
-        'Jeśli okaże się, że czegoś brakuje — po prostu dopisz wpis, ' +
-        'zgłoszenie samo się cofnie.');
-      odswiezStart();               // przeliczy zaległe i stan przycisku
+      pokazSukcesProsty_('Miesiąc zgłoszony',
+        'Dziękujemy! Marek dostał informację o ' + nazwaMiesiaca_(m) + '.');
+      odswiezStart();               // przeliczy zaległe i stan przycisku w tle
     })
     .catch(function(){
       schowajOverlay();
@@ -1896,6 +1939,22 @@ function pokazSukces(odp){
   el('sKolejny').textContent = sukcesPoEdycji ? '📋 Moje wpisy' : '➕ Dodaj kolejny wpis';
   el('sWpisy').textContent = sukcesPoEdycji ? '➕ Dodaj kolejny wpis' : '📋 Moje wpisy';
 
+  pokazEkran('ekranSukces');
+}
+
+/* W-12 (07.08.2026): ten sam ekran sukcesu dla zdarzeń innych niż zapis wpisu
+   (dziś: „Zamykam miesiąc"). Odpowiednik `pokazSukces(tekst, podtekst, ...)`
+   z floty — tamtejsza funkcja jest generyczna, tutejsza `pokazSukces(odp)`
+   jest zbudowana wokół odpowiedzi na zapis, więc zamiast ją przerabiać
+   (i ryzykować regresję w najczęstszej ścieżce appki) dokładamy wariant obok. */
+function pokazSukcesProsty_(tekst, podtekst){
+  el('sTekst').textContent = tekst;
+  el('sId').textContent = podtekst || '';
+  el('sOstrzezenia').classList.add('ukryte');
+  el('sOstrzezenia').innerHTML = '';
+  sukcesPoEdycji = false;   // przyciski w rolach jak po nowym wpisie
+  el('sKolejny').textContent = '➕ Dodaj kolejny wpis';
+  el('sWpisy').textContent = '📋 Moje wpisy';
   pokazEkran('ekranSukces');
 }
 
