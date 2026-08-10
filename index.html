@@ -304,6 +304,11 @@
   .odrzucony{background:var(--bg-blad); color:var(--tekst-blad); border-radius:10px;
     padding:10px; margin-top:8px; font-size:14px;}
   .odrzucony .p{display:flex; gap:8px; margin-top:8px;}
+  /* E-32 (10.08.2026): wariant dla E008 z kolejki — to NIE jest błąd, tylko
+     ślad udanego wpisu, którego telefon nie zdążył potwierdzić (patrz
+     komentarz przy `wyslijKolejke`). Kolory ostrzeżenia zamiast czerwieni,
+     żeby kierowca nie panikował na widok czegoś, co jest dobrą wiadomością. */
+  .odrzucony.zapisany{background:var(--bg-uwaga); color:var(--tekst-uwaga);}
   nav{position:fixed; bottom:0; left:0; right:0; background:var(--karta);
     border-top:1px solid var(--linia); display:flex; z-index:5;
     padding-bottom:env(safe-area-inset-bottom);}
@@ -791,13 +796,33 @@ function odswiezKolejkeInfo(){
       ' na wysłanie. Wyślą się same, gdy wróci zasięg.';
   }
   odrzucone.forEach(function(w){
-    html += '<div class="odrzucony"><b>Wpis nie został przyjęty</b>' +
-      (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') + ': ' +
-      bezpiecznyTekst(w.blad || 'nieznany błąd') +
-      '<div class="p">' +
-      '<button class="przycisk-maly" data-ponow="' + w.tmp + '">Spróbuj ponownie</button>' +
-      '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń</button>' +
-      '</div></div>';
+    // E-32 (10.08.2026): E008 z KOLEJKI ("ten dzień już jest wpisany") w
+    // ogromnej większości przypadków znaczy „ten sam wpis już się zapisał
+    // za pierwszym razem, tylko telefon nie zdążył tego zobaczyć" — patrz
+    // pełne wyjaśnienie mechanizmu przy `wyslijKolejke`. To nie jest błąd
+    // do naprawienia, więc pokazujemy to inaczej: spokojniejszy kolor, inny
+    // nagłówek, i BEZ „Spróbuj ponownie" — ten przycisk zawsze skończyłby
+    // się identycznym odrzuceniem (E008 nie jest przejściowy jak E013),
+    // więc pokazywanie go tylko myliłoby, że coś tu da się „naprawić".
+    var toDuplikatDnia = (w.bladKod === 'E008');
+    if (toDuplikatDnia) {
+      html += '<div class="odrzucony zapisany"><b>Ten wpis już jest zapisany</b>' +
+        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') +
+        '<br>Telefon nie zdążył potwierdzić wysyłki, ale wpis dotarł do bazy za ' +
+        'pierwszym razem. Sprawdź w „Moje wpisy" — jeśli tam jest, usuń tę pozycję ' +
+        'z kolejki, nic więcej nie trzeba robić.' +
+        '<div class="p">' +
+        '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń z kolejki</button>' +
+        '</div></div>';
+    } else {
+      html += '<div class="odrzucony"><b>Wpis nie został przyjęty</b>' +
+        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') + ': ' +
+        bezpiecznyTekst(w.blad || 'nieznany błąd') +
+        '<div class="p">' +
+        '<button class="przycisk-maly" data-ponow="' + w.tmp + '">Spróbuj ponownie</button>' +
+        '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń</button>' +
+        '</div></div>';
+    }
   });
   e.innerHTML = html;
 
@@ -883,9 +908,13 @@ function wyslijKolejke(){
       } else {
         // Pozostałe odpowiedzi serwera są trwałe — ponawianie w pętli nic
         // nie zmieni. Pokazujemy powód i oddajemy decyzję człowiekowi.
+        // E-32 (10.08.2026): zapisujemy też KOD błędu (nie tylko treść) —
+        // `odswiezKolejkeInfo` traktuje E008 z tej ścieżki inaczej niż resztę
+        // (patrz komentarz tam).
         ustawStatusWKolejce_(k[i].tmp, {
           status: 'odrzucony',
-          blad: (odp && odp.wiadomosc) ? odp.wiadomosc : 'Serwer nie odpowiedział poprawnie.'
+          blad: (odp && odp.wiadomosc) ? odp.wiadomosc : 'Serwer nie odpowiedział poprawnie.',
+          bladKod: (odp && odp.blad) || ''
         });
       }
       return nastepny(i + 1);
