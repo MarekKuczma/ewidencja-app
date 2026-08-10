@@ -257,6 +257,13 @@
   .wpisy-naglowek-miesiac{font-size:13px; font-weight:700; color:var(--szary);
     text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
   .wpisy-naglowek-miesiac:first-child{margin-top:0;}
+  /* E-07 (10.08.2026): plakietka miesiąca z wpisami, który jeszcze nie jest
+     ani zamknięty przez Marka, ani zadeklarowany dla tej maszyny (E-08) —
+     wzorem floty (.plakietka-zalegly), ten sam sygnał co baner „Skończył
+     się …” wyżej, tylko widoczny bezpośrednio przy każdym takim miesiącu
+     na liście, nie tylko dla najstarszego. */
+  .plakietka-zalegly{background:var(--bg-uwaga); color:var(--tekst-uwaga);
+    text-transform:none; letter-spacing:normal; margin-left:6px; vertical-align:middle;}
   /* E-14 (01.08.2026): nagłówek sekcji listy jednostek (Twoje pojazdy /
      Podpięte) — sam styl co nagłówek miesiąca, ale nieklikalny. */
   .sekcja-jednostek-naglowek{font-size:13px; font-weight:700; color:var(--szary);
@@ -550,13 +557,41 @@
   <!-- ===================== EKRAN: MOJE WPISY ===================== -->
   <section id="ekranWpisy" class="ukryte">
     <div class="karta">
-      <h2 id="wpisyTytul">Moje wpisy</h2>
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+        <h2 id="wpisyTytul" style="margin:0;">Moje wpisy</h2>
+        <!-- E-07 (10.08.2026): podsumowanie miesiąca dla TEJ maszyny —
+             wzorem przycisku „📊 Podsumowanie miesiąca” z floty (pkt 19),
+             tylko per pojazd zamiast per kierowca (patrz ekranPodsumowanie
+             niżej — dane już wczytane tutaj, więc bez nowego zapytania). -->
+        <button type="button" class="przycisk-maly" id="wpisyPodsumowanieBtn" style="flex:none;">📊 Podsumowanie</button>
+      </div>
       <div class="p2" id="wpisyPodtytul" style="font-size:14px; color:var(--szary); margin:-6px 0 12px;"></div>
       <label style="display:flex; align-items:center; gap:8px; font-weight:400; color:var(--tekst);">
         <input type="checkbox" id="pokazAnulowane" style="width:auto; min-height:auto;">
         Pokaż anulowane wpisy
       </label>
       <div id="listaWpisow" style="margin-top:12px;"><div class="srodek">Ładowanie…</div></div>
+    </div>
+  </section>
+
+  <!-- ===================== EKRAN: PODSUMOWANIE MIESIĄCA (E-07, 10.08.2026) =====================
+       Wzorem floty (pkt 19), ale per POJAZD, nie per kierowca — ewidencja
+       jest zorganizowana wokół pulpitu maszyny, nie jednej wspólnej listy
+       wpisów (decyzja Marka 10.08.2026 przy zamykaniu E-07). Zawsze bieżący
+       miesiąc kalendarzowy — tak samo jak we flocie (wybór miesięcy wstecz
+       to tam wciąż tylko pomysł na przyszłość, nie ma go w interfejsie). -->
+  <section id="ekranPodsumowanie" class="ukryte">
+    <div class="karta">
+      <h2 id="podsumowanieTytul">Podsumowanie miesiąca</h2>
+      <div class="p2" id="podsumowaniePodtytul" style="font-size:14px; color:var(--szary); margin:-6px 0 12px;"></div>
+      <div class="metryki" id="podsumowanieGlowne"></div>
+      <div id="podsumowanieKategorieNaglowek" class="ukryte" style="font-size:13px; font-weight:700;
+        color:var(--szary); text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;">
+        Serwis — kategorie
+      </div>
+      <div class="metryki" id="podsumowanieKafelki" style="margin-bottom:0;"></div>
+      <div class="srodek ukryte" id="podsumowaniePusto" style="padding:16px;">Brak wpisów w tym miesiącu.</div>
+      <button type="button" class="przycisk-drugi" id="podsumowanieWstecz" style="margin-top:14px;">← Wróć do wpisów</button>
     </div>
   </section>
 </main>
@@ -637,13 +672,16 @@ function bezpiecznyTekst(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function pokazEkran(nazwa){
-  ['ekranStart','ekranWpis','ekranSukces','ekranWpisy'].forEach(function(e){
+  ['ekranStart','ekranWpis','ekranSukces','ekranWpisy','ekranPodsumowanie'].forEach(function(e){
     el(e).classList.add('ukryte');
   });
   el(nazwa).classList.remove('ukryte');
   el('navStart').classList.toggle('aktywna', nazwa === 'ekranStart');
   el('navNowy').classList.toggle('aktywna', nazwa === 'ekranWpis');
-  el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy');
+  // E-07: podsumowanie to „dziecko” Moje wpisy (wejście stamtąd, powrót
+  // tam samo) — wzorem floty, gdzie podsumowanie podświetla Start (skąd
+  // się wchodzi), nie osobną, nieistniejącą pozycję nawigacji.
+  el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy' || nazwa === 'ekranPodsumowanie');
   window.scrollTo(0, 0);
 }
 function komunikat(idEl, tekst, typ){
@@ -1993,22 +2031,64 @@ function pokazSukcesProsty_(tekst, podtekst){
 /* D47: pytanie o lukę pojawia się DOPIERO po zapisie i jest opcjonalne. */
 
 /* ---------- moje wpisy (D34: cała jednostka, nie tylko własne) ---------- */
+
+// E-07 (10.08.2026, wzorem floty — flota_wpisy / wpisyCache): cache
+// "Moje wpisy" w localStorage, PER POJAZD (ewidencja, w odróżnieniu od
+// floty, nie ma jednej wspólnej listy — kierowca wchodzi w konkretną
+// maszynę). Ekran maluje się od razu z ostatnio wczytanych danych, a w tle
+// (gdy jest sieć) leci świeże zapytanie i po cichu nadpisuje widok —
+// stale-while-revalidate, bez żadnej osobnej logiki unieważniania: każde
+// wejście online i tak odświeża cache, więc nie ma szans na trwale
+// nieaktualne dane. Klucz per `idPojazdu`, żeby przełączanie się między
+// maszynami nie mieszało wpisów jednej z drugą.
+var KLUCZ_WPISY_CACHE = 'ewidencja_wpisy_cache';
+var LIMIT_WPISY_CACHE_POJAZDOW = 8; // ochrona przed nieograniczonym wzrostem localStorage
+function wczytajWpisyCache_(){
+  try { return JSON.parse(localStorage.getItem(KLUCZ_WPISY_CACHE)) || {}; }
+  catch (e) { return {}; }
+}
+function wpisyCache_(idPojazdu){
+  var c = wczytajWpisyCache_()[idPojazdu];
+  return c ? c.wpisy : null;
+}
+function zapiszWpisyCache_(idPojazdu, wpisy){
+  var c = wczytajWpisyCache_();
+  c[idPojazdu] = { czas: Date.now(), wpisy: wpisy };
+  var klucze = Object.keys(c);
+  if (klucze.length > LIMIT_WPISY_CACHE_POJAZDOW) {
+    klucze.sort(function(a, b){ return c[a].czas - c[b].czas; }); // najstarsze pierwsze
+    klucze.slice(0, klucze.length - LIMIT_WPISY_CACHE_POJAZDOW).forEach(function(k){ delete c[k]; });
+  }
+  try { localStorage.setItem(KLUCZ_WPISY_CACHE, JSON.stringify(c)); } catch (e) {}
+}
 function otworzWpisy(j){
   if (!j) { pokazEkran('ekranStart'); return; }
   STAN.aktywna = j;
   el('wpisyTytul').textContent = 'Moje wpisy';
   el('wpisyPodtytul').textContent = j.tytul + ' · ' + j.podtytul;
-  el('listaWpisow').innerHTML = '<div class="srodek">Ładowanie…</div>';
   pokazEkran('ekranWpisy');
+
+  var zCache = wpisyCache_(j.idPojazdu);
+  if (zCache) { STAN.wpisy = zCache; rysujWpisy(); }
+  else el('listaWpisow').innerHTML = '<div class="srodek">Ładowanie…</div>';
+
+  if (!navigator.onLine) {
+    if (!zCache) el('listaWpisow').innerHTML = '<div class="srodek">Brak połączenia — brak zapisanych wpisów tej maszyny.</div>';
+    return;
+  }
   wolajAPI('historiaPojazdu', { idPojazdu: j.idPojazdu }).then(function(odp){
     if (!odp.ok) {
-      el('listaWpisow').innerHTML = '<div class="srodek">' + bezpiecznyTekst(odp.wiadomosc||'Błąd') + '</div>';
+      if (!zCache) el('listaWpisow').innerHTML = '<div class="srodek">' + bezpiecznyTekst(odp.wiadomosc||'Błąd') + '</div>';
       return;
     }
     STAN.wpisy = odp.wpisy || [];
+    zapiszWpisyCache_(j.idPojazdu, STAN.wpisy);
     rysujWpisy();
+    // Podsumowanie liczy z tych samych danych — jeśli akurat otwarte
+    // (np. kierowca wrócił do niego z tła), odśwież je razem z listą.
+    if (!el('ekranPodsumowanie').classList.contains('ukryte')) rysujPodsumowanie_();
   }).catch(function(){
-    el('listaWpisow').innerHTML = '<div class="srodek">Brak połączenia.</div>';
+    if (!zCache) el('listaWpisow').innerHTML = '<div class="srodek">Brak połączenia.</div>';
   });
 }
 el('pokazAnulowane').onchange = rysujWpisy;
@@ -2048,6 +2128,104 @@ function kmDniaHtml_(w, jed, kolor){
 }
 // ========== E-26 KONIEC ==========
 
+// ========== E-07 (10.08.2026): Podsumowanie miesiąca dla pojazdu ==========
+// Wzorem floty (pkt 19 — "Podsumowanie miesiąca"), ale per POJAZD zamiast
+// per kierowca (decyzja Marka 10.08.2026: ewidencja jest zorganizowana
+// wokół pulpitu maszyny, nie jednej wspólnej listy). Zawsze bieżący
+// miesiąc kalendarzowy, dokładnie jak we flocie. Liczone WYŁĄCZNIE z
+// STAN.wpisy, już wczytanego dla otwartej maszyny — bez nowego zapytania
+// do API, więc otwiera się natychmiast.
+function odcienKategoriiSerwisu_(nazwa){
+  var h = 0;
+  for (var i = 0; i < nazwa.length; i++) h = (h * 31 + nazwa.charCodeAt(i)) % 360;
+  return h;
+}
+function kafelPodsumowania_(etykieta, wartosc, sub, odcien){
+  var div = document.createElement('div');
+  div.className = 'metryka';
+  if (odcien != null) div.style.background = 'hsla(' + odcien + ', 70%, 50%, .13)';
+  div.innerHTML = '<div class="m-et">' + bezpiecznyTekst(etykieta) + '</div>' +
+    '<div class="m-w">' + wartosc + '</div>' +
+    (sub ? '<div class="m-sub">' + sub + '</div>' : '');
+  return div;
+}
+function otworzPodsumowanie(){
+  var j = STAN.aktywna;
+  if (!j) { pokazEkran('ekranStart'); return; }
+  el('podsumowanieTytul').textContent = 'Podsumowanie — ' + nazwaMiesiaca_(dzisiajISO().slice(0, 7));
+  el('podsumowaniePodtytul').textContent = j.tytul + ' · ' + j.podtytul;
+  pokazEkran('ekranPodsumowanie');
+  rysujPodsumowanie_();
+}
+function rysujPodsumowanie_(){
+  var j = STAN.aktywna;
+  if (!j) return;
+  var jed = j.jednostkaLicznika || '';
+  var biezacyMc = dzisiajISO().slice(0, 7);
+  var glowne = el('podsumowanieGlowne'), kafelki = el('podsumowanieKafelki');
+  glowne.innerHTML = '';
+  kafelki.innerHTML = '';
+  el('podsumowanieKategorieNaglowek').classList.add('ukryte');
+
+  var wpisy = (STAN.wpisy || []).filter(function(w){
+    return !w.anulowany && w.data.slice(0, 7) === biezacyMc;
+  });
+  if (!wpisy.length) {
+    el('podsumowaniePusto').classList.remove('ukryte');
+    return;
+  }
+  el('podsumowaniePusto').classList.add('ukryte');
+
+  glowne.appendChild(kafelPodsumowania_('Wpisy', String(wpisy.length), '', null));
+
+  // Suma km/mtg w miesiącu — ten sam mechanizm co "km/mtg tego dnia" (E-26)
+  // przy każdym wpisie na liście: różnica do NASTĘPNEGO wpisu tej samej
+  // maszyny (licznik poranny, D-x). Liczymy tylko wpisy z policzalną,
+  // nieujemną różnicą — dokładnie te same, które na liście pokazują
+  // strzałkę "↳ X km/mtg tego dnia" (spójność z tym, co kierowca już widzi).
+  var sumaLicznika = 0, majaLicznik = 0;
+  wpisy.forEach(function(w){
+    if (w.licznik === '' || w.licznik == null) return;
+    var nastepny = nastepnyWpisJednostki_(w);
+    if (!nastepny) return;
+    var roznica = Number(nastepny.licznik) - Number(w.licznik);
+    if (isNaN(roznica) || roznica < 0) return;
+    sumaLicznika += roznica;
+    majaLicznik++;
+  });
+  glowne.appendChild(kafelPodsumowania_(
+    'Suma ' + (jed || 'licznika') + ' w miesiącu',
+    majaLicznik ? formatLicznik_(sumaLicznika) + (jed ? ' ' + jed : '') : '—',
+    majaLicznik < wpisy.length ? (wpisy.length - majaLicznik) + ' wpis(ów) bez policzalnej różnicy' : '',
+    null
+  ));
+
+  // Rozbicie po kategoriach serwisowych — "Serwis — kategoria" to
+  // checkboxy sklejone przecinkiem (od E-22), więc jeden wpis może wpaść
+  // do kilku kategorii naraz; liczymy WYSTĄPIENIA kategorii, nie wpisy.
+  var kat = {};
+  wpisy.forEach(function(w){
+    if (!w.serwisKategoria) return;
+    String(w.serwisKategoria).split(',').forEach(function(nazwaSurowa){
+      var nazwa = nazwaSurowa.trim();
+      if (!nazwa) return;
+      kat[nazwa] = (kat[nazwa] || 0) + 1;
+    });
+  });
+  var nazwyKat = Object.keys(kat).sort(function(a, b){ return kat[b] - kat[a]; });
+  if (nazwyKat.length) {
+    el('podsumowanieKategorieNaglowek').classList.remove('ukryte');
+    nazwyKat.forEach(function(nazwa){
+      var n = kat[nazwa];
+      kafelki.appendChild(kafelPodsumowania_(nazwa, String(n),
+        n === 1 ? '1 wpis' : n + ' wpisy(-ów)', odcienKategoriiSerwisu_(nazwa)));
+    });
+  }
+}
+el('wpisyPodsumowanieBtn').onclick = otworzPodsumowanie;
+el('podsumowanieWstecz').onclick = function(){ pokazEkran('ekranWpisy'); };
+// ========== E-07 KONIEC ==========
+
 function rysujWpisy(){
   var j = STAN.aktywna;
   var pokazAnul = el('pokazAnulowane').checked;
@@ -2069,10 +2247,18 @@ function rysujWpisy(){
       // Zwijanie "bo kierowca zadeklarował" czeka na E-08 (ewidencja nie ma
       // dziś takiej deklaracji).
       var zwiniety = !!w.zwiniety;
+      // E-07 (10.08.2026, wzorem floty): miesiąc, który już minął, ma
+      // wpisy i NIE jest zwinięty (czyli nie zamknięty przez Marka ani
+      // zadeklarowany dla tej maszyny — patrz `zwiniety` w API.gs) — ten
+      // sam sygnał co baner „Skończył się …” na Starcie, tylko widoczny
+      // wprost przy każdym takim miesiącu na liście, nie tylko najstarszym.
+      var biezacyMc = dzisiajISO().slice(0, 7);
+      var zalegly = !zwiniety && m !== biezacyMc;
       html += '<div class="wpisy-naglowek-miesiac' + (zwiniety ? ' zwijalny' : '') +
           '" data-toggle-miesiac="' + m + '">' +
         MIESIACE[Number(m.slice(5,7)) - 1] + ' ' + m.slice(0,4) +
-        (zwiniety ? ' <span class="plakietka">zamknięty — podgląd</span> <span class="naglowek-strzalka">▸</span>' : '') +
+        (zwiniety ? ' <span class="plakietka">zamknięty — podgląd</span> <span class="naglowek-strzalka">▸</span>'
+          : (zalegly ? ' <span class="plakietka plakietka-zalegly">zaległy</span>' : '')) +
         '</div>';
       html += '<div class="wpisy-grupa-miesiaca' + (zwiniety ? ' ukryte' : '') +
         '" data-grupa-miesiaca="' + m + '">';
