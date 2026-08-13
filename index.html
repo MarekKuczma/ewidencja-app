@@ -353,6 +353,22 @@
     border-top-color:#fff; border-radius:50%; animation:kreciSie .8s linear infinite;}
   .overlay-zapis .tekst{color:#fff; font-size:16px; font-weight:600;}
   @keyframes kreciSie{to{transform:rotate(360deg);}}
+  /* Z-80: pasek nad listą „Moje wpisy". Lista rysuje się od razu z pamięci
+     telefonu, a w tle leci pobranie świeżych danych — ten pasek mówi wprost,
+     że to, co widać, może być jeszcze nieaktualne. Bez niego kierowca nie miał
+     jak odróżnić „to są wszystkie moje wpisy" od „trwa dociąganie".
+     Identyczny blok jest we flocie — zmieniasz tu, zmień i tam. */
+  .pasek-odswiezania{display:flex; align-items:center; gap:8px; margin:0 0 10px;
+    padding:7px 11px; border-radius:9px; font-size:13px; line-height:1.35;}
+  .pasek-odswiezania.ladowanie{background:rgba(41,128,185,.12); color:#1f6391;}
+  .pasek-odswiezania.offline{background:rgba(243,156,18,.14); color:#8a5b00;}
+  .pasek-odswiezania .mini-spinner{width:13px; height:13px; flex:none;
+    border:2px solid rgba(31,99,145,.28); border-top-color:#1f6391;
+    border-radius:50%; animation:kreciSie .8s linear infinite;}
+  [data-motyw="ciemny"] .pasek-odswiezania.ladowanie{background:rgba(41,128,185,.22); color:#8fc4e8;}
+  [data-motyw="ciemny"] .pasek-odswiezania.offline{background:rgba(243,156,18,.2); color:#f0c060;}
+  [data-motyw="ciemny"] .pasek-odswiezania .mini-spinner{
+    border-color:rgba(143,196,232,.3); border-top-color:#8fc4e8;}
 </style>
 </head>
 <body>
@@ -570,6 +586,9 @@
         <input type="checkbox" id="pokazAnulowane" style="width:auto; min-height:auto;">
         Pokaż anulowane wpisy
       </label>
+      <!-- Z-80: stan świeżości listy. Chowany domyślnie, sterowany przez
+           `pokazPasekWpisow_`. -->
+      <div id="pasekWpisow" class="pasek-odswiezania ukryte" style="margin-top:12px;"></div>
       <div id="listaWpisow" style="margin-top:12px;"><div class="srodek">Ładowanie…</div></div>
     </div>
   </section>
@@ -1903,6 +1922,10 @@ el('zapiszBtn').onclick = function(){
       if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
       pokazSukces(odp);
       odswiezStart();   // przy poprawce stan jednostki może się zmienić dowolnie
+      // Z-80: poprawka nie idzie przez `zastosujStanPo_`, więc cache historii
+      // trzeba odświeżyć tutaj — inaczej lista pokazywałaby wersję sprzed
+      // poprawki i kierowca poprawiałby ten sam wpis drugi raz.
+      odswiezCacheHistorii_(payload.idPojazdu);
     }).catch(function(){
       schowajOverlay();
       komunikat('wpisKomunikat', 'Brak połączenia — poprawki nie da się zapisać offline. Spróbuj później.', 'blad');
@@ -1967,6 +1990,31 @@ function zastosujStanPo_(stanPo){
     if (c) { c.jednostki = STAN.jednostki; localStorage.setItem(KLUCZ_CACHE, JSON.stringify(c)); }
   } catch(e){}
   STAN.wpisy = [];   // historia wymaga przeładowania
+  // Z-80: cache historii tej maszyny właśnie się zdezaktualizował (doszedł
+  // nowy wpis). Dociągamy świeży w tle; gdy się nie uda — kasujemy cache,
+  // bo lista bez właśnie zapisanego wpisu zachęca do wpisania go drugi raz.
+  // Lepiej pokazać „Ładowanie…" niż niepełną prawdę.
+  odswiezCacheHistorii_(stanPo.idPojazdu);
+}
+
+/** Z-80: odświeżenie cache historii maszyny „w tle", po ID.
+    Flaga `trwaOdswiezanieHistorii_` chroni przed lawiną żądań: wysyłka
+    kolejki offline woła `zastosujStanPo_` po KAŻDYM wpisie, a paczka
+    zaległych to bywa kilkanaście wpisów pod rząd — bez tego poleciałoby
+    tyle samo zapytań o historię. Wystarczy jedno na końcu, więc gdy coś
+    już leci, tylko zaznaczamy, że trzeba będzie powtórzyć. */
+var trwaOdswiezanieHistorii_ = {};
+function odswiezCacheHistorii_(idPojazdu){
+  if (!idPojazdu) return;
+  if (!navigator.onLine) { usunWpisyCache_(idPojazdu); return; }
+  if (trwaOdswiezanieHistorii_[idPojazdu]) { trwaOdswiezanieHistorii_[idPojazdu] = 'ponow'; return; }
+  trwaOdswiezanieHistorii_[idPojazdu] = true;
+  odswiezHistorie_({ idPojazdu: idPojazdu }).then(function(wynik){
+    var ponow = trwaOdswiezanieHistorii_[idPojazdu] === 'ponow';
+    delete trwaOdswiezanieHistorii_[idPojazdu];
+    if (!wynik.ok) { usunWpisyCache_(idPojazdu); return; }
+    if (ponow) odswiezCacheHistorii_(idPojazdu);
+  });
 }
 
 /**
@@ -2051,6 +2099,21 @@ function wpisyCache_(idPojazdu){
   var c = wczytajWpisyCache_()[idPojazdu];
   return c ? c.wpisy : null;
 }
+/** Z-80: kiedy ten cache został pobrany — do etykiety „dane sprzed X". */
+function wpisyCacheCzas_(idPojazdu){
+  var c = wczytajWpisyCache_()[idPojazdu];
+  return c ? c.czas : 0;
+}
+/** Z-80: skasowanie cache jednej maszyny. Używane, gdy WIEMY, że jest
+    nieaktualny, a odświeżenie się nie udało — lepiej pokazać „Ładowanie…"
+    niż listę bez właśnie zapisanego wpisu (patrz komentarz przy
+    `odswiezHistorie_`). */
+function usunWpisyCache_(idPojazdu){
+  var c = wczytajWpisyCache_();
+  if (!(idPojazdu in c)) return;
+  delete c[idPojazdu];
+  try { localStorage.setItem(KLUCZ_WPISY_CACHE, JSON.stringify(c)); } catch (e) {}
+}
 function zapiszWpisyCache_(idPojazdu, wpisy){
   var c = wczytajWpisyCache_();
   c[idPojazdu] = { czas: Date.now(), wpisy: wpisy };
@@ -2061,6 +2124,80 @@ function zapiszWpisyCache_(idPojazdu, wpisy){
   }
   try { localStorage.setItem(KLUCZ_WPISY_CACHE, JSON.stringify(c)); } catch (e) {}
 }
+// ========== Z-80 (13.08.2026): świeżość listy „Moje wpisy" ==========
+// Lista pokazuje się od razu z pamięci telefonu, a świeże dane lecą w tle.
+// Warunek, bez którego to by SZKODZIŁO: cache musi być wiarygodny. Lista bez
+// właśnie zapisanego wpisu zachęca kierowcę, żeby wpisał go drugi raz — czyli
+// generuje dokładnie ten duplikat, z którym walczymy (E008, Z-77). Dlatego
+// KAŻDE odświeżenie historii idzie przez `odswiezHistorie_` (jedna funkcja,
+// która przy okazji zapisuje cache), a pasek wyżej mówi wprost, kiedy dane
+// mogą być jeszcze nieaktualne.
+function pokazPasekWpisow_(tryb, czasCache, oczekujace){
+  var p = el('pasekWpisow');
+  if (!p) return;
+  if (!tryb) { p.className = 'pasek-odswiezania ukryte'; p.innerHTML = ''; return; }
+  if (tryb === 'ladowanie') {
+    p.className = 'pasek-odswiezania ladowanie';
+    p.innerHTML = '<span class="mini-spinner"></span><span>Odświeżam listę…</span>';
+    return;
+  }
+  p.className = 'pasek-odswiezania offline';
+  var tekst = '⚠ Brak połączenia — pokazane dane pochodzą z ' + wiekCache_(czasCache) + '.';
+  // Bez tego zdania kierowca, który zapisał wpis offline, nie widzi go na
+  // liście i wpisuje drugi raz. Kolejka nie trafia do historii, dopóki nie
+  // dojdzie do serwera — trzeba to powiedzieć wprost.
+  if (oczekujace) {
+    tekst += ' ' + oczekujace + (oczekujace === 1 ? ' wpis czeka' : ' wpisy/-ów czeka') +
+      ' w kolejce i nie ma go jeszcze na tej liście.';
+  }
+  p.innerHTML = '<span>' + tekst + '</span>';
+}
+/** Ile wpisów tej maszyny czeka w kolejce offline na wysłanie. */
+function oczekujaceWKolejce_(idPojazdu){
+  return kolejka().filter(function(w){
+    return w.status === 'oczekuje' && w.dane && w.dane.idPojazdu === idPojazdu;
+  }).length;
+}
+/** Czytelny wiek danych z cache, do paska offline. */
+function wiekCache_(czas){
+  if (!czas) return 'ostatniego pobrania';
+  var min = Math.round((Date.now() - czas) / 60000);
+  if (min < 2) return 'przed chwilą';
+  if (min < 60) return 'sprzed ' + min + ' min';
+  var godz = Math.round(min / 60);
+  if (godz < 24) return 'sprzed ' + godz + (godz === 1 ? ' godziny' : ' godzin');
+  var dni = Math.round(godz / 24);
+  return 'sprzed ' + dni + (dni === 1 ? ' dnia' : ' dni');
+}
+
+/**
+ * JEDNO miejsce, przez które przechodzi każde pobranie historii maszyny.
+ * Zawsze: aktualizuje STAN.wpisy, zapisuje cache i przerysowuje TO, co
+ * akurat jest na ekranie. Wcześniej cache zapisywał się tylko w jednym
+ * miejscu (po wejściu na listę), więc po zapisie wpisu zostawał nieaktualny.
+ * Zwraca { ok, wiadomosc } — bez rzucania wyjątku, żeby wołający nie musiał
+ * pamiętać o `.catch`.
+ */
+function odswiezHistorie_(j){
+  if (!j) return Promise.resolve({ ok: false, wiadomosc: '' });
+  return wolajAPI('historiaPojazdu', { idPojazdu: j.idPojazdu }).then(function(odp){
+    if (!odp || !odp.ok) return { ok: false, wiadomosc: (odp && odp.wiadomosc) || '' };
+    zapiszWpisyCache_(j.idPojazdu, odp.wpisy || []);
+    // Ekrany aktualizujemy TYLKO wtedy, gdy odpowiedź dotyczy maszyny, którą
+    // kierowca ma teraz otwartą. Bez tego odświeżenie w tle uruchomione dla
+    // poprzedniej maszyny mogło wpisać jej historię do STAN.wpisy już po
+    // przełączeniu na inną.
+    if (!STAN.aktywna || STAN.aktywna.idPojazdu !== j.idPojazdu) return { ok: true, wiadomosc: '' };
+    STAN.wpisy = odp.wpisy || [];
+    if (!el('ekranWpisy').classList.contains('ukryte')) rysujWpisy();
+    if (!el('ekranPodsumowanie').classList.contains('ukryte')) rysujPodsumowanie_();
+    if (!el('ekranWpis').classList.contains('ukryte')) odswiezPodpowiedzLicznika();
+    return { ok: true, wiadomosc: '' };
+  }).catch(function(){
+    return { ok: false, wiadomosc: '' };
+  });
+}
+
 function otworzWpisy(j){
   if (!j) { pokazEkran('ekranStart'); return; }
   STAN.aktywna = j;
@@ -2073,22 +2210,27 @@ function otworzWpisy(j){
   else el('listaWpisow').innerHTML = '<div class="srodek">Ładowanie…</div>';
 
   if (!navigator.onLine) {
-    if (!zCache) el('listaWpisow').innerHTML = '<div class="srodek">Brak połączenia — brak zapisanych wpisów tej maszyny.</div>';
+    var czeka = oczekujaceWKolejce_(j.idPojazdu);
+    if (!zCache) {
+      el('listaWpisow').innerHTML = '<div class="srodek">Brak połączenia — brak zapisanych wpisów tej maszyny.' +
+        (czeka ? '<br>' + czeka + (czeka === 1 ? ' wpis czeka' : ' wpisy/-ów czeka') + ' w kolejce na wysłanie.' : '') +
+        '</div>';
+      pokazPasekWpisow_(null);
+    } else {
+      pokazPasekWpisow_('offline', wpisyCacheCzas_(j.idPojazdu), czeka);
+    }
     return;
   }
-  wolajAPI('historiaPojazdu', { idPojazdu: j.idPojazdu }).then(function(odp){
-    if (!odp.ok) {
-      if (!zCache) el('listaWpisow').innerHTML = '<div class="srodek">' + bezpiecznyTekst(odp.wiadomosc||'Błąd') + '</div>';
-      return;
+
+  pokazPasekWpisow_('ladowanie');
+  odswiezHistorie_(j).then(function(wynik){
+    pokazPasekWpisow_(null);
+    // Mamy cache — nie kasujemy go komunikatem błędu; kierowca woli widzieć
+    // swoje wpisy niż czerwony napis.
+    if (!wynik.ok && !zCache) {
+      el('listaWpisow').innerHTML = '<div class="srodek">' +
+        bezpiecznyTekst(wynik.wiadomosc || 'Nie udało się pobrać wpisów. Spróbuj za chwilę.') + '</div>';
     }
-    STAN.wpisy = odp.wpisy || [];
-    zapiszWpisyCache_(j.idPojazdu, STAN.wpisy);
-    rysujWpisy();
-    // Podsumowanie liczy z tych samych danych — jeśli akurat otwarte
-    // (np. kierowca wrócił do niego z tła), odśwież je razem z listą.
-    if (!el('ekranPodsumowanie').classList.contains('ukryte')) rysujPodsumowanie_();
-  }).catch(function(){
-    if (!zCache) el('listaWpisow').innerHTML = '<div class="srodek">Brak połączenia.</div>';
   });
 }
 el('pokazAnulowane').onchange = rysujWpisy;
@@ -2412,6 +2554,9 @@ function rysujWpisy(){
         w.wspolkierowcy = o.wspolkierowcy;
         w.jestemWspolkierowca = o.jestemWspolkierowca;
         rysujWpisy();
+        // Z-80: zmiana jest już w STAN.wpisy — zapisujemy ją też w pamięci
+        // telefonu, żeby po ponownym wejściu nie mignęła stara wersja.
+        if (STAN.aktywna) zapiszWpisyCache_(STAN.aktywna.idPojazdu, STAN.wpisy);
       }).catch(function(){
         schowajOverlay();
         alert('Brak połączenia.');
@@ -2519,10 +2664,16 @@ el('startNowyWpisBtn').onclick = function(){
   otworzWpis(STAN.aktywna);
 };
 
+// Z-80: przepięte na `odswiezHistorie_` — ta sama praca, ale przy okazji
+// zapisuje cache (wcześniej to pobranie ginęło i lista wchodziła na stary).
 function dociagnijHistorie_(j){
-  wolajAPI('historiaPojazdu', { idPojazdu: j.idPojazdu }).then(function(odp){
-    if (odp && odp.ok) { STAN.wpisy = odp.wpisy || []; odswiezPodpowiedzLicznika(); }
-  }).catch(function(){});
+  var zCache = wpisyCache_(j.idPojazdu);
+  if (zCache && !(STAN.wpisy || []).length) {
+    // Jest co pokazać od ręki — podpowiedź licznika nie musi czekać na sieć.
+    STAN.wpisy = zCache;
+    odswiezPodpowiedzLicznika();
+  }
+  odswiezHistorie_(j);
 }
 el('zmienPojazdBtn').onclick = function(){ localStorage.removeItem(KLUCZ_POJAZD); pokazWyborPojazdu(); };
 
