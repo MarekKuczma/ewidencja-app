@@ -99,7 +99,11 @@
   #motywBtn,#paletaBtn{background:rgba(255,255,255,.2); border:none; border-radius:10px;
     width:40px; height:40px; font-size:18px; color:#fff; flex:none; min-height:auto;
     display:inline-flex; align-items:center; justify-content:center; padding:0;}
-  .ikona-paletki{fill:var(--paleta-ikona);}
+  /* Z-82 (uwaga Marka o spójności): korpus paletki konturowy jak cały zestaw,
+     kolor palety został na kropkach farby. */
+  .ikona-paletki{fill:none; stroke:currentColor; stroke-width:1.75;
+    stroke-linecap:round; stroke-linejoin:round;}
+  .paleta-kropka{fill:var(--paleta-ikona); stroke:none;}
   main{max-width:560px; margin:0 auto; padding:14px 14px 90px;}
   .karta{background:var(--karta); border-radius:14px; padding:16px;
     box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:14px;}
@@ -440,9 +444,58 @@
     .pole-blad-puls input, .pole-blad-puls select, .pole-blad-puls textarea,
     input:focus, select:focus, textarea:focus{ animation:none; }
   }
+  /* Z-82: ikony konturowe — kolor z `color` rodzica (currentColor), rozmiar
+     z font-size kontenera (1em). Patrz sprite na początku <body>. */
+  .ikona{width:1em; height:1em; flex:none; vertical-align:-.125em;
+    fill:none; stroke:currentColor; stroke-width:1.75;
+    stroke-linecap:round; stroke-linejoin:round;}
 </style>
 </head>
 <body>
+<!-- ===== Z-82: sprite ikon (ikony/ikony-sprite.svg) — wspólny dla obu appek.
+     Zasady: 24x24, kontur 1.75, currentColor; <symbol> BEZ atrybutów
+     fill/stroke (dziedziczenie z reguły .ikona na końcu <style>). Rodzina
+     pojazdów 1:1 z "Panel Floty.html" (rodzajIcon v51) = ta sama, którą ta
+     appka ma w ikonaTypu (D57). Dokumentacja: instrukcja ikony.txt ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="ic-car" viewBox="0 0 24 24"><path d="M5 13l1.5-4.5A2 2 0 018.4 7h7.2a2 2 0 011.9 1.5L19 13"/><path d="M4 13h16a1 1 0 011 1v3h-2"/><path d="M5 17H3v-3a1 1 0 011-1"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/><path d="M9.5 17h5"/></symbol>
+<symbol id="ic-bus" viewBox="0 0 24 24"><path d="M3 13l2-6h11l3 6"/><path d="M3 13h18v5h-2"/><path d="M7 18H5v-5"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M10 18h5"/></symbol>
+<symbol id="ic-digger" viewBox="0 0 24 24"><path d="M3 18h10"/><circle cx="5" cy="18" r="1.6"/><circle cx="11" cy="18" r="1.6"/><path d="M4 15h8v-4H6l-2 4z"/><path d="M12 12l4-6 4 2-3 5"/><path d="M20 8l1 4-3 1"/></symbol>
+<symbol id="ic-hds" viewBox="0 0 24 24"><path d="M3 13l2-6h6l2 6"/><path d="M3 13h18v5h-2"/><path d="M7 18H5v-5"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M13 7l6-3"/><path d="M19 4v5"/><path d="M19 9l-1.5 1.5"/></symbol>
+<symbol id="ic-trailer" viewBox="0 0 24 24"><rect x="2" y="8" width="15" height="7" rx="1"/><path d="M17 12h5"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="12" cy="17.5" r="1.8"/></symbol>
+<symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></symbol>
+<symbol id="ic-clip" viewBox="0 0 24 24"><path d="M9 4.5h6M9 4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5M9 4.5H7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2M9 4.5v2h6v-2M9 11h6M9 15h4"/></symbol>
+<symbol id="ic-money" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 10.2v0M18 15v0"/></symbol>
+<symbol id="ic-fuel" viewBox="0 0 24 24"><path d="M5 20.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14.5M3.8 20.5h10.4M5.8 10h6.4M13 12.5h1.6a1.4 1.4 0 0 1 1.4 1.4v3.1a1.5 1.5 0 0 0 3 0V9.6a2 2 0 0 0-.6-1.4L16 5.8"/></symbol>
+<symbol id="ic-cal" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M8 14h2M14 14h2M8 17h2"/></symbol>
+<symbol id="ic-gauge" viewBox="0 0 24 24"><path d="M4.5 15.5a8 8 0 1 1 15 0"/><path d="M12 13.5 15.5 9"/><circle cx="12" cy="14.5" r="1.2"/><path d="M4.5 19h15"/></symbol>
+<symbol id="ic-drop" viewBox="0 0 24 24"><path d="M12 3.5s6 6.6 6 10.7a6 6 0 0 1-12 0C6 10.1 12 3.5 12 3.5Z"/><path d="M9.5 14.5a2.6 2.6 0 0 0 2.2 2.5"/></symbol>
+<symbol id="ic-site" viewBox="0 0 24 24"><path d="M4 20.5h16M7 20.5V9l10-4.5v16M10.5 9.5v2.5M13.5 8.5v3.5M10.5 15v2.5M13.5 14.5V18"/></symbol>
+<symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 4.5v14a1.5 1.5 0 0 0 1.5 1.5H20M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.5 2.6 4.9-5.4"/></symbol>
+<symbol id="ic-home" viewBox="0 0 24 24"><path d="m4 11 8-7 8 7M6.5 9.5v9A1.5 1.5 0 0 0 8 20h8a1.5 1.5 0 0 0 1.5-1.5v-9M10 20v-5.5h4V20"/></symbol>
+<symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M4 9V7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V9a2.6 2.6 0 0 0 0 6v1.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5V15a2.6 2.6 0 0 0 0-6Z"/><path d="M13.5 7v2M13.5 11v2M13.5 15v2"/></symbol>
+<symbol id="ic-cart" viewBox="0 0 24 24"><circle cx="9.5" cy="19" r="1.4"/><circle cx="16.5" cy="19" r="1.4"/><path d="M3.5 4.5h2.2L8 14.7a1.5 1.5 0 0 0 1.5 1.2h6.8a1.5 1.5 0 0 0 1.5-1.1l1.7-6.6H6.4"/></symbol>
+<symbol id="ic-pencil" viewBox="0 0 24 24"><path d="m5 19 .9-3.7L16.7 4.5a1.6 1.6 0 0 1 2.3 0l.5.5a1.6 1.6 0 0 1 0 2.3L8.7 18.1 5 19ZM14.8 6.4l2.8 2.8"/></symbol>
+<symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V5A1.5 1.5 0 0 1 11 3.5h2A1.5 1.5 0 0 1 14.5 5v1.5M6.5 6.5l.8 12A2 2 0 0 0 9.3 20.5h5.4a2 2 0 0 0 2-1.9l.8-12.1M10 10.5v6M14 10.5v6"/></symbol>
+<symbol id="ic-moon" viewBox="0 0 24 24"><path d="M19.5 14.5A7.8 7.8 0 0 1 9.5 4.5a8 8 0 1 0 10 10Z"/></symbol>
+<symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v1.8M12 19.2V21M21 12h-1.8M4.8 12H3M18.4 5.6l-1.3 1.3M6.9 17.1l-1.3 1.3M18.4 18.4l-1.3-1.3M6.9 6.9 5.6 5.6"/></symbol>
+<symbol id="ic-key" viewBox="0 0 24 24"><circle cx="8" cy="15.5" r="4"/><path d="m11 12.5 8.5-8.5M16.5 7l2.5 2.5M13.8 9.7l2 2"/></symbol>
+<symbol id="ic-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20a7.3 7.3 0 0 1 14 0"/></symbol>
+<symbol id="ic-flask" viewBox="0 0 24 24"><path d="M10 3.5h4M10.8 3.5v5.2L5.9 17a2.2 2.2 0 0 0 2 3.5h8.2a2.2 2.2 0 0 0 2-3.5l-4.9-8.3V3.5M8.2 14.5h7.6"/></symbol>
+<symbol id="ic-link" viewBox="0 0 24 24"><path d="M10 14 14 10M8.5 12 6.8 13.7a3.4 3.4 0 0 0 4.8 4.8l1.7-1.7M15.5 12l1.7-1.7a3.4 3.4 0 0 0-4.8-4.8L10.7 7.2"/></symbol>
+<symbol id="ic-note" viewBox="0 0 24 24"><path d="M6.5 3.5h11A1.5 1.5 0 0 1 19 5v14a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V5a1.5 1.5 0 0 1 1.5-1.5ZM9 8.5h6M9 12h6M9 15.5h3.5"/></symbol>
+<symbol id="ic-mega" viewBox="0 0 24 24"><path d="M4 10.5v3a1 1 0 0 0 1 1h2.5L18 19V5L7.5 9.5H5a1 1 0 0 0-1 1ZM8 15v3.3a1.2 1.2 0 0 0 1.2 1.2h1"/></symbol>
+<symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2"/></symbol>
+<symbol id="ic-warn" viewBox="0 0 24 24"><path d="M12 4 3.5 19h17L12 4ZM12 10v4M12 16.8v.2"/></symbol>
+<symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 1 5.4-4.1L17 5.3l1.7 1.7 2.9-2.9a4 4 0 0 1-5.1 5.4l-8 8a2 2 0 0 1-2.9-2.9l8-8.1Z"/></symbol>
+<symbol id="ic-pin" viewBox="0 0 24 24"><path d="M9 3.5h6l-.7 6.2 2.7 3.3H7l2.7-3.3L9 3.5ZM12 13v7.5"/></symbol>
+<symbol id="ic-swap" viewBox="0 0 24 24"><path d="M4.5 9.5a8 8 0 0 1 13.6-2.7M18.5 3.5v3.7h-3.7M19.5 14.5a8 8 0 0 1-13.6 2.7M5.5 20.5v-3.7h3.7"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="ic-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18M6.5 14.5h4"/></symbol>
+<symbol id="ic-chevron" viewBox="0 0 24 24"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></symbol>
+<symbol id="ic-bottle" viewBox="0 0 24 24"><path d="M10.2 3.5h3.6M10.6 3.5v3.2L8.3 10a3 3 0 0 0-.3 1.3v7.2A2 2 0 0 0 10 20.5h4a2 2 0 0 0 2-2v-7.2a3 3 0 0 0-.3-1.3l-2.3-3.3V3.5M8.2 13.5h7.6"/></symbol>
+</defs></svg>
 
 <header>
   <img src="./ikona-192.png" alt="Rinkon">
@@ -450,14 +503,18 @@
     <h1>Ewidencja Floty Rinkon</h1>
     <div class="kto" id="naglowekKto"></div>
   </div>
-  <button type="button" id="motywBtn" aria-label="Zmień motyw">🌙</button>
+  <button type="button" id="motywBtn" aria-label="Zmień motyw"></button>
   <button type="button" id="paletaBtn" aria-label="Zmień paletę kolorów">
+    <!-- Z-82 (uwaga Marka): paletka przerysowana na KONTUR 1.75, spójnie
+         z resztą zestawu. Podpowiedź koloru palety przeniesiona z korpusu
+         na kropki farby (--paleta-ikona) — korpus jest teraz biały jak
+         księżyc/słońce obok. -->
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path class="ikona-paletki" d="M12 2C6.48 2 2 6.15 2 11.2c0 3.1 2.6 4.4 4.4 4.4h1.7c.7 0 1.3.6 1.3 1.3 0 .4-.2.8-.5 1.1-.6.5-.9 1.2-.9 1.9 0 1.2 1.1 2.1 2.5 2.1 5.5 0 9.5-4.4 9.5-9.9C20 6.36 16.6 2 12 2Z"/>
-      <circle cx="7.5" cy="10.5" r="1.4" fill="#fff"/>
-      <circle cx="11.5" cy="7" r="1.4" fill="#fff"/>
-      <circle cx="16" cy="9" r="1.4" fill="#fff"/>
-      <circle cx="16" cy="13.5" r="1.4" fill="#fff"/>
+      <path class="ikona-paletki" d="M12 2.9c-4.8 0-8.9 3.7-8.9 8.3 0 2.6 2.2 3.7 3.7 3.7h1.7c1.2 0 2.2 1 2.2 2.2 0 .6-.3 1.2-.7 1.6-.4.4-.6.8-.6 1.2 0 .7.7 1.3 1.6 1.3 4.9 0 8.6-3.9 8.6-8.9 0-5.2-3.5-9.4-7.6-9.4Z"/>
+      <circle class="paleta-kropka" cx="7.6" cy="10.3" r="1.3"/>
+      <circle class="paleta-kropka" cx="11.6" cy="6.9" r="1.3"/>
+      <circle class="paleta-kropka" cx="15.9" cy="9" r="1.3"/>
+      <circle class="paleta-kropka" cx="15.9" cy="13.3" r="1.3"/>
     </svg>
   </button>
 </header>
@@ -470,7 +527,7 @@
   <!-- Brak kodu (D69) — awaryjne wejście, gdy link nie zadziałał -->
   <div id="widokBrakKodu" class="karta ukryte">
     <div class="srodek">
-      <p style="font-size:40px; margin:0;">🔑</p>
+      <p style="font-size:40px; margin:0;"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-key"></use></svg></p>
       <p><b>Otwórz aplikację ze swojego osobistego linku.</b></p>
       <p style="font-size:15px;" id="brakKoduPodpowiedz"></p>
       <div style="margin-top:16px; text-align:left;">
@@ -519,32 +576,35 @@
         <!-- Z-81: opakowanie .przycisk-glow = obracająca się obwódka;
              przycisk w środku bez zmian (id, handler). -->
         <div class="przycisk-glow">
-          <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
+          <button class="przycisk" id="startNowyWpisBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Nowy wpis</button>
         </div>
-        <button class="przycisk-drugi" id="zamykamBtn">✅ Zamykam miesiąc</button>
+        <button class="przycisk-drugi" id="zamykamBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-check"></use></svg> Zamykam miesiąc</button>
 
         <!-- W-12 (07.08.2026): rozwijane pudełko zastąpione oknem <dialog>
              — patrz #dialogMiesiac niżej. Cały przebieg „Zamykam miesiąc"
              ujednolicony z flotą (decyzja Marka: kierowcy znają ten proces
              z floty, ma wyglądać i działać tak samo w obu appkach). -->
 
-        <button class="przycisk-drugi" id="zmienPojazdBtn">🔄 Zmień pojazd</button>
-        <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);">📌 Odepnij ten pojazd</button>
+        <button class="przycisk-drugi" id="zmienPojazdBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-swap"></use></svg> Zmień pojazd</button>
+        <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-pin"></use></svg> Odepnij ten pojazd</button>
       </div>
 
       <!-- Lista jednostek do wyboru -->
       <div id="wyborPojazdu">
         <div id="listaJednostek"></div>
-        <button class="przycisk-drugi" id="dodajJednostkeBtn">＋ Dodaj auto lub koparkę</button>
+        <button class="przycisk-drugi" id="dodajJednostkeBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Dodaj auto lub koparkę</button>
       </div>
 
       <!-- Dodawanie pojazdu z listy (D59) — zamiast wpisywania z ręki -->
       <div id="dodajBox" class="ukryte" style="margin-top:12px;">
         <div class="pole">
-          <label>🚗 Wybierz z listy</label>
+          <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-car"></use></svg> Wybierz z listy</label>
           <select id="wyborNowej"><option value="">— ładowanie… —</option></select>
         </div>
-        <button class="przycisk" id="potwierdzDodanieBtn">Dodaj do moich pojazdów</button>
+        <!-- Z-81 (uzupełnienie, 14.08): glow także tutaj — prośba Marka. -->
+        <div class="przycisk-glow">
+          <button class="przycisk" id="potwierdzDodanieBtn">Dodaj do moich pojazdów</button>
+        </div>
         <button class="przycisk-drugi" id="anulujDodanieBtn">Anuluj</button>
       </div>
     </div>
@@ -557,7 +617,7 @@
       <div id="wpisPodtytul" style="font-size:14px; color:var(--szary); margin:-8px 0 14px;"></div>
 
       <div class="pole" id="poleDataBox">
-        <label>📅 Data <span class="wym">*</span></label>
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-cal"></use></svg> Data <span class="wym">*</span></label>
         <input type="date" id="poleData">
         <div class="blad-pola" id="bladData"></div>
       </div>
@@ -567,7 +627,7 @@
              (ustawienie LICZNIK_MOMENT w arkuszu). Tu jest tylko wartość
              startowa na wypadek, gdyby pierwszy odczyt statusu jeszcze nie
              wrócił — celowo ta sama, co domyślne ustawienie. -->
-        <label>🔢 <span id="etykietaLicznika">Stan licznika na początek dnia</span>
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-gauge"></use></svg> <span id="etykietaLicznika">Stan licznika na początek dnia</span>
           <span id="jednLicznika">(km)</span> <span class="wym">*</span></label>
         <input type="text" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
         <!-- E-16: treść wstawia `zastosujEtykieteLicznika_` — zależy od trybu. -->
@@ -578,7 +638,7 @@
       </div>
 
       <div class="pole" id="poleBudowaBox">
-        <label>🏗️ Budowa <span class="wym">*</span></label>
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-site"></use></svg> Budowa <span class="wym">*</span></label>
         <select id="poleBudowa"></select>
         <div class="blad-pola" id="bladBudowa"></div>
       </div>
@@ -588,7 +648,7 @@
            zapomina, a te trzy zdarzają się na tyle często, że warto je mieć
            przed oczami. Puste = po prostu się nie zapisują. -->
       <div class="pole">
-        <label>⛽ Tankowanie <span class="opcjonalne">(jeśli tankowano)</span></label>
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-fuel"></use></svg> Tankowanie <span class="opcjonalne">(jeśli tankowano)</span></label>
         <div id="listaTankowan"></div>
         <button type="button" class="przycisk-maly" id="dodajTankowanieBtn">+ Dodaj kolejne tankowanie</button>
         <div class="tank-podglad" id="tankPodglad"></div>
@@ -604,12 +664,12 @@
            lub pomiń"). W karcie wpisu (lista „Moje wpisy") zostaje osobny,
            krótki tag „🔧 Serwis" — ta dłuższa etykieta go nie dotyczy. -->
       <div class="pole">
-        <label>🔧 Serwis i inne czynności <span class="opcjonalne">— zaznacz, co dotyczy, albo pomiń</span></label>
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-wrench"></use></svg> Serwis i inne czynności <span class="opcjonalne">— zaznacz, co dotyczy, albo pomiń</span></label>
         <div class="serwis-siatka" id="poleSerwis"></div>
       </div>
 
       <div class="pole">
-        <label>📝 Uwagi</label>
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-note"></use></svg> Uwagi</label>
         <textarea id="poleUwagi" placeholder="opis przeglądu / serwisu / naprawy / wymiany opon lub inne uwagi"></textarea>
       </div>
 
@@ -636,14 +696,14 @@
        obie appki naraz nie musiał uczyć się dwóch nazw tej samej rzeczy. -->
   <section id="ekranSukces" class="ukryte">
     <div class="karta">
-      <div class="sukces-ikona">✅</div>
+      <div class="sukces-ikona"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-check"></use></svg></div>
       <div class="sukces-tekst" id="sTekst">Zapisano</div>
       <div class="sukces-id" id="sId"></div>
       <div class="komunikat uwaga ukryte" id="sOstrzezenia"></div>
-      <button type="button" class="przycisk" id="sKolejny">➕ Dodaj kolejny wpis</button>
+      <button type="button" class="przycisk" id="sKolejny"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Dodaj kolejny wpis</button>
       <div class="dwa">
-        <button type="button" class="przycisk-drugi" id="sWpisy">📋 Moje wpisy</button>
-        <button type="button" class="przycisk-drugi" id="sStart">🏠 Ekran główny</button>
+        <button type="button" class="przycisk-drugi" id="sWpisy"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-clip"></use></svg> Moje wpisy</button>
+        <button type="button" class="przycisk-drugi" id="sStart"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-home"></use></svg> Ekran główny</button>
       </div>
     </div>
   </section>
@@ -657,7 +717,7 @@
              wzorem przycisku „📊 Podsumowanie miesiąca” z floty (pkt 19),
              tylko per pojazd zamiast per kierowca (patrz ekranPodsumowanie
              niżej — dane już wczytane tutaj, więc bez nowego zapytania). -->
-        <button type="button" class="przycisk-maly" id="wpisyPodsumowanieBtn" style="flex:none;">📊 Podsumowanie</button>
+        <button type="button" class="przycisk-maly" id="wpisyPodsumowanieBtn" style="flex:none;"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-chart"></use></svg> Podsumowanie</button>
       </div>
       <div class="p2" id="wpisyPodtytul" style="font-size:14px; color:var(--szary); margin:-6px 0 12px;"></div>
       <label style="display:flex; align-items:center; gap:8px; font-weight:400; color:var(--tekst);">
@@ -697,9 +757,9 @@
      są tu celowo NIE używane: Marek prosił o ikony SVG tylko dla pojazdów
      i maszyn, nawigacja ma zostać spójna z flotą. -->
 <nav id="nawigacja" class="ukryte">
-  <button id="navStart" class="aktywna"><span class="i">🏠</span>Start</button>
-  <button id="navNowy"><span class="i">📝</span>Nowy wpis</button>
-  <button id="navWpisy"><span class="i">📋</span>Moje wpisy</button>
+  <button id="navStart" class="aktywna"><span class="i"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-home"></use></svg></span>Start</button>
+  <button id="navNowy"><span class="i"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-note"></use></svg></span>Nowy wpis</button>
+  <button id="navWpisy"><span class="i"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-clip"></use></svg></span>Moje wpisy</button>
 </nav>
 
 <div class="overlay-zapis ukryte" id="overlay">
@@ -857,6 +917,11 @@ var IKONY = {
   przyczepa: '<rect x="2" y="8" width="15" height="7" rx="1"/><path d="M17 12h5"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="12" cy="17.5" r="1.8"/>',
   inne: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'
 };
+// Z-82: markup ikony konturowej ze sprite'u (patrz początek <body>).
+// Rozmiar dziedziczy z font-size rodzica — świadomie bez width/height.
+function ikonaHTML_(id) {
+  return '<svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+}
 function ikonaTypu(typ, kolor){
   var t = String(typ||'').toLowerCase(), k = 'inne';
   if (t.indexOf('kopark') !== -1 || t.indexOf('ładowarka') !== -1) k = 'koparka';
@@ -878,7 +943,7 @@ var KOLOR_PASKA = { grafit: '#27272a', burgund: '#4c0519' };
 function wczytajMotyw(){
   var m = localStorage.getItem(KLUCZ_MOTYW) || 'jasny';
   document.documentElement.setAttribute('data-motyw', m);
-  el('motywBtn').textContent = m === 'ciemny' ? '🌙' : '☀️';
+  el('motywBtn').innerHTML = ikonaHTML_(m === 'ciemny' ? 'ic-moon' : 'ic-sun'); // Z-82: innerHTML — wstawiamy element
   var p = localStorage.getItem(KLUCZ_PALETA) || KONFIG.PALETA_DOMYSLNA;
   document.documentElement.setAttribute('data-paleta', p);
 
@@ -1228,7 +1293,7 @@ function rysujKomunikaty_(lista){
   var e = el('komunikatMarka');
   if (!lista || !lista.length) { e.style.display = 'none'; e.innerHTML = ''; return; }
   e.style.display = 'block';
-  e.innerHTML = '<div class="km-tytul"><span>📢</span><span>Wiadomość od Marka</span></div>' +
+  e.innerHTML = '<div class="km-tytul"><span>' + ikonaHTML_('ic-mega') + '</span><span>Wiadomość od Marka</span></div>' +
     lista.map(function(t){
       return '<div class="km-wiersz"><span class="km-znaczek">›</span><span>' +
         bezpiecznyTekst(t) + '</span></div>';
@@ -1492,9 +1557,9 @@ function rysujDeklaracje_(j){
 
   // Przycisk zawsze widoczny — zgłoszenie można powtórzyć (np. po dopisaniu
   // zaległego dnia, które automatycznie cofnęło poprzednie).
-  el('zamykamBtn').textContent = (!zalegle.length && j.biezacyZadeklarowany)
-    ? '✅ Miesiąc zgłoszony — zgłoś ponownie'
-    : '✅ Zamykam miesiąc';
+  el('zamykamBtn').innerHTML = ikonaHTML_('ic-check') + ((!zalegle.length && j.biezacyZadeklarowany)
+    ? ' Miesiąc zgłoszony — zgłoś ponownie'
+    : ' Zamykam miesiąc');   // Z-82: innerHTML — wstawiamy element
 }
 
 /* W-12 (07.08.2026): cały przebieg przeniesiony 1:1 z floty (decyzja Marka —
@@ -1632,7 +1697,7 @@ function jednostkaHtml_(j, i){
       '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + ' &middot; ' + opis + '</div>' +
     '</div>' +
     (j.sposob === 'dodane samodzielnie'
-      ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">📌</button>'
+      ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">' + ikonaHTML_('ic-pin') + '</button>'
       : '') +
   '</div>';
 }
@@ -2145,8 +2210,8 @@ function pokazSukces(odp){
   }
 
   sukcesPoEdycji = !!STAN.edytowanyId;
-  el('sKolejny').textContent = sukcesPoEdycji ? '📋 Moje wpisy' : '➕ Dodaj kolejny wpis';
-  el('sWpisy').textContent = sukcesPoEdycji ? '➕ Dodaj kolejny wpis' : '📋 Moje wpisy';
+  el('sKolejny').innerHTML = sukcesPoEdycji ? ikonaHTML_('ic-clip') + ' Moje wpisy' : ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis'; // Z-82: innerHTML — wstawiamy element
+  el('sWpisy').innerHTML = sukcesPoEdycji ? ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis' : ikonaHTML_('ic-clip') + ' Moje wpisy';
 
   pokazEkran('ekranSukces');
 }
@@ -2162,8 +2227,8 @@ function pokazSukcesProsty_(tekst, podtekst){
   el('sOstrzezenia').classList.add('ukryte');
   el('sOstrzezenia').innerHTML = '';
   sukcesPoEdycji = false;   // przyciski w rolach jak po nowym wpisie
-  el('sKolejny').textContent = '➕ Dodaj kolejny wpis';
-  el('sWpisy').textContent = '📋 Moje wpisy';
+  el('sKolejny').innerHTML = ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis';
+  el('sWpisy').innerHTML = ikonaHTML_('ic-clip') + ' Moje wpisy';
   pokazEkran('ekranSukces');
 }
 
@@ -2531,7 +2596,7 @@ function rysujWpisy(){
           // zapisu), liczona po stronie serwera przy każdym odczycie —
           // plakietka znika sama, gdy wpis zostanie poprawiony.
           (w.doPoprawy
-            ? '<div class="wpis-poprawa"><b>⚠ Do poprawy</b>' +
+            ? '<div class="wpis-poprawa"><b>' + ikonaHTML_('ic-warn') + ' Do poprawy</b>' +
               bezpiecznyTekst(w.doPoprawy) + '</div>'
             : '') +
           // E-24 (02.08.2026): cofnięty licznik względem poprzedniego wpisu —
@@ -2540,7 +2605,7 @@ function rysujWpisy(){
           // Ten sam mechanizm co Panel Marka („Cofnięty stan licznika"),
           // teraz też widoczny kierowcy — nie tylko w arkuszu.
           (w.cofniety
-            ? '<div class="wpis-uwaga"><b>⚠ Wymaga uwagi</b>' +
+            ? '<div class="wpis-uwaga"><b>' + ikonaHTML_('ic-warn') + ' Wymaga uwagi</b>' +
               bezpiecznyTekst(w.cofniety) + '</div>'
             : '') +
           '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
@@ -2560,21 +2625,21 @@ function rysujWpisy(){
             // justify-content:space-between na .linia-data.
             '<span style="display:inline-flex; align-items:center; margin-left:auto;">' +
               '<span class="wpis-podpowiedzi">' +
-                (w.tankowanie ? '⛽' : '') + (w.serwisKategoria ? '🔧' : '') + (w.uwagi ? '📝' : '') +
+                (w.tankowanie ? ikonaHTML_('ic-fuel') : '') + (w.serwisKategoria ? ikonaHTML_('ic-wrench') : '') + (w.uwagi ? ikonaHTML_('ic-note') : '') +
               '</span>' +
               '<span class="wpis-strzalka">&#9662;</span>' +
             '</span></div>' +
           '<div class="wpis-szczegoly"><div class="wsz-zawartosc">' +
-            (w.tankowanie ? '<div class="wsz-wiersz dwie"><span>⛽ Tankowanie</span><b>' + bezpiecznyTekst(w.tankowanie) + '</b></div>' : '') +
-            (w.serwisKategoria ? '<div class="wsz-wiersz dwie"><span>🔧 Serwis</span><b>' + bezpiecznyTekst(w.serwisKategoria) + '</b></div>' : '') +
-            (w.uwagi ? '<div class="wsz-wiersz dwie"><span>📝 Uwagi</span><b>' + bezpiecznyTekst(w.uwagi) + '</b></div>' : '') +
+            (w.tankowanie ? '<div class="wsz-wiersz dwie"><span>' + ikonaHTML_('ic-fuel') + ' Tankowanie</span><b>' + bezpiecznyTekst(w.tankowanie) + '</b></div>' : '') +
+            (w.serwisKategoria ? '<div class="wsz-wiersz dwie"><span>' + ikonaHTML_('ic-wrench') + ' Serwis</span><b>' + bezpiecznyTekst(w.serwisKategoria) + '</b></div>' : '') +
+            (w.uwagi ? '<div class="wsz-wiersz dwie"><span>' + ikonaHTML_('ic-note') + ' Uwagi</span><b>' + bezpiecznyTekst(w.uwagi) + '</b></div>' : '') +
             (!w.tankowanie && !w.serwisKategoria && !w.uwagi
               ? '<div class="wsz-wiersz"><span>Brak dodatkowych informacji</span><b></b></div>' : '') +
           '</div></div>' +
         '</div>' +
         (w.edytowalny
-          ? '<div class="akcja"><button class="przycisk-maly" data-edytuj="' + i + '">✏️ Popraw</button>' +
-            '<button class="przycisk-czerwony" data-anuluj="' + i + '">🗑 Anuluj wpis</button></div>'
+          ? '<div class="akcja"><button class="przycisk-maly" data-edytuj="' + i + '">' + ikonaHTML_('ic-pencil') + ' Popraw</button>' +
+            '<button class="przycisk-czerwony" data-anuluj="' + i + '">' + ikonaHTML_('ic-trash') + ' Anuluj wpis</button></div>'
           : '') +
         // E-27: przycisk współkierowcy — wyłącznie przy CUDZYM wpisie
         // (mogeWspolkierowac z serwera: nie-autor, nie anulowany, nie
@@ -2583,7 +2648,7 @@ function rysujWpisy(){
           ? '<div class="akcja"><button class="' +
             (w.jestemWspolkierowca ? 'przycisk-czerwony' : 'przycisk-maly') +
             '" data-wspol="' + i + '">' +
-            (w.jestemWspolkierowca ? '🗑 Usuń mnie jako kierowcę' : '➕ Dodaj mnie jako kierowcę') +
+            (w.jestemWspolkierowca ? ikonaHTML_('ic-trash') + ' Usuń mnie jako kierowcę' : ikonaHTML_('ic-plus') + ' Dodaj mnie jako kierowcę') +
             '</button></div>'
           : '') +
       '</div>' +
