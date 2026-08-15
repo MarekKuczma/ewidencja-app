@@ -38,6 +38,12 @@
        dotykać --akcent/--bg-akcentjasny używanych gdzie indziej. Reaguje
        tylko na jasny/ciemny motyw, patrz blok [data-motyw="ciemny"] niżej. */
     --akcent-komunikat:#9f1239; --bg-komunikat:#fff1f2; --tekst-komunikat:#9f1239;
+    /* Z-81: kolory obracającej się obwódki (conic-gradient) — te same barwy
+       co w --gradient danej palety, rozłożone na okrąg; bez nowych kolorów.
+       --glow-krycie: poświata na jasnym tle musi być słabsza niż na ciemnym.
+       Identyczny mechanizm we flocie — zmieniasz tu, zmień i tam. */
+    --stozek:#a1a1aa,#52525b,#27272a,#52525b,#a1a1aa;
+    --glow-krycie:.40;
   }
   /* ===== PALETA „burgund" — druga, przełączalna (D49) ===== */
   [data-paleta="burgund"]{
@@ -48,6 +54,7 @@
     --bg-akcentjasny:#fff1f2; --tekst-akcentjasny:#9f1239;
     --metryka-grad:linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
     --paleta-ikona:#fda4af;
+    --stozek:#fb7185,#e11d48,#9f1239,#e11d48,#fb7185;   /* Z-81 */
   }
   /* W ciemnym motywie akcent MUSI się rozjaśnić. Paleta grafitowa ma
      --akcent:#3f3f46, czyli prawie czerń — na ciemnym tle znikały przez to
@@ -69,11 +76,15 @@
        ciemnym motywie, patrz blok niżej) — zawsze widoczna, niezależnie od
        wybranej palety appki. */
     --akcent-komunikat:#fb7185; --bg-komunikat:#3f1220; --tekst-komunikat:#fda4af;
+    --stozek:#52525b,#a1a1aa,#e4e4e7,#a1a1aa,#52525b;   /* Z-81: grafit na
+       ciemnym tle znika, więc stożek przesunięty o stopień w jasność */
+    --glow-krycie:.70;                                   /* Z-81 */
   }
   [data-motyw="ciemny"][data-paleta="burgund"]{
     --akcent:#fb7185; --akcent-c:#fda4af;
     --bg-akcentjasny:#3f1220; --tekst-akcentjasny:#fda4af;
     --metryka-grad:linear-gradient(135deg, #2a1218 0%, #33161d 100%);
+    --stozek:#9f1239,#e11d48,#fb7185,#e11d48,#9f1239;   /* Z-81 */
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0; background:var(--tlo); color:var(--tekst);
@@ -109,7 +120,18 @@
   /* iOS potrafi wyrównać wartość do środka i uciąć ją w wąskim polu — flota
      natrafiła na to w becie (FEEDBACK pkt 7). */
   input[type="date"]::-webkit-date-and-time-value{text-align:left;}
-  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--akcent);}
+  /* Z-81 (F3): aktywne pole dostaje obracającą się ramkę w kolorach palety.
+     Border robi się przezroczysty, ramkę rysują dwa tła: wnętrze
+     (padding-box) zasłania środek conic-gradientu (border-box). */
+  input:focus,select:focus,textarea:focus{outline:none;
+    border-color:transparent;
+    background:linear-gradient(var(--input-tlo), var(--input-tlo)) padding-box,
+               conic-gradient(from var(--kat), var(--stozek)) border-box;
+    animation:obrot 3s linear infinite;}
+  /* Błąd WYGRYWA z fokusem — wirująca kolorowa ramka na źle wypełnionym
+     polu to sprzeczny sygnał. */
+  .pole-blad input:focus,.pole-blad select:focus,.pole-blad textarea:focus{
+    border-color:var(--blad); background:var(--input-tlo); animation:none;}
   textarea{min-height:130px; resize:vertical; line-height:1.45; font-size:16px;}
   /* Błędy pól — wzorzec z aplikacji floty: komunikat pod polem + czerwona ramka */
   /* D98 — ostrzeżenie przy polu: coś wygląda podejrzanie, ale zapisać można.
@@ -369,6 +391,55 @@
   [data-motyw="ciemny"] .pasek-odswiezania.offline{background:rgba(243,156,18,.2); color:#f0c060;}
   [data-motyw="ciemny"] .pasek-odswiezania .mini-spinner{
     border-color:rgba(143,196,232,.3); border-top-color:#8fc4e8;}
+
+  /* ================= Z-81: obracające się obwódki „glow" =================
+     Pełny opis mechanizmu w bliźniaczym bloku floty (pwa/index.html) —
+     zmieniasz tu, zmień i tam. Skrót: opakowanie z paddingiem, conic-gradient
+     jako tło, kąt animowany przez @property; bez wsparcia @property obwódka
+     jest statyczna (akceptowalny fallback, iOS < 16.4). */
+  @property --kat { syntax:'<angle>'; initial-value:0deg; inherits:true; }
+  @keyframes obrot { to { --kat:360deg; } }
+
+  .przycisk-glow{position:relative; isolation:isolate; padding:2px;
+    border-radius:14px; margin-top:18px;
+    background:conic-gradient(from var(--kat), var(--stozek));
+    animation:obrot 4s linear infinite;}
+  .przycisk-glow::after{content:''; position:absolute; inset:2px;
+    border-radius:12px;
+    background:conic-gradient(from var(--kat), var(--stozek));
+    filter:blur(13px); opacity:var(--glow-krycie); z-index:-1;}
+  .przycisk-glow .przycisk{margin-top:0;}
+
+  .pasek-glow{padding:1.5px; border-radius:10.5px; margin:0 0 10px;
+    background:conic-gradient(from var(--kat),
+      transparent 0deg, transparent 235deg,
+      rgba(41,128,185,.45) 300deg, #2980b9 342deg,
+      rgba(41,128,185,.45) 358deg, transparent 360deg);
+    animation:obrot 2.6s linear infinite;}
+  .pasek-glow .pasek-odswiezania{margin:0;
+    background:linear-gradient(rgba(41,128,185,.12), rgba(41,128,185,.12)) var(--tlo);}
+  [data-motyw="ciemny"] .pasek-glow{
+    background:conic-gradient(from var(--kat),
+      transparent 0deg, transparent 235deg,
+      rgba(143,196,232,.4) 300deg, #8fc4e8 342deg,
+      rgba(143,196,232,.4) 358deg, transparent 360deg);}
+  [data-motyw="ciemny"] .pasek-glow .pasek-odswiezania{
+    background:linear-gradient(rgba(41,128,185,.22), rgba(41,128,185,.22)) var(--tlo);}
+
+  .pole-blad input,.pole-blad select,.pole-blad textarea{
+    box-shadow:0 0 0 3px rgba(217,48,37,.14), 0 0 12px rgba(217,48,37,.30);}
+  .pole-blad-puls input,.pole-blad-puls select,.pole-blad-puls textarea{
+    animation:pulsBledu .9s ease-in-out 2;}
+  @keyframes pulsBledu{
+    0%,100%{ box-shadow:0 0 0 3px rgba(217,48,37,.14), 0 0 12px rgba(217,48,37,.30); }
+    50%    { box-shadow:0 0 0 5px rgba(217,48,37,.26), 0 0 22px rgba(217,48,37,.55); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .przycisk-glow, .przycisk-glow::after, .pasek-glow,
+    .pole-blad-puls input, .pole-blad-puls select, .pole-blad-puls textarea,
+    input:focus, select:focus, textarea:focus{ animation:none; }
+  }
 </style>
 </head>
 <body>
@@ -445,7 +516,11 @@
              którego nikt jeszcze nie zgłosił. -->
         <div class="komunikat" id="banerDeklaracji"></div>
 
-        <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
+        <!-- Z-81: opakowanie .przycisk-glow = obracająca się obwódka;
+             przycisk w środku bez zmian (id, handler). -->
+        <div class="przycisk-glow">
+          <button class="przycisk" id="startNowyWpisBtn">＋ Nowy wpis</button>
+        </div>
         <button class="przycisk-drugi" id="zamykamBtn">✅ Zamykam miesiąc</button>
 
         <!-- W-12 (07.08.2026): rozwijane pudełko zastąpione oknem <dialog>
@@ -539,7 +614,10 @@
       </div>
 
       <div class="komunikat" id="wpisKomunikat"></div>
-      <button class="przycisk" id="zapiszBtn">Zapisz wpis</button>
+      <!-- Z-81: glow zostaje też przy „Zapisz poprawkę" (decyzja Marka). -->
+      <div class="przycisk-glow">
+        <button class="przycisk" id="zapiszBtn">Zapisz wpis</button>
+      </div>
       <!-- Wzorzec z aplikacji flota (F-22, 01.08.2026): dwa osobne przyciski
            zamiast jednego uniwersalnego „Anuluj" — „Anuluj" przy nowym wpisie
            (czyści pola, wraca na dashboard), „Anuluj poprawianie" w edycji
@@ -718,11 +796,24 @@ function pokazOverlay(tekst){
 }
 function schowajOverlay(){ el('overlay').classList.add('ukryte'); }
 function bladPola(idBox, idBlad, tekst){
-  el(idBox).classList.add('pole-blad');
+  var box = el(idBox);
+  // Z-81: PIERWSZE błędne pole pulsuje dwa razy i przestaje („zacznij
+  // tutaj"). Walidacja zawsze zaczyna od wyczyscBledy(), więc „nie ma
+  // jeszcze żadnego .pole-blad" = to wywołanie jest pierwsze.
+  // requestAnimationFrame po remove — żeby animacja restartowała się
+  // także przy kolejnym kliknięciu „Zapisz".
+  if (!document.querySelector('.pole-blad')) {
+    box.classList.remove('pole-blad-puls');
+    requestAnimationFrame(function(){ box.classList.add('pole-blad-puls'); });
+  }
+  box.classList.add('pole-blad');
   el(idBlad).textContent = tekst;
 }
 function wyczyscBledy(){
-  ['poleDataBox','poleLicznikBox','poleBudowaBox'].forEach(function(i){ el(i).classList.remove('pole-blad'); });
+  ['poleDataBox','poleLicznikBox','poleBudowaBox'].forEach(function(i){
+    el(i).classList.remove('pole-blad');
+    el(i).classList.remove('pole-blad-puls');   // Z-81
+  });
   if (el('ostrzezeniePrzyrost')) el('ostrzezeniePrzyrost').textContent = '';
   schowajKomunikat('wpisKomunikat');
 }
@@ -2137,8 +2228,11 @@ function pokazPasekWpisow_(tryb, czasCache, oczekujace){
   if (!p) return;
   if (!tryb) { p.className = 'pasek-odswiezania ukryte'; p.innerHTML = ''; return; }
   if (tryb === 'ladowanie') {
-    p.className = 'pasek-odswiezania ladowanie';
-    p.innerHTML = '<span class="mini-spinner"></span><span>Odświeżam listę…</span>';
+    // Z-81: obwódka z biegnącym błyskiem wokół paska (klasa .pasek-glow na
+    // zewnętrznym elemencie, właściwy pasek jako wnętrze).
+    p.className = 'pasek-glow';
+    p.innerHTML = '<div class="pasek-odswiezania ladowanie">' +
+      '<span class="mini-spinner"></span><span>Odświeżam listę…</span></div>';
     return;
   }
   p.className = 'pasek-odswiezania offline';
