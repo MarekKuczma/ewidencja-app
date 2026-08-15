@@ -1512,8 +1512,12 @@ function odswiezStart(){
       return;
     }
     STAN.imie = odp.imie;
-    localStorage.setItem(KLUCZ_PALETY_SPEC, odp.paletySpecjalne ? 'TAK' : 'NIE');   // Z-83
-    wczytajMotyw();   // Z-83: uprawnienie mogło się właśnie zmienić
+    // Z-83 poprawka (ta sama klasa błędu co we flocie): flagę nadpisujemy
+    // tylko, gdy serwer faktycznie przysłał pole — nie każda odpowiedź je ma.
+    if (typeof odp.paletySpecjalne !== 'undefined') {
+      localStorage.setItem(KLUCZ_PALETY_SPEC, odp.paletySpecjalne ? 'TAK' : 'NIE');
+      wczytajMotyw();
+    }
     STAN.jednostki = odp.jednostki || [];
     STAN.budowy = odp.budowy || [];
     STAN.kategorie = odp.kategorie || [];
