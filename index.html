@@ -112,7 +112,8 @@
     padding-top:calc(14px + env(safe-area-inset-top)); position:sticky; top:0; z-index:5;
     display:flex; align-items:center; gap:12px;}
   header img{width:40px; height:40px; border-radius:10px; flex:none;}
-  header h1{margin:0; font-size:19px; font-weight:600;}
+  /* W2: tytuł skaluje się z szerokością ekranu (bliźniacze do floty). */
+  header h1{margin:0; font-size:clamp(15px, 3.9vw, 21px); font-weight:600; line-height:1.25;}
   header .kto{font-size:14px; opacity:.9; margin-top:2px;}
   header .naglowek-tekst{flex:1; min-width:0;}
   #motywBtn,#paletaBtn{background:rgba(255,255,255,.2); border:none; border-radius:10px;
@@ -136,7 +137,7 @@
   label .wym{color:var(--blad);}
   label .opcjonalne{font-weight:400; color:var(--szary); opacity:.8;}
   .pole + .pole{margin-top:22px;}
-  input,select,textarea{width:100%; max-width:100%; min-width:0; font-size:18px; padding:12px;
+  input,select,textarea{width:100%; max-width:100%; min-width:0; font-family:inherit; font-size:18px; padding:12px;
     border:1.5px solid var(--input-brzeg); border-radius:10px; background:var(--input-tlo);
     color:var(--tekst); min-height:48px;}
   input[type="date"]{-webkit-min-logical-width:0; -webkit-appearance:none; appearance:none;}
@@ -216,7 +217,10 @@
   .metryki{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
   .metryka{background:var(--metryka-grad); border-radius:10px; padding:12px;}
   .metryka .m-et{font-size:13px; color:var(--szary);}
-  .metryka .m-w{font-size:clamp(17px, 6vw, 23px); font-weight:600; margin-top:2px;}
+  /* F3 (bliźniacze do floty): liczba w jednej linii z jednostką, jednostka mniejsza. */
+  .metryka .m-w{font-size:clamp(16px, 5.2vw, 21px); font-weight:600; margin-top:2px;
+    white-space:nowrap;}
+  .metryka .m-jedn{font-size:.72em; font-weight:600; margin-left:.22em;}
   .metryka .m-sub{font-size:12px; color:var(--szary); margin-top:2px;}
   /* Karta jednostki / wpisu — akcent po lewej w kolorze typu sprzętu (D29) */
   .jedn{display:flex; gap:12px; background:var(--karta); border-radius:12px;
@@ -742,7 +746,7 @@
             <div class="m-sub" id="mLicznikData"></div>
           </div>
           <div class="metryka">
-            <div class="m-et">Wpisy w tym miesiącu</div>
+            <div class="m-et">Wpisy</div>
             <div class="m-w" id="mWpisy">—</div>
             <div class="m-sub" id="mOstatniaBudowa"></div>
           </div>
@@ -895,7 +899,7 @@
   <!-- ===================== EKRAN: MOJE WPISY ===================== -->
   <section id="ekranWpisy" class="ukryte">
     <div class="karta">
-      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <h2 id="wpisyTytul" style="margin:0;">Moje wpisy</h2>
         <!-- E-07 (10.08.2026): podsumowanie miesiąca dla TEJ maszyny —
              wzorem przycisku „📊 Podsumowanie miesiąca” z floty (pkt 19),
@@ -903,7 +907,10 @@
              niżej — dane już wczytane tutaj, więc bez nowego zapytania). -->
         <button type="button" class="przycisk-maly" id="wpisyPodsumowanieBtn" style="flex:none;"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-chart"></use></svg> Podsumowanie</button>
       </div>
-      <div class="p2" id="wpisyPodtytul" style="font-size:14px; color:var(--szary); margin:-6px 0 12px;"></div>
+      <!-- E1: ujemny margines wsuwał podtytuł POD przycisk „Podsumowanie”,
+           bo przycisk jest wyższy od nagłówka. Teraz rząd wyrównany do środka,
+           podtytuł normalnie pod spodem. -->
+      <div class="p2" id="wpisyPodtytul" style="font-size:14px; color:var(--szary); margin:2px 0 12px;"></div>
       <label style="display:flex; align-items:center; gap:8px; font-weight:400; color:var(--tekst);">
         <input type="checkbox" id="pokazAnulowane" style="width:auto; min-height:auto;">
         Pokaż anulowane wpisy
@@ -1138,6 +1145,24 @@ var IKONY = {
 // Rozmiar dziedziczy z font-size rodzica — świadomie bez width/height.
 function ikonaHTML_(id) {
   return '<svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+}
+// W3: jeden format daty w całej aplikacji — dd.mm.rrrr. Serwer (formatujDate_
+// w API.gs) przysyła ISO rrrr-mm-dd; cokolwiek innego przepuszczamy bez zmian.
+// F2: 1 wpis · 2–4 wpisy · 5+ wpisów. Bliźniacze do floty — zmieniasz tu,
+// zmień i tam.
+// F3: jednostka („mth”, „km”) mniejszą czcionką i sklejona z liczbą.
+function zJedn_(liczba, jednostka){
+  return jednostka ? (liczba + '<span class="m-jedn">' + jednostka + '</span>') : liczba;
+}
+function odmianaWpisow_(n){
+  n = Math.abs(Number(n) || 0);
+  if (n === 1) return 'wpis';
+  var d = n % 10, s = n % 100;
+  return (d >= 2 && d <= 4 && (s < 12 || s > 14)) ? 'wpisy' : 'wpisów';
+}
+function dataPL_(iso){
+  var s = String(iso || '');
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.split('-').reverse().join('.') : s;
 }
 function ikonaTypu(typ, kolor){
   var t = String(typ||'').toLowerCase(), k = 'inne';
@@ -1899,9 +1924,9 @@ function wybierzPojazd(j, zPamieci){
     '<div class="tresc"><div class="linia1">' + bezpiecznyTekst(j.tytul) + '</div>' +
     '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + '</div></div>';
 
-  el('mLicznik').textContent = j.ostatniStanLicznika
-    ? formatLicznik_(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika : '—';
-  el('mLicznikData').textContent = j.ostatniaData ? 'z ' + j.ostatniaData : 'brak wpisów';
+  el('mLicznik').innerHTML = j.ostatniStanLicznika
+    ? zJedn_(formatLicznik_(j.ostatniStanLicznika), j.jednostkaLicznika) : '—';
+  el('mLicznikData').textContent = j.ostatniaData ? 'z ' + dataPL_(j.ostatniaData) : 'brak wpisów';
   el('mOstatniaBudowa').textContent = j.ostatniaBudowa ? 'ostatnio: ' + j.ostatniaBudowa : '';
   rysujTerminy(j);
 
@@ -2063,9 +2088,9 @@ function rysujTerminy(j){
         else wartosc = 'za ' + formatLicznik_(t.zostalo) + ' ' + jed;
         wartosc += ' <span style="color:var(--szary); font-weight:400;">(' + formatLicznik_(t.wartosc) + ' ' + jed + ')</span>';
       } else {
-        if (t.dni < 0) wartosc = 'minął ' + t.data;
-        else if (t.dni === 0) wartosc = 'dziś! <span style="color:var(--szary); font-weight:400;">(' + t.data + ')</span>';
-        else wartosc = 'za ' + t.dni + ' dni <span style="color:var(--szary); font-weight:400;">(' + t.data + ')</span>';
+        if (t.dni < 0) wartosc = 'minął ' + dataPL_(t.data);
+        else if (t.dni === 0) wartosc = 'dziś! <span style="color:var(--szary); font-weight:400;">(' + dataPL_(t.data) + ')</span>';
+        else wartosc = 'za ' + t.dni + ' dni <span style="color:var(--szary); font-weight:400;">(' + dataPL_(t.data) + ')</span>';
       }
       return '<div class="termin' + klasa + '"><span class="t-nazwa">' + bezpiecznyTekst(t.nazwa) +
         '</span><span class="t-wartosc">' + wartosc + '</span></div>';
@@ -2079,7 +2104,7 @@ function rysujTerminy(j){
 function opisOstatniegoWpisu(j){
   if (!j.ostatniaData) return 'brak wpisów';
   var d = j.dniOdWpisu;
-  if (d < 0) return 'wpis z datą ' + j.ostatniaData + ' (przyszła data!)';
+  if (d < 0) return 'wpis z datą ' + dataPL_(j.ostatniaData) + ' (przyszła data!)';
   if (d === 0) return 'ostatni wpis: dziś';
   if (d === 1) return 'ostatni wpis: wczoraj';
   return 'brak wpisu od ' + d + ' dni';
@@ -2335,7 +2360,7 @@ function odswiezPodpowiedzLicznika(){
       if (!przed || w.data > przed.data) przed = w;
     });
     if (przed) {
-      e.textContent = 'Poprzedni dzień z wpisem: ' + przed.data + ' — ' +
+      e.textContent = 'Poprzedni dzień z wpisem: ' + dataPL_(przed.data) + ' — ' +
         formatLicznik_(przed.licznik) + ' ' + j.jednostkaLicznika;
       return;
     }
@@ -2345,7 +2370,7 @@ function odswiezPodpowiedzLicznika(){
 
   e.textContent = j.ostatniStanLicznika
     ? 'Ostatni znany stan: ' + formatLicznik_(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika +
-      (j.ostatniaData ? ' (' + j.ostatniaData + ')' : '')
+      (j.ostatniaData ? ' (' + dataPL_(j.ostatniaData) + ')' : '')
     : '';
 }
 el('poleData').addEventListener('change', odswiezPodpowiedzLicznika);
@@ -2897,8 +2922,10 @@ function rysujPodsumowanie_(){
   });
   glowne.appendChild(kafelPodsumowania_(
     'Suma ' + (jed || 'licznika') + ' w miesiącu',
-    majaLicznik ? formatLicznik_(sumaLicznika) + (jed ? ' ' + jed : '') : '—',
-    majaLicznik < wpisy.length ? (wpisy.length - majaLicznik) + ' wpis(ów) bez policzalnej różnicy' : '',
+    majaLicznik ? zJedn_(formatLicznik_(sumaLicznika), jed) : '—',
+    majaLicznik < wpisy.length
+      ? (wpisy.length - majaLicznik) + ' ' + odmianaWpisow_(wpisy.length - majaLicznik) +
+        ' bez policzalnej różnicy' : '',
     null
   ));
 
@@ -2920,7 +2947,7 @@ function rysujPodsumowanie_(){
     nazwyKat.forEach(function(nazwa){
       var n = kat[nazwa];
       kafelki.appendChild(kafelPodsumowania_(nazwa, String(n),
-        n === 1 ? '1 wpis' : n + ' wpisy(-ów)', odcienKategoriiSerwisu_(nazwa)));
+        n + ' ' + odmianaWpisow_(n), odcienKategoriiSerwisu_(nazwa)));
     });
   }
 }
@@ -2981,7 +3008,7 @@ function rysujWpisy(){
         '<div class="wpis-tresc">' +
           // Data z lewej, licznik z PRAWEJ strony tej samej linii (uwaga Marka
           // 27.07.2026) — bez osobnego wiersza i bez ikony, sam podpis „Licznik:".
-          '<div class="linia1"><span>' + w.data.slice(8) + '.' + w.data.slice(5,7) + '.' + w.data.slice(0,4) + '</span>' +
+          '<div class="linia1"><span>' + dataPL_(w.data) + '</span>' +
             (w.licznik !== '' && w.licznik != null
               ? '<span class="licznik-rog">Licznik: <b>' + formatLicznik_(w.licznik) + ' ' + jed + '</b>' +
                 '</span>'
@@ -3040,7 +3067,7 @@ function rysujWpisy(){
         '</div>' +
         (w.edytowalny
           ? '<div class="akcja"><button class="przycisk-maly" data-edytuj="' + i + '">' + ikonaHTML_('ic-pencil') + ' Popraw</button>' +
-            '<button class="przycisk-czerwony" data-anuluj="' + i + '">' + ikonaHTML_('ic-trash') + ' Anuluj wpis</button></div>'
+            '<button class="przycisk-czerwony" data-anuluj="' + i + '">' + ikonaHTML_('ic-trash') + ' Usuń</button></div>'
           : '') +
         // E-27: przycisk współkierowcy — wyłącznie przy CUDZYM wpisie
         // (mogeWspolkierowac z serwera: nie-autor, nie anulowany, nie
@@ -3079,7 +3106,12 @@ function rysujWpisy(){
         alert('Brak internetu.\n\nAnulowanie wpisu wymaga zasięgu. Spróbuj, gdy wróci sieć.');
         return;
       }
-      if (!confirm('Anulować wpis z ' + w.data + '?\n\nWpis zostanie przekreślony, ale zostanie w ewidencji.')) return;
+      var jedW = w.jednostkaLicznika || (STAN.aktywna && STAN.aktywna.jednostkaLicznika) || '';
+      var opisW = (w.licznik !== '' && w.licznik != null)
+        ? ' (' + formatLicznik_(w.licznik) + (jedW ? ' ' + jedW : '') + ')' : '';
+      if (!confirm('Usunąć wpis z ' + dataPL_(w.data) + opisW + '?\n\n' +
+        'Wpis zostanie anulowany i nie będzie brany pod uwagę w ewidencji — '  +
+        'nie pojawi się na wydruku ani na liście.')) return;
       pokazOverlay('Anuluję wpis…');
       wolajAPI('anulujWpis', { idWpisu: w.idWpisu }).then(function(o){
         schowajOverlay();
@@ -3105,7 +3137,7 @@ function rysujWpisy(){
         return;
       }
       var usuwam = w.jestemWspolkierowca;
-      if (usuwam && !confirm('Usunąć Cię z wpisu z ' + w.data + '?')) return;
+      if (usuwam && !confirm('Usunąć Cię z wpisu z ' + dataPL_(w.data) + '?')) return;
       pokazOverlay(usuwam ? 'Usuwam z wpisu…' : 'Dopisuję do wpisu…');
       wolajAPI(usuwam ? 'usunWspolkierowce' : 'dopiszWspolkierowce',
         { idWpisu: w.idWpisu }).then(function(o){
