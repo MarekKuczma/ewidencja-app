@@ -680,6 +680,9 @@
 
       <!-- Lista jednostek do wyboru -->
       <div id="wyborPojazdu">
+        <!-- Z-84: stan świeżości listy pojazdów, sterowany przez
+             `pokazPasekJednostek_`. Ten sam wzorzec co #pasekWpisow (Z-80). -->
+        <div id="pasekJednostek" class="pasek-odswiezania ukryte"></div>
         <div id="listaJednostek"></div>
         <button class="przycisk-drugi" id="dodajJednostkeBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Dodaj auto lub koparkę</button>
       </div>
@@ -1500,6 +1503,39 @@ function pokazZPamieci(){
   else if (STAN.jednostki.length === 1) wybierzPojazd(STAN.jednostki[0], true);
 }
 
+/* ================= Z-84 (zgłoszenie Marka 16.08.2026) =================
+   Po dodaniu (albo odpięciu) pojazdu ekran przez chwilę pokazywał STARĄ
+   listę: `odswiezStart()` leci do serwera, a `#listaJednostek` stoi
+   niezmieniona, dopóki odpowiedź nie wróci. Z perspektywy kierowcy wygląda
+   to jak „kliknąłem i nic się nie stało" — a najgorsze, że kusi, żeby
+   dodać ten sam pojazd drugi raz.
+
+   Rozwiązanie 1:1 jak pasek w „Moje wpisy" (Z-80): nie udajemy, że nowy
+   pojazd już jest (serwer oddaje samo `ok`, bez danych jednostki — sztuczny
+   wiersz różniłby się od prawdziwego), tylko mówimy wprost, że lista się
+   odświeża. */
+function pokazPasekJednostek_(widoczny){
+  var p = el('pasekJednostek');
+  if (!p) return;
+  if (!widoczny) { p.className = 'pasek-odswiezania ukryte'; p.innerHTML = ''; return; }
+  p.className = 'pasek-glow';
+  p.innerHTML = '<div class="pasek-odswiezania ladowanie">' +
+    '<span class="mini-spinner"></span><span>Odświeżam listę pojazdów…</span></div>';
+}
+/* Owija `odswiezStart()` paskiem. Osobna funkcja, bo `odswiezStart` woła się
+   też przy starcie i po zapisie wpisu — tam pasek nad listą pojazdów nie ma
+   sensu (kierowca patrzy na pulpit, nie na listę). */
+function odswiezStartZPaskiem_(){
+  pokazPasekJednostek_(true);
+  return odswiezStart().then(function(w){
+    pokazPasekJednostek_(false);
+    return w;
+  }, function(e){
+    pokazPasekJednostek_(false);
+    throw e;
+  });
+}
+
 function odswiezStart(){
   return wolajAPI('status', {}).then(function(odp){
     if (!odp.ok) {
@@ -1507,6 +1543,7 @@ function odswiezStart(){
       // W-01 (01.08.2026): było E002/E004, teraz E011/E015 jak we flocie.
       if (odp.blad === 'E011' || odp.blad === 'E015') { odrzucKod_(odp.wiadomosc); return; }
       el('powitanieImie').textContent = 'Błąd';
+      pokazPasekJednostek_(false);   // Z-84
       el('listaJednostek').innerHTML = '<div class="srodek">' +
         bezpiecznyTekst(odp.wiadomosc || 'Nie udało się wczytać danych.') + '</div>';
       return;
@@ -1554,6 +1591,7 @@ function odswiezStart(){
     rysujSlowniki();
   }).catch(function(){
     el('powitanieImie').textContent = 'Brak połączenia';
+    pokazPasekJednostek_(false);   // Z-84
     el('listaJednostek').innerHTML = '<div class="srodek">Brak zasięgu. ' +
       'Możesz zapisać wpis — wyśle się, gdy sieć wróci.</div>';
   });
@@ -2893,7 +2931,7 @@ function poOdpieciu_(idPojazdu){
   } catch(e){}
   pokazEkran('ekranStart');
   pokazWyborPojazdu();
-  odswiezStart();
+  odswiezStartZPaskiem_();   // Z-84
 }
 
 /* Odpięcie prosto z listy pojazdów — nie trzeba najpierw wchodzić na pulpit. */
@@ -2962,7 +3000,7 @@ el('potwierdzDodanieBtn').onclick = function(){
     if (!o.ok) { alert(o.wiadomosc || 'Nie udało się dodać.'); return; }
     el('dodajBox').classList.add('ukryte');
     el('dodajJednostkeBtn').classList.remove('ukryte');
-    odswiezStart();
+    odswiezStartZPaskiem_();   // Z-84: „Odświeżam listę pojazdów…"
   }).catch(function(){
     schowajOverlay();
     alert('Brak połączenia.');
