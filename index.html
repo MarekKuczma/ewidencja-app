@@ -1204,7 +1204,27 @@ function odswiezKolejkeInfo(){
     // się identycznym odrzuceniem (E008 nie jest przejściowy jak E013),
     // więc pokazywanie go tylko myliłoby, że coś tu da się „naprawić".
     var toDuplikatDnia = (w.bladKod === 'E008');
-    if (toDuplikatDnia) {
+    // Z-75 (16.08.2026, zredukowane): E012 z KOLEJKI = wpis powstał, gdy
+    // miesiąc był otwarty, ale dotarł po jego rozliczeniu. To NIE jest błąd
+    // kierowcy i nie ma czego „próbować ponownie" — dopóki miesiąc jest
+    // zamknięty, każda próba skończy się tak samo (jak przy E008/E-32).
+    // Mówimy więc wprost: ten wpis nie pójdzie dalej, daj znać Markowi,
+    // a jak nie ma sprawy — usuń komunikat.
+    // ⚠ ZAKRES: dotyczy WYŁĄCZNIE kolejki offline. Świadome wpisanie daty
+    // z rozliczonego miesiąca jest blokowane od razu przy ZAPISZ (E012 na
+    // serwerze) i nic tam nie ginie. Decyzja Marka: pełna wersja Z-75
+    // (zakładka „Odrzucone" + mail) to przerost formy — brakujące tankowanie
+    // widać w pliku Orlenu, a brakujący dzień w Panelu.
+    var toZamknietyMiesiac = (w.bladKod === 'E012');
+    if (toZamknietyMiesiac) {
+      html += '<div class="odrzucony zapisany"><b>Miesiąc jest już rozliczony</b>' +
+        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') +
+        '<br>Ten wpis nie zostanie zapisany w ewidencji. Jeśli ten dzień jest ' +
+        'ważny — daj znać Markowi. Jeśli nie, możesz usunąć ten komunikat.' +
+        '<div class="p">' +
+        '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń</button>' +
+        '</div></div>';
+    } else if (toDuplikatDnia) {
       html += '<div class="odrzucony zapisany"><b>Ten wpis już jest zapisany</b>' +
         (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') +
         '<br>Telefon nie zdążył potwierdzić wysyłki, ale wpis dotarł do bazy za ' +
