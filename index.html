@@ -348,6 +348,20 @@
   nav button{flex:1; background:none; border:none; padding:12px 0 10px;
     font-size:13px; font-weight:600; color:var(--szary); min-height:56px;}
   nav button.aktywna{color:var(--akcent);}
+  /* ================= Z-86 (16.08.2026): przejścia ekranów =================
+     Bliźniacze do floty — zmieniasz tu, zmień i tam. Wariant N1 (ślizgająca
+     kreska) + E1 (przenikanie), wybrany przez Marka z mockupu. Wskaźnik to
+     JEDEN element jeżdżący pod zakładkami; widoczna kreska siedzi w środku
+     (44%), więc przesunięcie to czyste `translateX(n * 100%)` — bez
+     magicznych liczb. */
+  nav .wskaznik{position:absolute; bottom:3px; left:0; width:calc(100% / 3); height:3px;
+    display:flex; justify-content:center; pointer-events:none;
+    transition:transform .34s cubic-bezier(.4,1.3,.5,1), opacity .18s linear;}
+  nav .wskaznik i{width:44%; height:100%; border-radius:2px; background:var(--gradient);}
+  /* Ekran sukcesu nie należy do żadnej zakładki — kreska wtedy znika. */
+  nav .wskaznik.bez-zakladki{opacity:0;}
+  @keyframes wejscieEkranu{ from{opacity:0;} to{opacity:1;} }
+  .wchodzi{animation:wejscieEkranu .22s ease-out;}
   nav button .i{display:block; font-size:22px; line-height:1.1;}
   /* Numer wpisu w „kapsułce" — wzorzec z aplikacji floty (.plakietka-id) */
   .plakietka-id{background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny); font-weight:700;
@@ -497,11 +511,10 @@
      tutaj NIE podmieniamy border-color — dokładamy tylko poświatę, żeby nie
      zgubić informacji, którą to kółko niesie. */
   [data-paleta="rgb"] .ikona-krag{box-shadow:0 0 10px rgba(168,85,247,.45);}
-  [data-paleta="rgb"] nav button.aktywna{position:relative;}
-  [data-paleta="rgb"] nav button.aktywna::after{content:''; position:absolute; left:24%; right:24%;
-    bottom:3px; height:2.5px; border-radius:2px; background:var(--gradient);
-    background-size:300% 100%; animation:plyn 6s linear infinite;
-    box-shadow:0 0 9px var(--akcent);}
+  /* Z-86: kreska nie jest już rysowana osobno pod aktywną zakładką (byłyby
+     DWIE naraz — ta i ślizgający się wskaźnik). RGB tylko ją rozświetla. */
+  [data-paleta="rgb"] nav .wskaznik i{background-size:300% 100%;
+    animation:plyn 6s linear infinite; box-shadow:0 0 9px var(--akcent);}
   [data-paleta="rgb"] nav button.aktywna .i svg{filter:drop-shadow(0 0 6px currentColor);}
   [data-paleta="rgb"] .metryka .m-w{filter:drop-shadow(0 0 8px rgba(168,85,247,.6));}
   @keyframes fala { from{transform:scale(.55); opacity:.85;} to{transform:scale(1.75); opacity:0;} }
@@ -535,7 +548,7 @@
   @media (prefers-reduced-motion: reduce){
     [data-paleta="rgb"] header, [data-paleta="rgb"] .przycisk, [data-paleta="rgb"] .metryka .m-w,
     [data-paleta="rgb"] .avatar-krag, [data-paleta="rgb"] .avatar-pierscien,
-    [data-paleta="rgb"] header::after,     [data-paleta="rgb"] nav button.aktywna::after, [data-paleta="rgb"] .sukces-ikona::before,
+    [data-paleta="rgb"] header::after,     [data-paleta="rgb"] nav .wskaznik i, [data-paleta="rgb"] .sukces-ikona::before,
     [data-paleta="rgb"] .sukces-ikona::after{ animation:none; }
   }
 </style>
@@ -849,6 +862,7 @@
      są tu celowo NIE używane: Marek prosił o ikony SVG tylko dla pojazdów
      i maszyn, nawigacja ma zostać spójna z flotą. -->
 <nav id="nawigacja" class="ukryte">
+  <div class="wskaznik" id="wskaznikNawigacji"><i></i></div>
   <button id="navStart" class="aktywna"><span class="i"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-home"></use></svg></span>Start</button>
   <button id="navNowy"><span class="i"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-note"></use></svg></span>Nowy wpis</button>
   <button id="navWpisy"><span class="i"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-clip"></use></svg></span>Moje wpisy</button>
@@ -939,7 +953,29 @@ function pokazEkran(nazwa){
   // tam samo) — wzorem floty, gdzie podsumowanie podświetla Start (skąd
   // się wchodzi), nie osobną, nieistniejącą pozycję nawigacji.
   el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy' || nazwa === 'ekranPodsumowanie');
+  ustawWskaznikNawigacji_();   // Z-86
+  animujWejscie_(nazwa);       // Z-86
   window.scrollTo(0, 0);
+}
+/* Z-86: wskaźnik czyta klasę `aktywna` zamiast dostawać indeks — jedno
+   źródło prawdy o wybranej zakładce (podświetlenie już tam było). */
+function ustawWskaznikNawigacji_(){
+  var w = el('wskaznikNawigacji');
+  if (!w) return;
+  var zakladki = ['navStart', 'navNowy', 'navWpisy'];
+  var i = -1;
+  zakladki.forEach(function(id, n){ if (el(id).classList.contains('aktywna')) i = n; });
+  w.classList.toggle('bez-zakladki', i === -1);
+  if (i >= 0) w.style.transform = 'translateX(' + (i * 100) + '%)';
+}
+/* Z-86: przenikanie treści (E1). `void offsetWidth` wymusza przeliczenie
+   układu — bez tego animacja nie odtworzy się drugi raz z rzędu. */
+function animujWejscie_(idEkranu){
+  var e = el(idEkranu);
+  if (!e) return;
+  e.classList.remove('wchodzi');
+  void e.offsetWidth;
+  e.classList.add('wchodzi');
 }
 function komunikat(idEl, tekst, typ){
   var e = el(idEl);
