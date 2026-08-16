@@ -528,6 +528,15 @@
   .szkielet{pointer-events:none;}
   .szkielet .sz-kolo{width:38px; height:38px; border-radius:50%; flex:none;}
   .szkielet .sz-tresc{flex:1; min-width:0;}
+  /* Z-92 (16.08.2026, zgłoszenie Marka): karta pojazdu, który właśnie jest
+     dodawany. Nie jest to pełny szkielet — nazwę pojazdu ZNAMY, bo kierowca
+     przed chwilą sam ją wybrał z listy. Migocze wyłącznie to, czego jeszcze
+     nie ma: kolor i typ maszyny (kółko) oraz opis ostatniego wpisu. Ta sama
+     zasada, co przy imieniu w powitaniu (Z-87) — szkielet tylko na brakujące
+     dane. Kształt dziedziczy po prawdziwej klasie `.jedn`, więc przyszła
+     zmiana wyglądu kart zmieni też tę. */
+  .jedn.dodawana{border-left-color:var(--linia); pointer-events:none;}
+  .jedn.dodawana .ikona-krag{border-color:var(--sz-baza);}
   .sz-kolo,.sz-l{background:var(--sz-baza); position:relative; overflow:hidden;}
   .sz-l{height:11px; border-radius:6px;}
   .sz-l + .sz-l{margin-top:8px;}
@@ -3310,18 +3319,52 @@ el('anulujDodanieBtn').onclick = function(){
   el('dodajBox').classList.add('ukryte');
   el('dodajJednostkeBtn').classList.remove('ukryte');
 };
+/* Z-92: karta pojazdu w trakcie dodawania. Świadomie NIC poza tym nie zmienia
+   się w tym przebiegu — zasłona „Dodaję pojazd…" zostaje (decyzja Marka:
+   „chcę dodać tylko ten szkielet, nie usuwać overlay"). Zasłona jest
+   półprzezroczysta, więc karta jest pod nią widoczna, a po jej zniknięciu
+   kierowca widzi, że pojazd już jest na liście, zanim dojdą pozostałe dane. */
+function kartaDodawanegoHtml_(tytul){
+  return '<div class="jedn dodawana">' +
+    '<div class="ikona-krag"><span class="sz-kolo" style="width:22px; height:22px;"></span></div>' +
+    '<div class="tresc">' +
+      '<div class="linia1">' + bezpiecznyTekst(tytul) + '</div>' +
+      '<div class="sz-l" style="width:64%; margin-top:7px;"></div>' +
+    '</div>' +
+  '</div>';
+}
 el('potwierdzDodanieBtn').onclick = function(){
   var id = el('wyborNowej').value;
   if (!id) { alert('Wybierz pojazd z listy.'); return; }
+
+  // Nazwę bierzemy z wybranej pozycji listy — kierowca nie ma powodu czekać
+  // na coś, co przed chwilą sam wskazał.
+  var wybrana = el('wyborNowej').options[el('wyborNowej').selectedIndex];
+  var box = el('listaJednostek');
+  var bylaPusta = !STAN.jednostki.length;
+  if (bylaPusta) box.innerHTML = '';   // zdejmij „Dodaj auto…, żeby zacząć"
+  box.insertAdjacentHTML('beforeend',
+    kartaDodawanegoHtml_(wybrana ? wybrana.textContent : id));
+  // Sprzątanie na wypadek niepowodzenia. Przy sukcesie karta znika sama —
+  // `odswiezStartZPaskiem_` przerysowuje całą listę (`rysujJednostki`)
+  // i podmienia ją na prawdziwą. Zdejmowanie jej wcześniej dawałoby
+  // mignięcie pustym miejscem.
+  var zdejmijKarte = function(){
+    var k = box.querySelector('.jedn.dodawana');
+    if (k) k.remove();
+    if (bylaPusta && !STAN.jednostki.length) rysujJednostki();
+  };
+
   pokazOverlay('Dodaję pojazd…');
   wolajAPI('dodajJednostke', { idPojazdu: id }).then(function(o){
     schowajOverlay();
-    if (!o.ok) { alert(o.wiadomosc || 'Nie udało się dodać.'); return; }
+    if (!o.ok) { zdejmijKarte(); alert(o.wiadomosc || 'Nie udało się dodać.'); return; }
     el('dodajBox').classList.add('ukryte');
     el('dodajJednostkeBtn').classList.remove('ukryte');
     odswiezStartZPaskiem_();   // Z-84: „Odświeżam listę pojazdów…"
   }).catch(function(){
     schowajOverlay();
+    zdejmijKarte();
     alert('Brak połączenia.');
   });
 };
