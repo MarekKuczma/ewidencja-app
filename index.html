@@ -44,6 +44,20 @@
        Identyczny mechanizm we flocie — zmieniasz tu, zmień i tam. */
     --stozek:#a1a1aa,#52525b,#27272a,#52525b,#a1a1aa;
     --glow-krycie:.40;
+    /* Z-87 (16.08.2026): szkielety ładowania — kolor wypełnienia i jasność
+       przebiegającego połysku. Tylko te dwie zmienne; kształt szkieletu
+       bierze się z tych samych klas co prawdziwa karta, więc nie da się
+       ich rozjechać osobno. */
+    --sz-baza:#e8ebef; --sz-polysk:rgba(255,255,255,.85);
+    /* Z-87: barwy łuku spinnera na zasłonie.
+       ⚠ Zasłona jest ZAWSZE ciemna (rgba(15,17,21,.55)), niezależnie od
+       motywu — więc łuk musi być jasny w OBU motywach. Dlatego nie sięgamy
+       po --akcent: w palecie grafitowej jasnej to #3f3f46, prawie czerń,
+       i łuk byłby niewidoczny. W grafitowej wychodzi srebro, czyli prawie
+       to samo co dzisiejsza biel — i tak ma być, ta paleta jest bezbarwna
+       z założenia. Kolor widać w burgundzie i RGB. */
+    --luk:#f4f4f5 0deg, #a1a1aa 45deg, #52525b 86deg;
+    --luk-glow:rgba(255,255,255,.5);
   }
   /* ===== PALETA „burgund" — druga, przełączalna (D49) ===== */
   [data-paleta="burgund"]{
@@ -55,6 +69,8 @@
     --metryka-grad:linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
     --paleta-ikona:#fda4af;
     --stozek:#fb7185,#e11d48,#9f1239,#e11d48,#fb7185;   /* Z-81 */
+    --luk:#fda4af 0deg, #fb7185 45deg, #e11d48 86deg;   /* Z-87 */
+    --luk-glow:#e11d48;                                  /* Z-87 */
   }
   /* W ciemnym motywie akcent MUSI się rozjaśnić. Paleta grafitowa ma
      --akcent:#3f3f46, czyli prawie czerń — na ciemnym tle znikały przez to
@@ -71,6 +87,9 @@
     --bg-blad:#451a17; --tekst-blad:#fca5a5;
     --bg-akcentjasny:#26262a; --tekst-akcentjasny:#d4d4d8;
     --metryka-grad:linear-gradient(135deg, #1f2127 0%, #24262c 100%);
+    /* Z-87: szkielet na ciemnym tle — jaśniejszy niż karta, ale nie biały,
+       i dużo słabszy połysk (na ciemnym białe pasmo wygląda jak błysk lampy). */
+    --sz-baza:#2a2f38; --sz-polysk:rgba(255,255,255,.10);
     /* W-05: ta sama stała bordowo-czerwona plama co w jasnym motywie, tylko
        rozjaśniona pod ciemne tło (te same wartości co paleta burgund w
        ciemnym motywie, patrz blok niżej) — zawsze widoczna, niezależnie od
@@ -389,10 +408,57 @@
   .overlay-zapis{position:fixed; inset:0; background:rgba(15,17,21,.55);
     display:flex; align-items:center; justify-content:center; flex-direction:column;
     gap:14px; z-index:50;}
-  .overlay-zapis .spinner{width:42px; height:42px; border:4px solid rgba(255,255,255,.3);
-    border-top-color:#fff; border-radius:50%; animation:kreciSie .8s linear infinite;}
+  /* Z-87 (16.08.2026): ten sam spinner co dotąd — rozmiar 42 px, grubość
+     4 px, łuk 90°, obrót w 0,8 s — tylko łuk ma barwy palety zamiast bieli.
+     Zasłona była JEDYNYM miejscem w appce, które o palecie w ogóle nie
+     wiedziało.
+     ⚠ Dlaczego NIE tak jak obwódki z Z-81: tam animowany jest kąt gradientu
+     (`@property --kat`), co na iOS < 16.4 nie działa i obwódka stoi. Tutaj
+     łuk jest w gradiencie NIERUCHOMY, a kręci się cały element przez
+     `transform:rotate` — czyli dokładnie tak, jak działał stary spinner.
+     Skutek: chodzi na każdym telefonie, obrót liczy kompozytor (taniej niż
+     przemalowywanie gradientu co klatkę), a ruch jest identyczny jak dotąd.
+     `mask` wycina środek, żeby z koła zrobił się pierścień. */
+  .overlay-zapis .spinner{width:42px; height:42px; border-radius:50%;
+    position:relative; animation:kreciSie .8s linear infinite;}
+  .overlay-zapis .spinner::before{content:''; position:absolute; inset:0;
+    border-radius:50%; border:4px solid rgba(255,255,255,.28);}
+  .overlay-zapis .spinner::after{content:''; position:absolute; inset:0;
+    border-radius:50%; background:conic-gradient(from 0deg, var(--luk), transparent 92deg);
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    mask:radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    filter:drop-shadow(0 0 5px var(--luk-glow));}
   .overlay-zapis .tekst{color:#fff; font-size:16px; font-weight:600;}
   @keyframes kreciSie{to{transform:rotate(360deg);}}
+
+  /* ===== Z-87: szkielety zamiast napisu „Ładowanie…" =====
+     Pusty ekran z napisem nie mówi, CO się ładuje — szkielet pokazuje kształt
+     tego, co za chwilę przyjdzie, więc ekran czyta się jak prawie gotowy,
+     a nie jak zepsuty. Kształt dziedziczy po prawdziwych klasach `.wpis`
+     i `.jedn`, więc szkielet nie może się z nimi rozjechać przy przyszłych
+     zmianach wyglądu kart.
+     ⚠ ZAKRES: szkielet pokazujemy WYŁĄCZNIE, gdy naprawdę nie mamy danych.
+     Kto ma cache (Z-80/Z-84), dalej widzi prawdziwe wpisy od pierwszej klatki
+     — tam o ładowaniu mówi pasek „Odświeżam listę…", nie szkielet.
+     Połysk jedzie przez `transform`, nie `background-position`: przesunięcie
+     obsługuje kompozytor, więc przeglądarka nie przemalowuje paska w każdej
+     klatce. */
+  .szkielet{pointer-events:none;}
+  .szkielet .sz-kolo{width:38px; height:38px; border-radius:50%; flex:none;}
+  .szkielet .sz-tresc{flex:1; min-width:0;}
+  .sz-kolo,.sz-l{background:var(--sz-baza); position:relative; overflow:hidden;}
+  .sz-l{height:11px; border-radius:6px;}
+  .sz-l + .sz-l{margin-top:8px;}
+  .sz-kolo::after,.sz-l::after{content:''; position:absolute; inset:0;
+    transform:translateX(-100%);
+    background:linear-gradient(90deg, transparent, var(--sz-polysk), transparent);
+    animation:polysk 1.5s linear infinite;}
+  .sz-l:nth-child(2)::after{animation-delay:.12s;}
+  .sz-l:nth-child(3)::after{animation-delay:.24s;}
+  @keyframes polysk{to{transform:translateX(100%);}}
+  /* Szkielet imienia w powitaniu — wysokość równa linii tekstu, żeby kafelek
+     nie „podskoczył", gdy imię dojdzie. */
+  .sz-imie{height:19px; width:58%; border-radius:7px; margin:3px 0 2px;}
   /* Z-80: pasek nad listą „Moje wpisy". Lista rysuje się od razu z pamięci
      telefonu, a w tle leci pobranie świeżych danych — ten pasek mówi wprost,
      że to, co widać, może być jeszcze nieaktualne. Bez niego kierowca nie miał
@@ -457,6 +523,11 @@
     .przycisk-glow, .przycisk-glow::after, .pasek-glow,
     .pole-blad-puls input, .pole-blad-puls select, .pole-blad-puls textarea,
     input:focus, select:focus, textarea:focus{ animation:none; }
+    /* Z-87: bez ruchu szkielet nadal spełnia swoją rolę (pokazuje kształt
+       tego, co się ładuje), więc zostaje — gaśnie tylko przebiegający
+       połysk. Spinner zasłony celowo kręci się DALEJ: to jedyny znak, że
+       appka nie zawiesiła się w trakcie zapisu. */
+    .sz-kolo::after, .sz-l::after{ animation:none; }
   }
   /* Z-82: ikony konturowe — kolor z `color` rodzica (currentColor), rozmiar
      z font-size kontenera (1em). Patrz sprite na początku <body>. */
@@ -477,6 +548,9 @@
     --przycisk-cien:rgba(168,85,247,.45);
     --stozek:#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15,#ff2d95;
     --glow-krycie:.55;
+    /* Z-87: łuk spinnera przebiega przez cały zestaw barw RGB */
+    --luk:#22d3ee 0deg, #a855f7 34deg, #ff2d95 62deg, #facc15 86deg;
+    --luk-glow:#a855f7;
     --bg-akcentjasny:#f3e8ff; --tekst-akcentjasny:#7e22ce;
     --metryka-grad:linear-gradient(135deg,#faf5ff 0%,#eff6ff 100%);
     --paleta-ikona:#22d3ee;
@@ -648,7 +722,12 @@
       <div class="powitanie">
         <div class="avatar-pierscien"><div class="avatar-krag" id="avatar">?</div></div>
         <div>
-          <div class="p1" id="powitanieImie">Ładowanie…</div>
+          <!-- Z-87: zamiast słowa „Ładowanie…" zarys w miejscu imienia.
+               Ma tę samą wysokość co linia tekstu, więc kafelek nie
+               podskakuje, gdy imię się pojawi. Kto ma imię w pamięci
+               telefonu, i tak nie zdąży tego zobaczyć — `pokazZPamieci()`
+               podmienia je jeszcze przed pierwszym malowaniem. -->
+          <div class="p1" id="powitanieImie"><span class="sz-l sz-imie" aria-hidden="true"></span></div>
           <div class="p2" id="powitanieData"></div>
         </div>
       </div>
@@ -832,7 +911,9 @@
       <!-- Z-80: stan świeżości listy. Chowany domyślnie, sterowany przez
            `pokazPasekWpisow_`. -->
       <div id="pasekWpisow" class="pasek-odswiezania ukryte" style="margin-top:12px;"></div>
-      <div id="listaWpisow" style="margin-top:12px;"><div class="srodek">Ładowanie…</div></div>
+      <!-- Z-87: szkielet zamiast napisu „Ładowanie…" (skrypt podmienia go
+           na prawdziwe wpisy albo na własny szkielet — patrz otworzWpisy). -->
+      <div id="listaWpisow" style="margin-top:12px;"><div class="wpis szkielet" aria-hidden="true"><div class="sz-tresc"><div class="sz-l" style="width:68%"></div><div class="sz-l" style="width:45%"></div><div class="sz-l" style="width:31%"></div></div></div></div>
     </div>
   </section>
 
@@ -1489,6 +1570,7 @@ function uruchomAplikacje_(){
   // potem mignięcie listy wyboru, a dopiero na końcu właściwy pojazd —
   // przy słabym zasięgu na budowie trwało to kilka sekund.
   pokazZPamieci();
+  szkieletJednostekJesliPusto_();   // Z-87 — tylko gdy cache nic nie dał
   // Z-84 cz.2: pasek od razu, jeszcze przed wysyłką kolejki — inaczej przy
   // zaległych wpisach ekran stoi bez żadnego znaku życia, dopóki kolejka
   // się nie opróżni. `.catch` przed `.then` celowo: gdyby wysyłka kolejki
@@ -1555,8 +1637,11 @@ function pokazZPamieci(){
   rysujKomunikaty_(cache.komunikaty);
   el('naglowekKto').textContent = cache.imie || '';
   el('avatar').textContent = inicjaly(cache.imie);
-  el('powitanieImie').textContent = cache.imie
-    ? 'Cześć, ' + String(cache.imie).trim().split(/\s+/).pop() + '!' : '';
+  // Z-87: gdy w pamięci nie ma imienia, ZOSTAWIAMY szkielet z HTML-a zamiast
+  // czyścić kafelek do pustego miejsca — imię i tak zaraz dojdzie z serwera.
+  if (cache.imie) {
+    el('powitanieImie').textContent = 'Cześć, ' + String(cache.imie).trim().split(/\s+/).pop() + '!';
+  }
   rysujSlowniki();
 
   var zapamietany = localStorage.getItem(KLUCZ_POJAZD);
@@ -1582,6 +1667,61 @@ function pokazZPamieci(){
    pojazd już jest (serwer oddaje samo `ok`, bez danych jednostki — sztuczny
    wiersz różniłby się od prawdziwego), tylko mówimy wprost, że lista się
    odświeża. */
+/* ================= Z-87 (16.08.2026): szkielety ładowania =================
+   Zamiast napisu „Ładowanie…" pokazujemy zarys kart, które za chwilę przyjdą.
+   Kształt bierze się z tych samych klas co prawdziwa lista (`.wpis`, `.jedn`),
+   więc zmiana wyglądu kart automatycznie zmienia też szkielet.
+
+   `aria-hidden` — to dekoracja, czytnik ekranu nie ma jej czytać. Stan
+   ładowania i tak ogłasza pasek „Odświeżam listę…".
+
+   Trzy karty, nie pięć: tyle mieści się na ekranie telefonu bez przewijania,
+   a szkielet dłuższy niż prawdziwa lista wygląda jak obietnica danych,
+   których nie ma. */
+/* Z-87 (16.08.2026): powitanie NIE traci raz poznanego imienia.
+   Dotąd brak zasięgu albo błąd serwera nadpisywały „Cześć, Marek!" napisem
+   „Brak połączenia" — mimo że imię siedzi w pamięci telefonu i nic mu nie
+   jest. To ta sama zasada co Z-80: pokaż od razu to, co wiesz. O braku sieci
+   i tak mówi lista pojazdów pod spodem („Brak zasięgu…"), więc komunikat
+   w powitaniu tylko zabierał informację, nic nie dodając.
+   Gdy imienia naprawdę jeszcze nie znamy (pierwsze uruchomienie na nowym
+   telefonie) — pokazujemy zapasowy tekst, bo wtedy jest jedyną informacją. */
+function zachowajPowitanie_(tekstGdyNieWiemy){
+  var e = el('powitanieImie');
+  if (!e) return;
+  if (STAN.imie) {
+    e.textContent = 'Cześć, ' + String(STAN.imie).trim().split(/\s+/).pop() + '!';
+  } else {
+    e.textContent = tekstGdyNieWiemy;
+  }
+}
+
+function szkieletWpisow_(){
+  var k = '<div class="wpis szkielet" aria-hidden="true">' +
+    '<div class="sz-tresc">' +
+      '<div class="sz-l" style="width:68%"></div>' +
+      '<div class="sz-l" style="width:45%"></div>' +
+      '<div class="sz-l" style="width:31%"></div>' +
+    '</div></div>';
+  return k + k + k;
+}
+function szkieletJednostek_(){
+  var k = '<div class="jedn szkielet" aria-hidden="true">' +
+    '<div class="sz-kolo"></div>' +
+    '<div class="sz-tresc">' +
+      '<div class="sz-l" style="width:58%"></div>' +
+      '<div class="sz-l" style="width:76%"></div>' +
+    '</div></div>';
+  return k + k + k;
+}
+/* Szkielet listy pojazdów TYLKO wtedy, gdy nie ma czego pokazać. Kierowca
+   z cache (Z-84) widzi prawdziwe pojazdy od pierwszej klatki i podmiana ich
+   na szare prostokąty byłaby krokiem wstecz. */
+function szkieletJednostekJesliPusto_(){
+  var box = el('listaJednostek');
+  if (box && !box.innerHTML.trim()) box.innerHTML = szkieletJednostek_();
+}
+
 function pokazPasekJednostek_(widoczny){
   var p = el('pasekJednostek');
   if (!p) return;
@@ -1595,6 +1735,7 @@ function pokazPasekJednostek_(widoczny){
    sensu (kierowca patrzy na pulpit, nie na listę). */
 function odswiezStartZPaskiem_(){
   pokazPasekJednostek_(true);
+  szkieletJednostekJesliPusto_();   // Z-87
   return odswiezStart().then(function(w){
     pokazPasekJednostek_(false);
     return w;
@@ -1610,7 +1751,7 @@ function odswiezStart(){
       // D97 — kod nieznany albo konto wyłączone: wracamy na ekran wpisywania.
       // W-01 (01.08.2026): było E002/E004, teraz E011/E015 jak we flocie.
       if (odp.blad === 'E011' || odp.blad === 'E015') { odrzucKod_(odp.wiadomosc); return; }
-      el('powitanieImie').textContent = 'Błąd';
+      zachowajPowitanie_('Błąd');   // Z-87 — patrz komentarz przy funkcji
       pokazPasekJednostek_(false);   // Z-84
       el('listaJednostek').innerHTML = '<div class="srodek">' +
         bezpiecznyTekst(odp.wiadomosc || 'Nie udało się wczytać danych.') + '</div>';
@@ -1658,7 +1799,7 @@ function odswiezStart(){
 
     rysujSlowniki();
   }).catch(function(){
-    el('powitanieImie').textContent = 'Brak połączenia';
+    zachowajPowitanie_('Brak połączenia');   // Z-87
     pokazPasekJednostek_(false);   // Z-84
     el('listaJednostek').innerHTML = '<div class="srodek">Brak zasięgu. ' +
       'Możesz zapisać wpis — wyśle się, gdy sieć wróci.</div>';
@@ -2626,7 +2767,7 @@ function otworzWpisy(j){
 
   var zCache = wpisyCache_(j.idPojazdu);
   if (zCache) { STAN.wpisy = zCache; rysujWpisy(); }
-  else el('listaWpisow').innerHTML = '<div class="srodek">Ładowanie…</div>';
+  else el('listaWpisow').innerHTML = szkieletWpisow_();   // Z-87
 
   if (!navigator.onLine) {
     var czeka = oczekujaceWKolejce_(j.idPojazdu);
