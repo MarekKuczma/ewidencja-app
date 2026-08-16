@@ -60,13 +60,21 @@
     --luk-glow:rgba(255,255,255,.5);
   }
   /* ===== PALETA „burgund" — druga, przełączalna (D49) ===== */
+  /* Z-90 (16.08.2026): przegląd palety burgundowej. Marek: „nie do końca
+     jestem do niej przekonany". Diagnoza po wyrenderowaniu: czerwień była
+     JEDNOCZEŚNIE kolorem marki i kolorem alarmu, przez co sygnały („Serwis
+     przekroczony", „Wymaga uwagi", „Usuń") przestawały się wybijać.
+     Wybór Marka z mockupu: A3 nagłówek + B2 „Popraw" + C2 kafelki + D ciemny.
+       A3 — gradient bez jaskrawego różu na końcu (#e11d48 → #be123c),
+       C2 — kafelki metryk neutralne zamiast różowych: burgund zostaje na
+            nagłówku i przyciskach, czyli tam, gdzie ma znaczyć „marka". */
   [data-paleta="burgund"]{
     --akcent:#9f1239; --akcent-c:#4c0519;
-    --gradient:linear-gradient(135deg, #4c0519 0%, #9f1239 55%, #e11d48 100%);
-    --ikona-grad:linear-gradient(135deg, #4c0519, #be123c);
+    --gradient:linear-gradient(135deg, #450a1e 0%, #881337 55%, #be123c 100%);
+    --ikona-grad:linear-gradient(135deg, #450a1e, #be123c);
     --przycisk-cien:rgba(159,18,57,.35);
     --bg-akcentjasny:#fff1f2; --tekst-akcentjasny:#9f1239;
-    --metryka-grad:linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    --metryka-grad:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     --paleta-ikona:#fda4af;
     --stozek:#fb7185,#e11d48,#9f1239,#e11d48,#fb7185;   /* Z-81 */
     --luk:#fda4af 0deg, #fb7185 45deg, #e11d48 86deg;   /* Z-87 */
@@ -100,11 +108,29 @@
     --glow-krycie:.70;                                   /* Z-81 */
   }
   [data-motyw="ciemny"][data-paleta="burgund"]{
+    /* Z-90/D: prawy koniec gradientu przycięty o jeden ton (#be123c →
+       #9f2544). Na ciemnym tle jaskrawy koniec robił z paska nagłówka
+       najjaśniejszy punkt ekranu — ta sama poprawka, co w Z-89 we flocie. */
+    --gradient:linear-gradient(135deg, #450a1e 0%, #881337 55%, #9f2544 100%);
     --akcent:#fb7185; --akcent-c:#fda4af;
     --bg-akcentjasny:#3f1220; --tekst-akcentjasny:#fda4af;
-    --metryka-grad:linear-gradient(135deg, #2a1218 0%, #33161d 100%);
+    --metryka-grad:linear-gradient(135deg, #1f2127 0%, #262930 100%);
     --stozek:#9f1239,#e11d48,#fb7185,#e11d48,#9f1239;   /* Z-81 */
   }
+  /* Z-90/B2 — najważniejsza poprawka tej paczki, i to NIE jest kwestia gustu.
+     `.przycisk-maly` bierze --akcent, `.przycisk-czerwony` bierze --blad.
+     W burgundzie akcent to #9f1239, a błąd #d93025 — dwie czerwienie obok
+     siebie; w motywie ciemnym #fb7185 przy #fca5a5, czyli różnica żadna.
+     Przycisk „Popraw" wyglądał jak przycisk, który coś kasuje. Teraz czerwień
+     zostaje WYŁĄCZNIE na „Usuń", a `.przycisk-maly` jest neutralny.
+     ⚠ Reguła obejmuje wszystkie `.przycisk-maly` w tej palecie (także
+     „Podsumowanie", „+ Dodaj kolejne tankowanie", „Nie" w oknie potwierdzenia)
+     — tak wyglądał mockup zaakceptowany przez Marka 16.08. Gdyby miało to
+     dotyczyć wyłącznie sąsiadów „Usuń", wystarczy dopisać `.wpis .akcja`
+     przed selektorem. */
+  [data-paleta="burgund"] .przycisk-maly{color:#475569; border-color:#94a3b8;}
+  [data-motyw="ciemny"][data-paleta="burgund"] .przycisk-maly{
+    color:#cbd5e1; border-color:#8894a8;}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0; background:var(--tlo); color:var(--tekst);
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:17px;}
@@ -274,6 +300,11 @@
     text-decoration:line-through; color:#9ca3af;}
   .wpis.anulowany .ikona-krag{border-color:var(--linia); opacity:.5;}
   .wpis .akcja{display:flex; gap:8px; margin-top:10px;}
+  /* Z-90 (bliźniacze do Z-89 we flocie): oba przyciski tej samej szerokości,
+     ikona z napisem wyśrodkowane. Dotąd każdy był szeroki na tyle, ile miał
+     tekstu, więc „Popraw" i „Usuń" nigdy nie wychodziły równo. */
+  .wpis .akcja > button{flex:1 1 0; min-width:0; padding-left:10px; padding-right:10px;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;}
   .wpis-strzalka{width:24px; height:24px; border-radius:50%; background:var(--bg-akcentjasny);
     color:var(--tekst-akcentjasny); font-size:13px; font-weight:700; flex:none;
     display:inline-flex; align-items:center; justify-content:center;
@@ -371,6 +402,20 @@
   nav button{flex:1; background:none; border:none; padding:12px 0 10px;
     font-size:13px; font-weight:600; color:var(--szary); min-height:56px;}
   nav button.aktywna{color:var(--akcent);}
+  /* Z-90 (zgłoszenie Marka, sprostowanie do Z-89): chodziło o kolor IKONEK
+     i podpisów nieaktywnych zakładek, nie o tło paska. Domyślne --szary
+     (#9aa1ad) na ciemnym tle było za ciemne.
+     ⚠ `:not(.aktywna)` jest konieczne: `[data-motyw="ciemny"] nav button` ma
+     tę samą wagę co `nav button.aktywna` i stojąc niżej w pliku zabijało
+     kolor aktywnej zakładki (złapane na mockupie, przed wysyłką). */
+  [data-motyw="ciemny"] nav button:not(.aktywna){color:#c3cad6;}
+  /* ⚠ Wyjątek dla palety grafitowej (domyślnej). Jej --akcent w motywie
+     ciemnym to #c7c7cf, czyli praktycznie ten sam jasny szary — po
+     rozjaśnieniu do #c3cad6 aktywna zakładka przestawała się różnić kolorem
+     od nieaktywnych (zmierzone: rgb(199,199,207) vs rgb(195,202,214)).
+     Tu rozjaśniamy mniej: wyraźnie ponad dzisiejsze #9aa1ad, ale nadal
+     zauważalnie poniżej akcentu. */
+  [data-motyw="ciemny"][data-paleta="grafit"] nav button:not(.aktywna){color:#a8b0bd;}
   /* ================= Z-86 (16.08.2026): przejścia ekranów =================
      Bliźniacze do floty — zmieniasz tu, zmień i tam. Wariant N1 (ślizgająca
      kreska) + E1 (przenikanie), wybrany przez Marka z mockupu. Wskaźnik to
@@ -1214,7 +1259,7 @@ var PALETY = [
     probka:'linear-gradient(135deg,#27272a,#52525b 70%,#a1a1aa)' },
   { id:'burgund',  nazwa:'Burgundowa', opis:'cieplejsza',        pasek:'#4c0519',
     probka:'linear-gradient(135deg,#4c0519,#9f1239 55%,#e11d48)' },
-  { id:'rgb',      nazwa:'RGB',        opis:'dla wybranych osób', pasek:'#a855f7',
+  { id:'rgb',      nazwa:'RGB',        opis:'gaming vibe', pasek:'#a855f7',
     probka:'linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15)', specjalna:true }
 ];
 var KLUCZ_PALETY_SPEC = 'ewidencja_palety_specjalne';
