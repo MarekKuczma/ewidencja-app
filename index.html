@@ -1433,7 +1433,13 @@ function uruchomAplikacje_(){
   // potem mignięcie listy wyboru, a dopiero na końcu właściwy pojazd —
   // przy słabym zasięgu na budowie trwało to kilka sekund.
   pokazZPamieci();
-  wyslijKolejke().then(odswiezStart);
+  // Z-84 cz.2: pasek od razu, jeszcze przed wysyłką kolejki — inaczej przy
+  // zaległych wpisach ekran stoi bez żadnego znaku życia, dopóki kolejka
+  // się nie opróżni. `.catch` przed `.then` celowo: gdyby wysyłka kolejki
+  // rzuciła wyjątkiem, odświeżenie i tak MUSI się odbyć (bez tego lista
+  // zostawała na wersji z pamięci i pasek wisiałby w nieskończoność).
+  pokazPasekJednostek_(true);
+  wyslijKolejke().catch(function(){}).then(odswiezStartZPaskiem_);
 }
 
 // W-05 (01.08.2026): jeden i ten sam render dla ścieżki z pamięci
@@ -1501,6 +1507,12 @@ function pokazZPamieci(){
   var pasuje = STAN.jednostki.filter(function(j){ return j.idPojazdu === zapamietany; })[0];
   if (pasuje) wybierzPojazd(pasuje, true);
   else if (STAN.jednostki.length === 1) wybierzPojazd(STAN.jednostki[0], true);
+  // Z-84 cz.2 (zgłoszenie Marka 16.08.2026): brakująca gałąź. Gdy nie ma
+  // zapamiętanego pojazdu (np. kierowca zamknął appkę na ekranie WYBORU),
+  // ta funkcja nie robiła NIC — ekran startował z pustą listą, mimo że
+  // jednostki siedziały w cache. Sens `pokazZPamieci` to „pokaż od razu to,
+  // co wiemy" (D60), więc lista musi się narysować także tutaj.
+  else pokazWyborPojazdu();
 }
 
 /* ================= Z-84 (zgłoszenie Marka 16.08.2026) =================
