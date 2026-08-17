@@ -1388,6 +1388,10 @@ function odswiezKolejkeInfo(){
       ' na wysłanie. Wyślą się same, gdy wróci zasięg.';
   }
   odrzucone.forEach(function(w){
+    /* Z-93: data w kartach kolejki szła prosto z zakolejkowanego payloadu,
+       czyli w ISO — Z-88 objęło kolejkę FLOTY, a tę przeoczyło. Wyszło
+       dopiero na zrzucie mockupu: „(2026-08-15)" obok reszty appki na
+       dd.mm.rrrr. Wszystkie trzy warianty karty przez `dataPL_()`. */
     // E-32 (10.08.2026): E008 z KOLEJKI ("ten dzień już jest wpisany") w
     // ogromnej większości przypadków znaczy „ten sam wpis już się zapisał
     // za pierwszym razem, tylko telefon nie zdążył tego zobaczyć" — patrz
@@ -1411,24 +1415,39 @@ function odswiezKolejkeInfo(){
     var toZamknietyMiesiac = (w.bladKod === 'E012');
     if (toZamknietyMiesiac) {
       html += '<div class="odrzucony zapisany"><b>Miesiąc jest już rozliczony</b>' +
-        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') +
+        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(dataPL_(w.dane.data)) + ')' : '') +
         '<br>Ten wpis nie zostanie zapisany w ewidencji. Jeśli ten dzień jest ' +
         'ważny — daj znać Markowi. Jeśli nie, możesz usunąć ten komunikat.' +
         '<div class="p">' +
         '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń</button>' +
         '</div></div>';
     } else if (toDuplikatDnia) {
+      /* Z-93 (17.08.2026): rozszerzona treść. Poprzednia wersja (E-32)
+         zakładała, że kolidujący wpis to WŁASNY wpis kierowcy — a przy
+         maszynie dzielonej równie dobrze może go zrobić kolega.
+         ⚠ Marek 17.08: komunikat i tak mówił prawdę („wpis już tam jest"),
+         a wpis kolegi i własny powinny być takie same; gdyby się różniły,
+         kierowcy wyjaśniają to między sobą albo z nim. Czyli to nie był
+         błąd do naprawienia, tylko brakująca podpowiedź, co zrobić w tym
+         drugim przypadku — stąd sama treść, bez zmian w mechanice.
+         „najprawdopodobniej" zamiast „dotarł" jest celowe: przy wpisie
+         kolegi zdanie o własnym wpisie po prostu nie jest prawdziwe.
+         Ścieżka „dopisz się jako kierowca" istnieje od E-27 — przycisk
+         pokazuje się na cudzym wpisie (`mogeWspolkierowac`). */
       html += '<div class="odrzucony zapisany"><b>Ten wpis już jest zapisany</b>' +
-        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') +
-        '<br>Telefon nie zdążył potwierdzić wysyłki, ale wpis dotarł do bazy za ' +
-        'pierwszym razem. Sprawdź w „Moje wpisy" — jeśli tam jest, usuń tę pozycję ' +
-        'z kolejki, nic więcej nie trzeba robić.' +
+        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(dataPL_(w.dane.data)) + ')' : '') +
+        '<br>Telefon nie zdążył potwierdzić wysyłki, ale wpis najprawdopodobniej ' +
+        'dotarł do bazy za pierwszym razem. Otwórz „Moje wpisy" i sprawdź ten dzień:' +
+        '<br>• <b>wpis jest Twój</b> — usuń tę pozycję z kolejki, nic więcej nie ' +
+        'trzeba robić;' +
+        '<br>• <b>wpis zrobił kolega</b> — dopisz się do niego jako kierowca, ' +
+        'a potem usuń tę pozycję z kolejki.' +
         '<div class="p">' +
         '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń z kolejki</button>' +
         '</div></div>';
     } else {
       html += '<div class="odrzucony"><b>Wpis nie został przyjęty</b>' +
-        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(w.dane.data) + ')' : '') + ': ' +
+        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(dataPL_(w.dane.data)) + ')' : '') + ': ' +
         bezpiecznyTekst(w.blad || 'nieznany błąd') +
         '<div class="p">' +
         '<button class="przycisk-maly" data-ponow="' + w.tmp + '">Spróbuj ponownie</button>' +
