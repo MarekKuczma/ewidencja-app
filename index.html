@@ -1002,6 +1002,12 @@
 
       <!-- Dodawanie pojazdu z listy (D59) — zamiast wpisywania z ręki -->
       <div id="dodajBox" class="ukryte" style="margin-top:12px;">
+        <!-- E-34 (19.08.2026): wskaźnik ładowania listy rozwijanej zamiast
+             pełnoekranowej zasłony — „Anuluj" ma być klikalne przez cały
+             czas pobierania. Ten sam wzorzec co #pasekJednostek (Z-84),
+             ale OSOBNY element: wspólny pasek nad listą pojazdów mógłby
+             się ścigać z odświeżaniem startowym o to, kto go chowa. -->
+        <div id="pasekDodawania" class="pasek-odswiezania ukryte"></div>
         <div class="pole">
           <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-car"></use></svg> Wybierz z listy</label>
           <select id="wyborNowej"><option value="">— ładowanie… —</option></select>
@@ -1998,6 +2004,21 @@ function pokazPasekJednostek_(widoczny){
   p.innerHTML = '<div class="pasek-odswiezania ladowanie">' +
     '<span class="mini-spinner"></span><span>Odświeżam listę pojazdów…</span></div>';
 }
+/* E-34 (19.08.2026): pasek ładowania w okienku „Dodaj auto lub koparkę".
+   Zastępuje pełnoekranową zasłonę „Wczytuję listę pojazdów…", która na czas
+   pobierania blokowała też przycisk „Anuluj" — a `wolajAPI` nie ma limitu
+   czasu, więc przy zawieszonym połączeniu kierowca nie miał żadnej drogi
+   odwrotu. To czysty ODCZYT, niczego nie zapisuje — nie potrzebuje blokady
+   ekranu; zasłona przy zapisie („Dodaję pojazd…") zostaje bez zmian (Z-92). */
+function pokazPasekDodawania_(widoczny){
+  var p = el('pasekDodawania');
+  if (!p) return;
+  if (!widoczny) { p.className = 'pasek-odswiezania ukryte'; p.innerHTML = ''; return; }
+  p.className = 'pasek-glow';
+  p.innerHTML = '<div class="pasek-odswiezania ladowanie">' +
+    '<span class="mini-spinner"></span><span>Wczytuję listę pojazdów…</span></div>';
+}
+
 /* Owija `odswiezStart()` paskiem. Osobna funkcja, bo `odswiezStart` woła się
    też przy starcie i po zapisie wpisu — tam pasek nad listą pojazdów nie ma
    sensu (kierowca patrzy na pulpit, nie na listę). */
@@ -3440,10 +3461,15 @@ el('dodajJednostkeBtn').onclick = function(){
   el('dodajJednostkeBtn').classList.add('ukryte');
   var sel = el('wyborNowej');
   sel.innerHTML = '<option value="">— ładowanie… —</option>';
-  pokazOverlay('Wczytuję listę pojazdów…');
+  // E-34 (19.08.2026): pasek zamiast zasłony — patrz pokazPasekDodawania_.
+  pokazPasekDodawania_(true);
 
   wolajAPI('dostepneJednostki', {}).then(function(o){
-    schowajOverlay();
+    pokazPasekDodawania_(false);
+    // E-34: kierowca mógł w trakcie ładowania kliknąć „Anuluj" — okienko
+    // jest już schowane i odpowiedź nie ma czego wypełniać. Kolejne
+    // otwarcie okienka i tak zaczyna od świeżego pobrania listy.
+    if (el('dodajBox').classList.contains('ukryte')) return;
     if (!o.ok || !o.jednostki || !o.jednostki.length) {
       sel.innerHTML = '<option value="">— brak pojazdów do dodania —</option>';
       return;
@@ -3467,13 +3493,17 @@ el('dodajJednostkeBtn').onclick = function(){
           }).join('') + '</optgroup>';
       }).join('');
   }).catch(function(){
-    schowajOverlay();
+    pokazPasekDodawania_(false);
     sel.innerHTML = '<option value="">— brak połączenia —</option>';
   });
 };
 el('anulujDodanieBtn').onclick = function(){
   el('dodajBox').classList.add('ukryte');
   el('dodajJednostkeBtn').classList.remove('ukryte');
+  // E-34: gdyby połączenie wisiało, pasek nie może zostać na ekranie po
+  // zamknięciu okienka — odpowiedź (jeśli w ogóle dojdzie) i tak trafi
+  // w pustkę dzięki kontroli `ukryte` wyżej.
+  pokazPasekDodawania_(false);
 };
 /* Z-92: karta pojazdu w trakcie dodawania. Świadomie NIC poza tym nie zmienia
    się w tym przebiegu — zasłona „Dodaję pojazd…" zostaje (decyzja Marka:
