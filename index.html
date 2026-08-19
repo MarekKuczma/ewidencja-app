@@ -419,8 +419,38 @@
   details.dodatki{border:1.5px solid var(--linia); border-radius:10px; padding:10px 12px;
     margin-top:20px;}
   details.dodatki summary{font-size:14px; font-weight:600; color:var(--szary); cursor:pointer;}
-  .kolejka-info{background:var(--bg-uwaga); color:var(--tekst-uwaga); border-radius:12px;
-    padding:10px 14px; margin-bottom:12px; font-size:15px; display:none;}
+  /* E-40 (19.08.2026): kolejka offline w kartach z ikonami SVG — mockup v5
+     pkt 8. Kontener stracił własne tło (karty mają swoje); karty ZOSTAJĄ
+     inline (decyzja Marka: nie znikają, aż kierowca załatwi — arkusz by
+     znikał po kliknięciu). Kolory wg zasady z 19.08: „czeka" = informacyjne
+     (paleta), „już zapisany"/„miesiąc rozliczony" = uwaga (pomarańcz, to
+     nie błędy), „nie przyjęty" = błąd (czerwień). */
+  .kolejka-info{display:none;}
+  .k-karta{border-radius:12px; padding:11px 12px; margin-bottom:10px;
+    font-size:14px; line-height:1.45;}
+  .k-glowka{display:flex; align-items:center; gap:9px; margin-bottom:4px;}
+  .k-kolko{width:30px; height:30px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:15px; flex:none;}
+  .k-glowka b{font-size:14px;}
+  .k-krok{display:flex; gap:7px; margin-top:5px;}
+  .k-num{width:17px; height:17px; border-radius:50%; font-size:9.5px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; flex:none; margin-top:2px;}
+  .k-przyciski{display:flex; gap:8px; margin-top:9px;}
+  .k-btn{flex:1; border-radius:9px; padding:9px 10px; font-size:13.5px; font-weight:700;
+    font-family:inherit; border:1.5px solid;}
+  /* „Spróbuj ponownie" = akcja bezpieczna/naprawcza — LEKKO ZIELONA
+     (prośba Marka, spójnie z „Zostaw" z E-39). „Usuń" = czerwona. */
+  .k-btn.ponow{border-color:var(--ok); color:var(--tekst-ok); background:var(--bg-ok);}
+  .k-btn.usun{border-color:var(--blad); color:var(--tekst-blad); background:transparent;}
+  .k-karta.info{background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);}
+  .k-karta.info .k-kolko{background:var(--karta); color:var(--tekst-akcentjasny);}
+  .k-karta.zapisany{background:var(--bg-uwaga); color:var(--tekst-uwaga);}
+  .k-karta.zapisany .k-kolko{background:rgba(255,255,255,.55); color:var(--tekst-uwaga);}
+  [data-motyw="ciemny"] .k-karta.zapisany .k-kolko{background:rgba(0,0,0,.25);}
+  .k-karta.zapisany .k-num{background:var(--brzeg-uwaga); color:#fff;}
+  .k-karta.blad{background:var(--bg-blad); color:var(--tekst-blad);}
+  .k-karta.blad .k-kolko{background:rgba(255,255,255,.55); color:var(--tekst-blad);}
+  [data-motyw="ciemny"] .k-karta.blad .k-kolko{background:rgba(0,0,0,.25);}
   /* E-37 (19.08.2026): komunikat Marka przeniesiony z bordowego paska (W-05)
      na wysuwany arkusz — wariant „marek" przy .arkusz-kom niżej. Stary
      pasek .komunikat-marka usunięty w całości; bordowe zmienne
@@ -429,15 +459,9 @@
      (decyzja Marka, „4a"): bordowy był potrzebny, bo pasek GINĄŁ na
      dashboardzie — arkusz sam wjeżdża na środek i wymaga kliknięcia,
      więc widoczność zapewnia forma, nie kolor. */
-  /* Odrzucony wpis z kolejki — wzorzec z aplikacji floty (.odrzucony) */
-  .odrzucony{background:var(--bg-blad); color:var(--tekst-blad); border-radius:10px;
-    padding:10px; margin-top:8px; font-size:14px;}
-  .odrzucony .p{display:flex; gap:8px; margin-top:8px;}
-  /* E-32 (10.08.2026): wariant dla E008 z kolejki — to NIE jest błąd, tylko
-     ślad udanego wpisu, którego telefon nie zdążył potwierdzić (patrz
-     komentarz przy `wyslijKolejke`). Kolory ostrzeżenia zamiast czerwieni,
-     żeby kierowca nie panikował na widok czegoś, co jest dobrą wiadomością. */
-  .odrzucony.zapisany{background:var(--bg-uwaga); color:var(--tekst-uwaga);}
+  /* E-40: dawne .odrzucony/.odrzucony.zapisany zastąpione kartami .k-karta
+     wyżej (kolory E-32 zachowane: pomarańcz dla „dobrej wiadomości",
+     czerwień dla realnego odrzucenia). */
   nav{position:fixed; bottom:0; left:0; right:0; background:var(--karta);
     border-top:1px solid var(--linia); display:flex; z-index:5;
     padding-bottom:env(safe-area-inset-bottom);}
@@ -1001,6 +1025,7 @@
 <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2"/></symbol>
 <symbol id="ic-warn" viewBox="0 0 24 24"><path d="M12 4 3.5 19h17L12 4ZM12 10v4M12 16.8v.2"/></symbol>
 <symbol id="ic-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6.2 17.8 17.8 6.2"/></symbol>
+<symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
 <symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 1 5.4-4.1L17 5.3l1.7 1.7 2.9-2.9a4 4 0 0 1-5.1 5.4l-8 8a2 2 0 0 1-2.9-2.9l8-8.1Z"/></symbol>
 <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M9 3.5h6l-.7 6.2 2.7 3.3H7l2.7-3.3L9 3.5ZM12 13v7.5"/></symbol>
 <symbol id="ic-swap" viewBox="0 0 24 24"><path d="M4.5 9.5a8 8 0 0 1 13.6-2.7M18.5 3.5v3.7h-3.7M19.5 14.5a8 8 0 0 1-13.6 2.7M5.5 20.5v-3.7h3.7"/></symbol>
@@ -1665,10 +1690,15 @@ function odswiezKolejkeInfo(){
   if (!oczekuje && !odrzucone.length){ e.style.display = 'none'; e.innerHTML = ''; return; }
   e.style.display = 'block';
 
+  // E-40 (19.08.2026): karty z ikonami SVG zamiast gołego tekstu i czerwonych
+  // pudełek — TREŚCI bez zmian (E-32/Z-75/Z-93), nowa jest tylko forma.
   var html = '';
   if (oczekuje) {
-    html += '⏳ ' + oczekuje + (oczekuje === 1 ? ' wpis czeka' : ' wpisy czekają') +
-      ' na wysłanie. Wyślą się same, gdy wróci zasięg.';
+    html += '<div class="k-karta info"><div class="k-glowka">' +
+      '<span class="k-kolko">' + ikonaHTML_('ic-clock') + '</span>' +
+      '<b>' + oczekuje + (oczekuje === 1 ? ' wpis czeka' : ' wpisy czekają') +
+      ' na wysłanie</b></div>' +
+      'Wyślą się same, gdy wróci zasięg.</div>';
   }
   odrzucone.forEach(function(w){
     /* Z-93: data w kartach kolejki szła prosto z zakolejkowanego payloadu,
@@ -1696,13 +1726,15 @@ function odswiezKolejkeInfo(){
     // (zakładka „Odrzucone" + mail) to przerost formy — brakujące tankowanie
     // widać w pliku Orlenu, a brakujący dzień w Panelu.
     var toZamknietyMiesiac = (w.bladKod === 'E012');
+    var dataK = (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(dataPL_(w.dane.data)) + ')' : '');
     if (toZamknietyMiesiac) {
-      html += '<div class="odrzucony zapisany"><b>Miesiąc jest już rozliczony</b>' +
-        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(dataPL_(w.dane.data)) + ')' : '') +
-        '<br>Ten wpis nie zostanie zapisany w ewidencji. Jeśli ten dzień jest ' +
+      html += '<div class="k-karta zapisany"><div class="k-glowka">' +
+        '<span class="k-kolko">' + ikonaHTML_('ic-lock') + '</span>' +
+        '<b>Miesiąc jest już rozliczony' + dataK + '</b></div>' +
+        'Ten wpis nie zostanie zapisany w ewidencji. Jeśli ten dzień jest ' +
         'ważny — daj znać Markowi. Jeśli nie, możesz usunąć ten komunikat.' +
-        '<div class="p">' +
-        '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń</button>' +
+        '<div class="k-przyciski">' +
+        '<button class="k-btn usun" data-usun="' + w.tmp + '">Usuń</button>' +
         '</div></div>';
     } else if (toDuplikatDnia) {
       /* Z-93 (17.08.2026): rozszerzona treść. Poprzednia wersja (E-32)
@@ -1717,24 +1749,26 @@ function odswiezKolejkeInfo(){
          kolegi zdanie o własnym wpisie po prostu nie jest prawdziwe.
          Ścieżka „dopisz się jako kierowca" istnieje od E-27 — przycisk
          pokazuje się na cudzym wpisie (`mogeWspolkierowac`). */
-      html += '<div class="odrzucony zapisany"><b>Ten wpis już jest zapisany</b>' +
-        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(dataPL_(w.dane.data)) + ')' : '') +
-        '<br>Telefon nie zdążył potwierdzić wysyłki, ale wpis najprawdopodobniej ' +
+      html += '<div class="k-karta zapisany"><div class="k-glowka">' +
+        '<span class="k-kolko">' + ikonaHTML_('ic-check') + '</span>' +
+        '<b>Ten wpis już jest zapisany' + dataK + '</b></div>' +
+        'Telefon nie zdążył potwierdzić wysyłki, ale wpis najprawdopodobniej ' +
         'dotarł do bazy za pierwszym razem. Otwórz „Moje wpisy" i sprawdź ten dzień:' +
-        '<br>• <b>wpis jest Twój</b> — usuń tę pozycję z kolejki, nic więcej nie ' +
-        'trzeba robić;' +
-        '<br>• <b>wpis zrobił kolega</b> — dopisz się do niego jako kierowca, ' +
-        'a potem usuń tę pozycję z kolejki.' +
-        '<div class="p">' +
-        '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń z kolejki</button>' +
+        '<div class="k-krok"><span class="k-num">1</span><span><b>wpis jest Twój</b> — ' +
+        'usuń tę pozycję z kolejki, nic więcej nie trzeba robić;</span></div>' +
+        '<div class="k-krok"><span class="k-num">2</span><span><b>wpis zrobił kolega</b> — ' +
+        'dopisz się do niego jako kierowca, a potem usuń tę pozycję z kolejki.</span></div>' +
+        '<div class="k-przyciski">' +
+        '<button class="k-btn usun" data-usun="' + w.tmp + '">Usuń z kolejki</button>' +
         '</div></div>';
     } else {
-      html += '<div class="odrzucony"><b>Wpis nie został przyjęty</b>' +
-        (w.dane && w.dane.data ? ' (' + bezpiecznyTekst(dataPL_(w.dane.data)) + ')' : '') + ': ' +
+      html += '<div class="k-karta blad"><div class="k-glowka">' +
+        '<span class="k-kolko">' + ikonaHTML_('ic-warn') + '</span>' +
+        '<b>Wpis nie został przyjęty' + dataK + '</b></div>' +
         bezpiecznyTekst(w.blad || 'nieznany błąd') +
-        '<div class="p">' +
-        '<button class="przycisk-maly" data-ponow="' + w.tmp + '">Spróbuj ponownie</button>' +
-        '<button class="przycisk-czerwony" data-usun="' + w.tmp + '">Usuń</button>' +
+        '<div class="k-przyciski">' +
+        '<button class="k-btn ponow" data-ponow="' + w.tmp + '">' + ikonaHTML_('ic-swap') + ' Spróbuj ponownie</button>' +
+        '<button class="k-btn usun" data-usun="' + w.tmp + '">Usuń</button>' +
         '</div></div>';
     }
   });
