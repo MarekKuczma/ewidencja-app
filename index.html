@@ -513,7 +513,12 @@
   dialog .p{display:flex; gap:10px;}
   dialog .p button{flex:1;}
   h2{font-size:18px; margin:0 0 12px;}
-  .sukces-ikona{font-size:52px; text-align:center; margin:6px 0 0;}
+  /* Z-98 (odpowiednik floty, 19.08.2026): ikona brała currentColor po
+     rodzicu — czarna w jasnym, blada w ciemnym. Ten sam zielony co „Popraw"
+     w „Moje wpisy" (.wpis .akcja .przycisk-maly). Wspólne dla dodania wpisu,
+     poprawienia i „Zamykam miesiąc" — jeden div .sukces-ikona na wszystko. */
+  .sukces-ikona{font-size:52px; text-align:center; margin:6px 0 0; color:#16a34a;}
+  [data-motyw="ciemny"] .sukces-ikona{color:#86efac;}
   .sukces-tekst{text-align:center; font-size:18px; font-weight:600; margin:6px 0 2px;}
   /* W-07 — z floty: numer wpisu pod tekstem, i dwa przyciski obok siebie
      w drugim rzędzie ekranu sukcesu. */
