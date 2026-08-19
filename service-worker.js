@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v82';   // E-40 (19.08.2026): karty kolejki offline w nowym stylu (ikony SVG, przyciski w obwódkach)
+var WERSJA_CACHE = 'ewidencja-v83';   // E-41 (19.08.2026): fix ramki przycisku „Zostaw" w arkuszu-pytaniu (zgłoszenie Marka)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

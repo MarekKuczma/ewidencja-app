@@ -764,10 +764,19 @@
   .arkusz-kom.pytanie .przycisk{background:#dc2626;}
   [data-motyw="ciemny"] .arkusz-kom.pytanie .przycisk{background:#ef4444;}
   .ak-dwa{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
-  .ak-dwa .przycisk-glow{margin-top:2px;}
-  .ak-zostaw{width:100%; border:0; border-radius:10px; padding:12px; font-size:15px;
-    font-weight:700; font-family:inherit; display:block; background:var(--karta);
-    color:var(--tekst);}
+  /* Oba przyciski MUSZĄ wypełniać swoje obramowanie co do piksela. Bez
+     `flex:1` niższy przycisk zostawiał pod sobą odsłonięty gradient —
+     wyglądało to jak „gruba ramka na dole" tylko przy „Zostaw" (zgłoszenie
+     Marka 19.08; zmierzone: 14 px szczeliny zamiast 2 px). Siatka rozciąga
+     oba opakowania do równej wysokości, więc przycisk w środku też musi. */
+  .ak-dwa .przycisk-glow{margin-top:2px; display:flex;}
+  .ak-dwa .przycisk-glow > button{flex:1;}
+  /* „Zostaw" nosi też klasę .przycisk — bierze z niej WSZYSTKIE metryki
+     (rozmiar pisma, padding, min-height, promień), więc para przycisków
+     jest identyczna i pozostanie taka, gdyby .przycisk kiedyś się zmienił.
+     Tutaj nadpisujemy wyłącznie barwy: neutralne tło zamiast gradientu
+     palety i brak kolorowego cienia (świeci już zielona obwódka). */
+  .ak-zostaw{background:var(--karta); color:var(--tekst); box-shadow:none;}
 
   /* Stożek ramki przycisku dopasowany do kontekstu — nadpisuje tylko
      --stozek z palety, mechanizm .przycisk-glow (Z-81) bez zmian. */
@@ -2348,7 +2357,7 @@ function pokazArkuszKom_(o){
       // E-39: wariant dwuprzyciskowy (dawne confirm) — „Zostaw" zamyka
       // bez niczego, przycisk akcji odpala poAkcji PO zamknięciu.
       ? '<div class="ak-dwa">' +
-        '<div class="przycisk-glow stozek-zielony"><button type="button" class="ak-zostaw" id="arkuszKomZostaw">' +
+        '<div class="przycisk-glow stozek-zielony"><button type="button" class="przycisk ak-zostaw" id="arkuszKomZostaw">' +
         (o.dwa.zostaw || 'Zostaw') + '</button></div>' +
         '<div class="przycisk-glow stozek-czerwony"><button type="button" class="przycisk" id="arkuszKomOk">' +
         o.dwa.akcja + '</button></div></div>'
