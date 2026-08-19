@@ -421,19 +421,14 @@
   details.dodatki summary{font-size:14px; font-weight:600; color:var(--szary); cursor:pointer;}
   .kolejka-info{background:var(--bg-uwaga); color:var(--tekst-uwaga); border-radius:12px;
     padding:10px 14px; margin-bottom:12px; font-size:15px; display:none;}
-  /* W-05 (01.08.2026): komunikat Marka — osobny styl od kolejka-info, żeby
-     mocniej rzucał się w oczy. Kolor przez --akcent-komunikat/--bg-komunikat/
-     --tekst-komunikat — stały bordowo-czerwony, NIEZALEŻNY od wybranej
-     palety appki (Marek: w grafitowym ciemnym motywie zwykły akcent za
-     mało widoczny), reaguje tylko na jasny/ciemny motyw. */
-  .komunikat-marka{background:var(--bg-komunikat); border-left:4px solid var(--akcent-komunikat);
-    border-radius:0 12px 12px 0; padding:12px 14px 14px; margin-bottom:12px; color:var(--tekst-komunikat);
-    display:none;}
-  .km-tytul{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:8px;}
-  .km-wiersz{display:flex; align-items:center; gap:8px; font-size:15px; line-height:1.4; margin-bottom:6px;}
-  .km-wiersz:last-child{margin-bottom:0;}
-  .km-znaczek{width:20px; height:20px; border-radius:50%; background:var(--akcent-komunikat); color:#fff;
-    font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex:none;}
+  /* E-37 (19.08.2026): komunikat Marka przeniesiony z bordowego paska (W-05)
+     na wysuwany arkusz — wariant „marek" przy .arkusz-kom niżej. Stary
+     pasek .komunikat-marka usunięty w całości; bordowe zmienne
+     --akcent-komunikat/--bg-komunikat/--tekst-komunikat zostają w :root
+     na wypadek powrotu (małe, nieszkodliwe). Powód zmiany koloru na PALETĘ
+     (decyzja Marka, „4a"): bordowy był potrzebny, bo pasek GINĄŁ na
+     dashboardzie — arkusz sam wjeżdża na środek i wymaga kliknięcia,
+     więc widoczność zapewnia forma, nie kolor. */
   /* Odrzucony wpis z kolejki — wzorzec z aplikacji floty (.odrzucony) */
   .odrzucony{background:var(--bg-blad); color:var(--tekst-blad); border-radius:10px;
     padding:10px; margin-top:8px; font-size:14px;}
@@ -711,6 +706,19 @@
   .arkusz-kom.uwaga h3{color:var(--tekst-uwaga);}
   .arkusz-kom.uwaga .ak-lista li b{color:var(--tekst-uwaga);}
   .arkusz-kom.uwaga .przycisk{background:#d97706;}
+
+  /* Wariant MAREK (E-37) — komunikat od Marka: kolory PALETY (elementy
+     informacyjne biorą paletę — zasada z 19.08), poświata górnej ramki
+     w akcencie. Przycisk zostaje na domyślnym var(--gradient) z .przycisk,
+     ramka glow na domyślnym var(--stozek) palety — zero nadpisań. */
+  .arkusz-kom.marek{border-top:3px solid var(--akcent);
+    box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 16px var(--akcent);}
+  .arkusz-kom.marek .ak-kolko{background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);}
+  .ak-wiersz{display:flex; gap:9px; font-size:14.5px; line-height:1.45; margin-bottom:8px;}
+  .ak-num{width:20px; height:20px; border-radius:50%; background:var(--akcent); color:var(--karta);
+    font-size:11px; font-weight:700; display:inline-flex; align-items:center;
+    justify-content:center; flex:none; margin-top:1px;}
+  .ak-wiersze{margin:0 0 14px;}
 
   /* Stożek ramki przycisku dopasowany do kontekstu — nadpisuje tylko
      --stozek z palety, mechanizm .przycisk-glow (Z-81) bez zmian. */
@@ -999,8 +1007,8 @@
 
 <main>
   <div class="kolejka-info" id="kolejkaInfo"></div>
-  <!-- W-05 (01.08.2026): komunikat Marka — ukryty gdy brak treści. -->
-  <div class="komunikat-marka" id="komunikatMarka"></div>
+  <!-- E-37 (19.08.2026): pasek „komunikat Marka" (W-05) usunięty — komunikat
+       przychodzi teraz wysuwanym arkuszem, patrz sprawdzKomunikatMarka_. -->
 
   <!-- Brak kodu (D69) — awaryjne wejście, gdy link nie zadziałał -->
   <div id="widokBrakKodu" class="karta ukryte">
@@ -1344,6 +1352,9 @@ var KLUCZ_ZOLTE = 'ewidencja_terminy_zolte_pokazane';      // {klucz terminu: tr
 // przypominać operatorowi. Marek najpierw mówił o tygodniu, ostatecznie 5 dni
 // (decyzja 19.08: „e-36 bym zrobił po 5 dniach jednak").
 var PROG_KONSERWACJI_DNI = 5;
+
+// E-37 (19.08.2026): ostatnio potwierdzony komunikat Marka — {d: dzień, t: treść}.
+var KLUCZ_KOMUNIKAT = 'ewidencja_komunikat_marka';
 
 /* ---------- pomocnicze ---------- */
 function el(id){ return document.getElementById(id); }
@@ -1953,19 +1964,33 @@ function uruchomAplikacje_(){
   wyslijKolejke().catch(function(){}).then(odswiezStartZPaskiem_);
 }
 
-// W-05 (01.08.2026): jeden i ten sam render dla ścieżki z pamięci
-// (pokazZPamieci) i ze świeżej odpowiedzi serwera (odswiezStart). Każda
-// wiadomość dostaje znaczek „›" (prośba Marka — bardziej graficzny niż
-// goły „>", ten sam styl kółka co strzałka rozwijania wpisu).
-function rysujKomunikaty_(lista){
-  var e = el('komunikatMarka');
-  if (!lista || !lista.length) { e.style.display = 'none'; e.innerHTML = ''; return; }
-  e.style.display = 'block';
-  e.innerHTML = '<div class="km-tytul"><span>' + ikonaHTML_('ic-mega') + '</span><span>Wiadomość od Marka</span></div>' +
-    lista.map(function(t){
-      return '<div class="km-wiersz"><span class="km-znaczek">›</span><span>' +
-        bezpiecznyTekst(t) + '</span></div>';
-    }).join('');
+/* E-37 (19.08.2026): komunikat Marka wysuwanym arkuszem zamiast paska W-05.
+   Raz dziennie, dopóki Marek nie wyłączy komunikatu w arkuszu — ale klucz
+   niesie też TREŚĆ: nowy/zmieniony komunikat tego samego dnia pokazuje się
+   od razu, bez czekania do jutra. Zaliczenie przy kliknięciu „OK,
+   przeczytałem" (jak żółte terminy). Tylko na świeżych danych serwera —
+   z tego samego powodu co popupy E-35 (treść w cache może być wczorajsza,
+   np. już wyłączona w arkuszu). Woływane na końcu łańcucha popupów
+   (alarm → żółte → komunikat), żeby arkusze się nie przepychały. */
+function sprawdzKomunikatMarka_(){
+  if (arkuszKomOtwarty_()) return;
+  var lista = STAN.komunikaty || [];
+  if (!lista.length) return;
+  var tresc = lista.join('\n');
+  var zap;
+  try { zap = JSON.parse(localStorage.getItem(KLUCZ_KOMUNIKAT) || 'null'); } catch(e){ zap = null; }
+  if (zap && zap.d === dzisLokalnie_() && zap.t === tresc) return;
+  pokazArkuszKom_({
+    typ: 'marek', ikona: 'ic-mega', tytul: 'Wiadomość od Marka',
+    wiersze: lista.map(function(t){ return bezpiecznyTekst(t); }),
+    przycisk: 'OK, przeczytałem',
+    po: function(){
+      try {
+        localStorage.setItem(KLUCZ_KOMUNIKAT,
+          JSON.stringify({ d: dzisLokalnie_(), t: tresc }));
+      } catch(e){}
+    }
+  });
 }
 
 /**
@@ -2007,7 +2032,8 @@ function pokazZPamieci(){
   STAN.kategorie = cache.kategorie || [];
   STAN.limity = cache.limity || STAN.limity;
   zastosujEtykieteLicznika_(cache.etykietaLicznika, cache.momentLicznika);
-  rysujKomunikaty_(cache.komunikaty);
+  // E-37: komunikat Marka NIE idzie z cache (jak popupy E-35) — patrz
+  // sprawdzKomunikatMarka_; pasek W-05 usunięty, więc nie ma czego rysować.
   rysujBadgeTerminow_();   // E-35 — sam badge; popupy dopiero po świeżych danych
   el('naglowekKto').textContent = cache.imie || '';
   el('avatar').textContent = inicjaly(cache.imie);
@@ -2240,6 +2266,12 @@ function pokazArkuszKom_(o){
     '<h3>' + o.tytul + '</h3></div>' +
     (o.wstep ? '<p class="ak-wstep">' + o.wstep + '</p>' : '') +
     (poz ? '<ul class="ak-lista">' + poz + '</ul>' : '') +
+    ((o.wiersze && o.wiersze.length)   // E-37: numerowane wiersze komunikatu
+      ? '<div class="ak-wiersze">' + o.wiersze.map(function(t, i){
+          return '<div class="ak-wiersz"><span class="ak-num">' + (i + 1) +
+            '</span><span>' + t + '</span></div>';
+        }).join('') + '</div>'
+      : '') +
     '<div class="przycisk-glow ' + (o.stozek || '') + '">' +
     '<button type="button" class="przycisk" id="arkuszKomOk">' + o.przycisk + '</button></div>';
   el('arkuszKomOk').onclick = function(){
@@ -2306,10 +2338,12 @@ function sprawdzPopupyTerminow_(){
         // Zaliczamy dopiero przy kliknięciu — zabity ekran = pokaże się znowu.
         nowe.forEach(function(p){ pokazane[kluczZoltego_(p)] = true; });
         try { localStorage.setItem(KLUCZ_ZOLTE, JSON.stringify(pokazane)); } catch(e){}
+        sprawdzKomunikatMarka_();   // E-37 — komunikat na końcu łańcucha
       }
     });
   } else {
     try { localStorage.setItem(KLUCZ_ZOLTE, JSON.stringify(pokazane)); } catch(e){}
+    sprawdzKomunikatMarka_();   // E-37 — komunikat na końcu łańcucha
   }
 }
 
@@ -2352,9 +2386,8 @@ function odswiezStart(){
     STAN.etykietaLicznika = odp.etykietaLicznika || STAN.etykietaLicznika;
     STAN.momentLicznika = odp.momentLicznika || STAN.momentLicznika;
     zastosujEtykieteLicznika_(STAN.etykietaLicznika, STAN.momentLicznika);
-    rysujKomunikaty_(STAN.komunikaty);
     rysujBadgeTerminow_();        // E-35
-    sprawdzPopupyTerminow_();     // E-35 — tylko na świeżych danych, patrz komentarz sekcji
+    sprawdzPopupyTerminow_();     // E-35+E-37 — łańcuch: alarm → żółte → komunikat Marka
     // Zapisujemy na następne otwarcie (D60) — patrz pokazZPamieci().
     try {
       localStorage.setItem(KLUCZ_CACHE, JSON.stringify({
