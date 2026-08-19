@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v79';   // E-37 (19.08.2026): komunikat Marka wysuwanym arkuszem (raz dziennie per treść), pasek W-05 usunięty
+var WERSJA_CACHE = 'ewidencja-v80';   // E-38 (19.08.2026): natywne alert() zastąpione arkuszem-info; walidacja wyboru pojazdu błędem przy polu
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

@@ -711,9 +711,11 @@
      informacyjne biorą paletę — zasada z 19.08), poświata górnej ramki
      w akcencie. Przycisk zostaje na domyślnym var(--gradient) z .przycisk,
      ramka glow na domyślnym var(--stozek) palety — zero nadpisań. */
-  .arkusz-kom.marek{border-top:3px solid var(--akcent);
+  .arkusz-kom.marek, .arkusz-kom.info{border-top:3px solid var(--akcent);
     box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 16px var(--akcent);}
-  .arkusz-kom.marek .ak-kolko{background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);}
+  .arkusz-kom.marek .ak-kolko, .arkusz-kom.info .ak-kolko{
+    background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);}
+  /* E-38: .info = dawne alert() — te same barwy palety co „marek". */
   .ak-wiersz{display:flex; gap:9px; font-size:14.5px; line-height:1.45; margin-bottom:8px;}
   .ak-num{width:20px; height:20px; border-radius:50%; background:var(--akcent); color:var(--karta);
     font-size:11px; font-weight:700; display:inline-flex; align-items:center;
@@ -1101,9 +1103,12 @@
              ale OSOBNY element: wspólny pasek nad listą pojazdów mógłby
              się ścigać z odświeżaniem startowym o to, kto go chowa. -->
         <div id="pasekDodawania" class="pasek-odswiezania ukryte"></div>
-        <div class="pole">
+        <div class="pole" id="poleWyborNowejBox">
           <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-car"></use></svg> Wybierz z listy</label>
           <select id="wyborNowej"><option value="">— ładowanie… —</option></select>
+          <!-- E-38: dawny alert „Wybierz pojazd z listy" — teraz błąd przy
+               polu (decyzja Marka: to walidacja, nie komunikat). -->
+          <div class="blad-pola" id="bladWyborNowej"></div>
         </div>
         <!-- Z-81 (uzupełnienie, 14.08): glow także tutaj — prośba Marka. -->
         <div class="przycisk-glow">
@@ -2289,6 +2294,19 @@ function arkuszKomOtwarty_(){
   return el('arkuszKom').classList.contains('widoczna');
 }
 
+/* E-38 (19.08.2026): zamiennik natywnego alert() — arkusz-info w kolorach
+   palety, z ikoną SVG. Natywnego alertu nie da się ostylować (rysuje go
+   system telefonu), stąd zamiana; alert() nic nie zwracał, więc podmiana
+   jest mechaniczna. ⚠ `tresc` idzie do innerHTML — dane z serwera
+   escapować bezpiecznyTekst PRZED wywołaniem (tak jak przy wszystkich
+   innych renderach). Jedyny alert, który NIE został arkuszem: „Wybierz
+   pojazd z listy" — to walidacja pola, poszła w bladPola() (decyzja Marka).
+   Natywne confirm() zostają do E-39 (wymagają przepisania na callback). */
+function pokazInfo_(tytul, tresc, ikona, po){
+  pokazArkuszKom_({ typ: 'info', ikona: ikona || 'ic-warn', tytul: tytul,
+    wstep: tresc || '', przycisk: 'OK', po: po });
+}
+
 function sprawdzPopupyTerminow_(){
   if (arkuszKomOtwarty_()) return;   // odswiezStart woła wybierzPojazd drugi raz — bez dubli
   var dzis = dzisLokalnie_();
@@ -2590,7 +2608,7 @@ function rysujDeklaracje_(j){
 function otworzDialogMiesiaca(){
   if (!STAN.aktywna) return;
   if (!navigator.onLine){
-    alert('„Zamykam miesiąc" wymaga internetu — to zgłoszenie nie idzie przez kolejkę offline.');
+    pokazInfo_('Brak internetu', '„Zamykam miesiąc" wymaga internetu — to zgłoszenie nie idzie przez kolejkę offline.', 'ic-link');
     return;
   }
   var idPojazdu = STAN.aktywna.idPojazdu;
@@ -2599,7 +2617,7 @@ function otworzDialogMiesiaca(){
     // `odswiezStart` przeładowuje STAN.jednostki, więc bierzemy jednostkę
     // na nowo po ID — stary obiekt jest już nieaktualnym wskaźnikiem.
     var j = (STAN.jednostki || []).filter(function(x){ return x.idPojazdu === idPojazdu; })[0];
-    if (!j) { schowajOverlay(); alert('Nie znaleziono tej maszyny — odśwież aplikację.'); return; }
+    if (!j) { schowajOverlay(); pokazInfo_('Nie znaleziono maszyny', 'Odśwież aplikację i spróbuj ponownie.', 'ic-warn'); return; }
     STAN.aktywna = j;
 
     // Lista = zaległe policzone przez serwer + zawsze bieżący miesiąc.
@@ -2624,7 +2642,7 @@ function otworzDialogMiesiaca(){
     el('dialogMiesiac').showModal();
   }).catch(function(){
     schowajOverlay();
-    alert('Serwer chwilowo niedostępny — spróbuj za chwilę.');
+    pokazInfo_('Serwer chwilowo niedostępny', 'Spróbuj za chwilę.', 'ic-warn');
   });
 }
 
@@ -2643,7 +2661,7 @@ el('dialogTak').addEventListener('click', function(){
     .then(function(odp){
       schowajOverlay();
       if (!odp.ok){
-        alert('Nie udało się zgłosić miesiąca:\n' + (odp.wiadomosc || 'Nieznany błąd'));
+        pokazInfo_('Nie udało się zgłosić miesiąca', bezpiecznyTekst(odp.wiadomosc || 'Nieznany błąd'), 'ic-warn');
         return;
       }
       pokazSukcesProsty_('Miesiąc zgłoszony',
@@ -2652,7 +2670,7 @@ el('dialogTak').addEventListener('click', function(){
     })
     .catch(function(){
       schowajOverlay();
-      alert('Brak połączenia — spróbuj za chwilę.');
+      pokazInfo_('Brak połączenia', 'Spróbuj za chwilę.', 'ic-link');
     });
 });
 
@@ -3697,7 +3715,7 @@ function rysujWpisy(){
       var w = lista[Number(b.dataset.anuluj)];
       // D66 — jak przy poprawianiu: anulowanie wymaga sieci.
       if (!navigator.onLine) {
-        alert('Brak internetu.\n\nAnulowanie wpisu wymaga zasięgu. Spróbuj, gdy wróci sieć.');
+        pokazInfo_('Brak internetu', 'Usunięcie wpisu wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link');
         return;
       }
       var jedW = w.jednostkaLicznika || (STAN.aktywna && STAN.aktywna.jednostkaLicznika) || '';
@@ -3709,12 +3727,12 @@ function rysujWpisy(){
       pokazOverlay('Anuluję wpis…');
       wolajAPI('anulujWpis', { idWpisu: w.idWpisu }).then(function(o){
         schowajOverlay();
-        if (!o.ok) { alert(o.wiadomosc || 'Nie udało się anulować.'); return; }
+        if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się usunąć wpisu.'), 'ic-warn'); return; }
         otworzWpisy(STAN.aktywna);
         odswiezStart();
       }).catch(function(){
         schowajOverlay();
-        alert('Brak połączenia.');
+        pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
       });
     };
   });
@@ -3727,7 +3745,7 @@ function rysujWpisy(){
     b.onclick = function(){
       var w = lista[Number(b.dataset.wspol)];
       if (!navigator.onLine) {
-        alert('Brak internetu.\n\nDopisanie się jako kierowca wymaga zasięgu. Spróbuj, gdy wróci sieć.');
+        pokazInfo_('Brak internetu', 'Dopisanie się jako kierowca wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link');
         return;
       }
       var usuwam = w.jestemWspolkierowca;
@@ -3736,7 +3754,7 @@ function rysujWpisy(){
       wolajAPI(usuwam ? 'usunWspolkierowce' : 'dopiszWspolkierowce',
         { idWpisu: w.idWpisu }).then(function(o){
         schowajOverlay();
-        if (!o.ok) { alert(o.wiadomosc || 'Nie udało się.'); return; }
+        if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się.'), 'ic-warn'); return; }
         w.wspolkierowcy = o.wspolkierowcy;
         w.jestemWspolkierowca = o.jestemWspolkierowca;
         rysujWpisy();
@@ -3745,7 +3763,7 @@ function rysujWpisy(){
         if (STAN.aktywna) zapiszWpisyCache_(STAN.aktywna.idPojazdu, STAN.wpisy);
       }).catch(function(){
         schowajOverlay();
-        alert('Brak połączenia.');
+        pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
       });
     };
   });
@@ -3771,15 +3789,15 @@ function poOdpieciu_(idPojazdu){
 
 /* Odpięcie prosto z listy pojazdów — nie trzeba najpierw wchodzić na pulpit. */
 function odepnijZListy_(j){
-  if (!navigator.onLine) { alert('Brak internetu.\n\nOdpięcie pojazdu wymaga zasięgu.'); return; }
+  if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Odpięcie pojazdu wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
   if (!confirm('Odpiąć „' + j.tytul + '" od Twojej listy?\n\n' +
       'Twoje dotychczasowe wpisy zostaną w ewidencji — znika tylko z Twojego widoku.')) return;
   pokazOverlay('Odpinam…');
   wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
     schowajOverlay();
-    if (!o.ok) { alert(o.wiadomosc || 'Nie udało się odpiąć.'); return; }
+    if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się odpiąć.'), 'ic-warn'); return; }
     poOdpieciu_(j.idPojazdu);
-  }).catch(function(){ schowajOverlay(); alert('Brak połączenia.'); });
+  }).catch(function(){ schowajOverlay(); pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link'); });
 }
 
 /* ---------- dodawanie pojazdu z listy (D59) ----------
@@ -3849,9 +3867,19 @@ function kartaDodawanegoHtml_(tytul){
     '</div>' +
   '</div>';
 }
+// E-38: błąd walidacji przy polu (bladPola, wzorzec Z-81) zamiast dawnego
+// alert() — czerwona ramka z pulsem i tekst pod listą; gaśnie przy wyborze.
+function wyczyscBladWyboru_(){
+  el('poleWyborNowejBox').classList.remove('pole-blad');
+  el('poleWyborNowejBox').classList.remove('pole-blad-puls');
+  el('bladWyborNowej').textContent = '';
+}
+el('wyborNowej').addEventListener('change', wyczyscBladWyboru_);
+
 el('potwierdzDodanieBtn').onclick = function(){
   var id = el('wyborNowej').value;
-  if (!id) { alert('Wybierz pojazd z listy.'); return; }
+  if (!id) { bladPola('poleWyborNowejBox', 'bladWyborNowej', 'Wybierz pojazd z listy.'); return; }
+  wyczyscBladWyboru_();
 
   // Nazwę bierzemy z wybranej pozycji listy — kierowca nie ma powodu czekać
   // na coś, co przed chwilą sam wskazał.
@@ -3874,14 +3902,14 @@ el('potwierdzDodanieBtn').onclick = function(){
   pokazOverlay('Dodaję pojazd…');
   wolajAPI('dodajJednostke', { idPojazdu: id }).then(function(o){
     schowajOverlay();
-    if (!o.ok) { zdejmijKarte(); alert(o.wiadomosc || 'Nie udało się dodać.'); return; }
+    if (!o.ok) { zdejmijKarte(); pokazInfo_('Nie udało się dodać', bezpiecznyTekst(o.wiadomosc || 'Nie udało się dodać pojazdu.'), 'ic-warn'); return; }
     el('dodajBox').classList.add('ukryte');
     el('dodajJednostkeBtn').classList.remove('ukryte');
     odswiezStartZPaskiem_();   // Z-84: „Odświeżam listę pojazdów…"
   }).catch(function(){
     schowajOverlay();
     zdejmijKarte();
-    alert('Brak połączenia.');
+    pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
   });
 };
 
@@ -3912,7 +3940,7 @@ el('zmienPojazdBtn').onclick = function(){ localStorage.removeItem(KLUCZ_POJAZD)
 el('odepnijBtn').onclick = function(){
   var j = STAN.aktywna;
   if (!j) return;
-  if (!navigator.onLine) { alert('Brak internetu.\n\nOdpięcie pojazdu wymaga zasięgu.'); return; }
+  if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Odpięcie pojazdu wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
   if (!confirm('Odpiąć „' + j.tytul + '" od Twojej listy?\n\n' +
       'Twoje dotychczasowe wpisy zostaną w ewidencji — znika tylko z Twojego widoku. ' +
       'Możesz go później dodać z powrotem.')) return;
@@ -3920,11 +3948,11 @@ el('odepnijBtn').onclick = function(){
   pokazOverlay('Odpinam…');
   wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
     schowajOverlay();
-    if (!o.ok) { alert(o.wiadomosc || 'Nie udało się odpiąć.'); return; }
+    if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się odpiąć.'), 'ic-warn'); return; }
     poOdpieciu_(j.idPojazdu);
   }).catch(function(){
     schowajOverlay();
-    alert('Brak połączenia.');
+    pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
   });
 };
 // F-22 (wzorzec floty, 01.08.2026): „Anuluj" przy nowym wpisie — bez pytania
