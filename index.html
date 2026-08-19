@@ -761,8 +761,12 @@
   .arkusz-kom.pytanie{border-top:3px solid var(--blad);
     box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 18px rgba(239,68,68,.45);}
   .arkusz-kom.pytanie .ak-kolko{background:var(--bg-blad); color:var(--blad);}
-  .arkusz-kom.pytanie .przycisk{background:#dc2626;}
-  [data-motyw="ciemny"] .arkusz-kom.pytanie .przycisk{background:#ef4444;}
+  /* ⚠ `:not(.ak-zostaw)` jest KONIECZNE, nie kosmetyczne: od chwili, gdy
+     „Zostaw" nosi też klasę .przycisk (dla równych metryk), ta reguła
+     łapałaby OBA przyciski, a `.ak-zostaw` przegrywa z nią specyficznością
+     (1 klasa vs 3) — „Zostaw" robił się czerwony (zgłoszenie Marka 19.08). */
+  .arkusz-kom.pytanie .przycisk:not(.ak-zostaw){background:#dc2626;}
+  [data-motyw="ciemny"] .arkusz-kom.pytanie .przycisk:not(.ak-zostaw){background:#ef4444;}
   .ak-dwa{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
   /* Oba przyciski MUSZĄ wypełniać swoje obramowanie co do piksela. Bez
      `flex:1` niższy przycisk zostawiał pod sobą odsłonięty gradient —
@@ -776,7 +780,7 @@
      jest identyczna i pozostanie taka, gdyby .przycisk kiedyś się zmienił.
      Tutaj nadpisujemy wyłącznie barwy: neutralne tło zamiast gradientu
      palety i brak kolorowego cienia (świeci już zielona obwódka). */
-  .ak-zostaw{background:var(--karta); color:var(--tekst); box-shadow:none;}
+  .arkusz-kom .ak-zostaw{background:var(--karta); color:var(--tekst); box-shadow:none;}
 
   /* Stożek ramki przycisku dopasowany do kontekstu — nadpisuje tylko
      --stozek z palety, mechanizm .przycisk-glow (Z-81) bez zmian. */
