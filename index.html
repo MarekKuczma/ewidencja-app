@@ -655,6 +655,19 @@
   .badge .tr{flex:1;}
   .badge .tr b{display:block; font-size:12.5px; margin-bottom:1px;}
   .badge.uwaga{background:var(--bg-uwaga); color:var(--tekst-uwaga);}
+  /* E-36 (19.08.2026): fiolet konserwacji koparki — świadomy WYJĄTEK poza
+     zestawem kolorów appki (jak zieleń „Popraw" z Z-91): kolor stały,
+     hardcoded + wariant ciemny, NIE z palety. */
+  .badge-glow.fiolet{background:conic-gradient(from var(--kat),
+    transparent 0deg, transparent 235deg,
+    rgba(124,58,237,.4) 300deg, #7c3aed 342deg,
+    rgba(124,58,237,.4) 358deg, transparent 360deg);}
+  .badge.fiolet{background:#f5f3ff; color:#5b21b6;}
+  [data-motyw="ciemny"] .badge-glow.fiolet{background:conic-gradient(from var(--kat),
+    transparent 0deg, transparent 235deg,
+    rgba(167,139,250,.4) 300deg, #a78bfa 342deg,
+    rgba(167,139,250,.4) 358deg, transparent 360deg);}
+  [data-motyw="ciemny"] .badge.fiolet{background:#2a1f45; color:#ddd0fe;}
 
   /* Wysuwany arkusz komunikatu — mechanizm 1:1 z .arkusz-palet (Z-83).
      z-index NAD wybierakiem palet (60/61), żeby alarm nigdy nie chował się
@@ -1326,6 +1339,11 @@ var KLUCZ_CACHE = 'ewidencja_cache';
 // E-35 (19.08.2026): pamięć przypomnień o terminach — patrz sekcja E-35 niżej.
 var KLUCZ_ALARM_DZIEN = 'ewidencja_terminy_alarm_dzien';   // data ostatniego czerwonego alarmu
 var KLUCZ_ZOLTE = 'ewidencja_terminy_zolte_pokazane';      // {klucz terminu: true} — pokazane żółte
+
+// E-36 (19.08.2026): po ilu dniach od ostatniego wpisu „Konserwacja koparki"
+// przypominać operatorowi. Marek najpierw mówił o tygodniu, ostatecznie 5 dni
+// (decyzja 19.08: „e-36 bym zrobił po 5 dniach jednak").
+var PROG_KONSERWACJI_DNI = 5;
 
 /* ---------- pomocnicze ---------- */
 function el(id){ return document.getElementById(id); }
@@ -2160,11 +2178,30 @@ function dzisLokalnie_(){
     '-' + ('0' + d.getDate()).slice(-2);
 }
 
+// E-36: koparki do przypomnienia o konserwacji. Pole `konserwacjaDni`
+// istnieje tylko dla koparek (API.gs): liczba dni od ostatniego wpisu
+// z kategorią „Konserwacja koparki", -1 = nigdy. Badge pokazujemy, gdy
+// minął próg — a przy „nigdy" tylko jeśli maszyna w ogóle ma wpisy
+// (ostatniaData), żeby nie zaczepiać o jednostki nieużywane.
+function koparkiDoKonserwacji_(){
+  return (STAN.jednostki || []).filter(function(j){
+    if (typeof j.konserwacjaDni === 'undefined' || j.konserwacjaDni === null) return false;
+    if (j.konserwacjaDni === -1) return !!j.ostatniaData;
+    return j.konserwacjaDni >= PROG_KONSERWACJI_DNI;
+  });
+}
+
+function opisKonserwacji_(j){
+  if (j.konserwacjaDni === -1) return 'brak zapisanej konserwacji';
+  return j.konserwacjaDni + ' dni od ostatniej konserwacji';
+}
+
 function rysujBadgeTerminow_(){
   var box = el('badgeTerminy');
   if (!box) return;
   var pilne = terminyPoziomu_('pilny');
-  if (!pilne.length) { box.innerHTML = ''; return; }
+  var konserw = koparkiDoKonserwacji_();   // E-36
+  if (!pilne.length && !konserw.length) { box.innerHTML = ''; return; }
   box.innerHTML = pilne.map(function(p){
     return '<div class="badge-glow uwaga"><button type="button" class="badge uwaga" ' +
       'data-badge-poj="' + bezpiecznyTekst(p.j.idPojazdu) + '">' +
@@ -2172,6 +2209,12 @@ function rysujBadgeTerminow_(){
       '<span class="tr"><b>Zbliżający się termin</b>' +
       bezpiecznyTekst(p.j.tytul) + ' — ' + bezpiecznyTekst(p.t.nazwa) + ' ' +
       opisTerminu_(p) + '</span></button></div>';
+  }).join('') + konserw.map(function(j){
+    return '<div class="badge-glow fiolet"><button type="button" class="badge fiolet" ' +
+      'data-badge-poj="' + bezpiecznyTekst(j.idPojazdu) + '">' +
+      '<span class="ik">' + ikonaHTML_('ic-wrench') + '</span>' +
+      '<span class="tr"><b>Konserwacja koparki</b>' +
+      bezpiecznyTekst(j.tytul) + ' — ' + opisKonserwacji_(j) + '</span></button></div>';
   }).join('');
   box.querySelectorAll('[data-badge-poj]').forEach(function(b){
     b.onclick = function(){

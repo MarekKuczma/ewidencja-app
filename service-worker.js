@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v77';   // E-35 (19.08.2026): przypomnienia o terminach — badge + arkusze (żółty raz, czerwony raz dziennie)
+var WERSJA_CACHE = 'ewidencja-v78';   // E-36 (19.08.2026): fioletowy badge konserwacji koparki (próg 5 dni)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
