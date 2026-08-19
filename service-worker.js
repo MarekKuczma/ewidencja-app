@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v80';   // E-38 (19.08.2026): natywne alert() zastąpione arkuszem-info; walidacja wyboru pojazdu błędem przy polu
+var WERSJA_CACHE = 'ewidencja-v81';   // E-39 (19.08.2026): confirm() → arkusz-pytanie (Zostaw/akcja); fix poświaty po schowaniu arkusza
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

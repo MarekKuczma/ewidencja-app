@@ -671,9 +671,17 @@
   .arkusz-kom{position:fixed; left:0; right:0; bottom:0; z-index:63; background:var(--karta);
     color:var(--tekst); border-radius:18px 18px 0 0;
     padding:16px 16px calc(18px + env(safe-area-inset-bottom));
-    transform:translateY(102%); transition:transform .28s cubic-bezier(.22,1,.36,1);
+    transform:translateY(102%); visibility:hidden;
+    /* E-39 fix (zgłoszenie Marka): translateY(102%) chowa ELEMENT, ale
+       box-shadow (poświata górnej ramki) sięga wyżej niż on sam — łuna
+       zostawała na dole ekranu po zamknięciu, aż coś przerysowało widok.
+       visibility:hidden gasi też cień; opóźnienie .28s = dokładnie koniec
+       animacji zjazdu, więc zjeżdżanie wygląda jak dotąd. Przy otwieraniu
+       visibility przełącza się BEZ opóźnienia (transition niżej). */
+    transition:transform .28s cubic-bezier(.22,1,.36,1), visibility 0s .28s;
     max-width:520px; margin:0 auto;}
-  .arkusz-kom.widoczna{transform:translateY(0);}
+  .arkusz-kom.widoczna{transform:translateY(0); visibility:visible;
+    transition:transform .28s cubic-bezier(.22,1,.36,1);}
   .zaslona.zaslona-kom{z-index:62;}
   .ak-uchwyt{width:38px; height:4px; border-radius:2px; background:var(--linia); margin:0 auto 12px;}
   .ak-glowka{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
@@ -722,12 +730,29 @@
     justify-content:center; flex:none; margin-top:1px;}
   .ak-wiersze{margin:0 0 14px;}
 
+  /* Wariant PYTANIE (E-39) — dawne confirm(): pytania o akcje
+     nieodwracalne (usuń/odepnij), stąd czerwona góra i czerwony przycisk
+     akcji. Bezpieczny przycisk „Zostaw" w zielonej ramce — kolor mówi,
+     która opcja jest bezpieczna, zanim kierowca przeczyta słowo. */
+  .arkusz-kom.pytanie{border-top:3px solid var(--blad);
+    box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 18px rgba(239,68,68,.45);}
+  .arkusz-kom.pytanie .ak-kolko{background:var(--bg-blad); color:var(--blad);}
+  .arkusz-kom.pytanie .przycisk{background:#dc2626;}
+  [data-motyw="ciemny"] .arkusz-kom.pytanie .przycisk{background:#ef4444;}
+  .ak-dwa{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
+  .ak-dwa .przycisk-glow{margin-top:2px;}
+  .ak-zostaw{width:100%; border:0; border-radius:10px; padding:12px; font-size:15px;
+    font-weight:700; font-family:inherit; display:block; background:var(--karta);
+    color:var(--tekst);}
+
   /* Stożek ramki przycisku dopasowany do kontekstu — nadpisuje tylko
      --stozek z palety, mechanizm .przycisk-glow (Z-81) bez zmian. */
   .przycisk-glow.stozek-czerwony{--stozek:#fca5a5,#ef4444,#991b1b,#ef4444,#fca5a5;}
   [data-motyw="ciemny"] .przycisk-glow.stozek-czerwony{--stozek:#f87171,#ef4444,#fecaca,#ef4444,#f87171;}
   .przycisk-glow.stozek-uwaga{--stozek:#fcd34d,#f59e0b,#92400e,#f59e0b,#fcd34d;}
   [data-motyw="ciemny"] .przycisk-glow.stozek-uwaga{--stozek:#fcd34d,#d97706,#fef3c7,#d97706,#fcd34d;}
+  .przycisk-glow.stozek-zielony{--stozek:#86efac,#16a34a,#14532d,#16a34a,#86efac;}   /* E-39 */
+  [data-motyw="ciemny"] .przycisk-glow.stozek-zielony{--stozek:#4ade80,#16a34a,#bbf7d0,#16a34a,#4ade80;}
 
   .pole-blad input,.pole-blad select,.pole-blad textarea{
     box-shadow:0 0 0 3px rgba(217,48,37,.14), 0 0 12px rgba(217,48,37,.30);}
@@ -1731,9 +1756,17 @@ function ponowZKolejki(tmp){
   wyslijKolejke();
 }
 function usunZKolejki(tmp){
-  if (!confirm('Usunąć ten wpis z kolejki? Nie zapisze się w ewidencji.')) return;
-  zapiszKolejke(kolejka().filter(function(w){ return w.tmp !== tmp; }));
-  odswiezKolejkeInfo();
+  // E-39: treść rozszerzona wg zatwierdzonego mockupu v5 pkt 9.
+  pokazPytanie_({
+    tytul: 'Usunąć wpis z kolejki?', ikona: 'ic-trash',
+    tresc: 'Ten wpis <b>nie zapisze się w ewidencji</b>. Usuwaj tylko, jeśli ' +
+      'sprawdziłeś w „Moich wpisach", że ten dzień już tam jest.',
+    akcja: 'Usuń z kolejki',
+    poAkcji: function(){
+      zapiszKolejke(kolejka().filter(function(w){ return w.tmp !== tmp; }));
+      odswiezKolejkeInfo();
+    }
+  });
 }
 
 /* Flaga chroni przed dwoma równoległymi przebiegami (zdarzenie `online`
@@ -2277,12 +2310,22 @@ function pokazArkuszKom_(o){
             '</span><span>' + t + '</span></div>';
         }).join('') + '</div>'
       : '') +
-    '<div class="przycisk-glow ' + (o.stozek || '') + '">' +
-    '<button type="button" class="przycisk" id="arkuszKomOk">' + o.przycisk + '</button></div>';
+    (o.dwa
+      // E-39: wariant dwuprzyciskowy (dawne confirm) — „Zostaw" zamyka
+      // bez niczego, przycisk akcji odpala poAkcji PO zamknięciu.
+      ? '<div class="ak-dwa">' +
+        '<div class="przycisk-glow stozek-zielony"><button type="button" class="ak-zostaw" id="arkuszKomZostaw">' +
+        (o.dwa.zostaw || 'Zostaw') + '</button></div>' +
+        '<div class="przycisk-glow stozek-czerwony"><button type="button" class="przycisk" id="arkuszKomOk">' +
+        o.dwa.akcja + '</button></div></div>'
+      : '<div class="przycisk-glow ' + (o.stozek || '') + '">' +
+        '<button type="button" class="przycisk" id="arkuszKomOk">' + o.przycisk + '</button></div>');
   el('arkuszKomOk').onclick = function(){
     zamknijArkuszKom_();
-    if (o.po) o.po();
+    if (o.dwa) { if (o.dwa.poAkcji) o.dwa.poAkcji(); }
+    else if (o.po) o.po();
   };
+  if (o.dwa) el('arkuszKomZostaw').onclick = function(){ zamknijArkuszKom_(); };
   el('zaslonaKom').classList.add('widoczna');
   a.classList.add('widoczna');
 }
@@ -2301,10 +2344,23 @@ function arkuszKomOtwarty_(){
    escapować bezpiecznyTekst PRZED wywołaniem (tak jak przy wszystkich
    innych renderach). Jedyny alert, który NIE został arkuszem: „Wybierz
    pojazd z listy" — to walidacja pola, poszła w bladPola() (decyzja Marka).
-   Natywne confirm() zostają do E-39 (wymagają przepisania na callback). */
+   Natywne confirm() przepisane w E-39 na pokazPytanie_ (callback). */
 function pokazInfo_(tytul, tresc, ikona, po){
   pokazArkuszKom_({ typ: 'info', ikona: ikona || 'ic-warn', tytul: tytul,
     wstep: tresc || '', przycisk: 'OK', po: po });
+}
+
+/* E-39 (19.08.2026): zamiennik confirm() — arkusz-pytanie z dwoma
+   przyciskami. Bezpieczny ZAWSZE „Zostaw" (zielona ramka), niebezpieczny
+   nazywa akcję po imieniu („Usuń wpis"/„Odepnij"…, czerwona ramka) —
+   nigdy Tak/Nie/OK/Anuluj: klikane odruchowo, a „anulowanie wpisu" to
+   w tej appce osobne pojęcie (Z-88). ⚠ confirm() BLOKOWAŁ wykonanie
+   i zwracał true/false — tu dalszy ciąg MUSI iść w `poAkcji`; „Zostaw"
+   tylko zamyka. `tresc` idzie do innerHTML — dane zmienne escapować. */
+function pokazPytanie_(o){
+  pokazArkuszKom_({ typ: 'pytanie', ikona: o.ikona || 'ic-trash',
+    tytul: o.tytul, wstep: o.tresc || '',
+    dwa: { zostaw: 'Zostaw', akcja: o.akcja, poAkcji: o.poAkcji } });
 }
 
 function sprawdzPopupyTerminow_(){
@@ -3721,18 +3777,24 @@ function rysujWpisy(){
       var jedW = w.jednostkaLicznika || (STAN.aktywna && STAN.aktywna.jednostkaLicznika) || '';
       var opisW = (w.licznik !== '' && w.licznik != null)
         ? ' (' + formatLicznik_(w.licznik) + (jedW ? ' ' + jedW : '') + ')' : '';
-      if (!confirm('Usunąć wpis z ' + dataPL_(w.data) + opisW + '?\n\n' +
-        'Wpis zostanie anulowany i nie będzie brany pod uwagę w ewidencji — '  +
-        'nie pojawi się na wydruku ani na liście.')) return;
-      pokazOverlay('Anuluję wpis…');
-      wolajAPI('anulujWpis', { idWpisu: w.idWpisu }).then(function(o){
-        schowajOverlay();
-        if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się usunąć wpisu.'), 'ic-warn'); return; }
-        otworzWpisy(STAN.aktywna);
-        odswiezStart();
-      }).catch(function(){
-        schowajOverlay();
-        pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
+      pokazPytanie_({
+        tytul: 'Usunąć wpis?', ikona: 'ic-trash',
+        tresc: 'Wpis z <b>' + dataPL_(w.data) + '</b>' + bezpiecznyTekst(opisW) +
+          ' zostanie anulowany i nie będzie brany pod uwagę w ewidencji — ' +
+          'nie pojawi się na wydruku ani na liście.',
+        akcja: 'Usuń wpis',
+        poAkcji: function(){
+          pokazOverlay('Anuluję wpis…');
+          wolajAPI('anulujWpis', { idWpisu: w.idWpisu }).then(function(o){
+            schowajOverlay();
+            if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się usunąć wpisu.'), 'ic-warn'); return; }
+            otworzWpisy(STAN.aktywna);
+            odswiezStart();
+          }).catch(function(){
+            schowajOverlay();
+            pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
+          });
+        }
       });
     };
   });
@@ -3749,7 +3811,9 @@ function rysujWpisy(){
         return;
       }
       var usuwam = w.jestemWspolkierowca;
-      if (usuwam && !confirm('Usunąć Cię z wpisu z ' + dataPL_(w.data) + '?')) return;
+      // E-39: pytanie tylko przy USUWANIU siebie (dopisanie idzie od razu,
+      // jak dotąd) — dawny confirm w arkuszu, dalszy ciąg w domknięciu.
+      var wykonajWspol = function(){
       pokazOverlay(usuwam ? 'Usuwam z wpisu…' : 'Dopisuję do wpisu…');
       wolajAPI(usuwam ? 'usunWspolkierowce' : 'dopiszWspolkierowce',
         { idWpisu: w.idWpisu }).then(function(o){
@@ -3765,6 +3829,14 @@ function rysujWpisy(){
         schowajOverlay();
         pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
       });
+      };   // koniec wykonajWspol (E-39)
+      if (usuwam) {
+        pokazPytanie_({
+          tytul: 'Usunąć Cię z wpisu?', ikona: 'ic-user',
+          tresc: 'Znikniesz z listy kierowców wpisu z <b>' + dataPL_(w.data) + '</b>.',
+          akcja: 'Usuń mnie', poAkcji: wykonajWspol
+        });
+      } else wykonajWspol();
     };
   });
 }
@@ -3790,14 +3862,20 @@ function poOdpieciu_(idPojazdu){
 /* Odpięcie prosto z listy pojazdów — nie trzeba najpierw wchodzić na pulpit. */
 function odepnijZListy_(j){
   if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Odpięcie pojazdu wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
-  if (!confirm('Odpiąć „' + j.tytul + '" od Twojej listy?\n\n' +
-      'Twoje dotychczasowe wpisy zostaną w ewidencji — znika tylko z Twojego widoku.')) return;
-  pokazOverlay('Odpinam…');
-  wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
-    schowajOverlay();
-    if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się odpiąć.'), 'ic-warn'); return; }
-    poOdpieciu_(j.idPojazdu);
-  }).catch(function(){ schowajOverlay(); pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link'); });
+  pokazPytanie_({
+    tytul: 'Odpiąć pojazd?', ikona: 'ic-pin',
+    tresc: '„' + bezpiecznyTekst(j.tytul) + '" zniknie z Twojego widoku. ' +
+      'Twoje dotychczasowe wpisy zostaną w ewidencji.',
+    akcja: 'Odepnij',
+    poAkcji: function(){
+      pokazOverlay('Odpinam…');
+      wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
+        schowajOverlay();
+        if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się odpiąć.'), 'ic-warn'); return; }
+        poOdpieciu_(j.idPojazdu);
+      }).catch(function(){ schowajOverlay(); pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link'); });
+    }
+  });
 }
 
 /* ---------- dodawanie pojazdu z listy (D59) ----------
@@ -3941,18 +4019,23 @@ el('odepnijBtn').onclick = function(){
   var j = STAN.aktywna;
   if (!j) return;
   if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Odpięcie pojazdu wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
-  if (!confirm('Odpiąć „' + j.tytul + '" od Twojej listy?\n\n' +
-      'Twoje dotychczasowe wpisy zostaną w ewidencji — znika tylko z Twojego widoku. ' +
-      'Możesz go później dodać z powrotem.')) return;
-
-  pokazOverlay('Odpinam…');
-  wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
-    schowajOverlay();
-    if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się odpiąć.'), 'ic-warn'); return; }
-    poOdpieciu_(j.idPojazdu);
-  }).catch(function(){
-    schowajOverlay();
-    pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
+  pokazPytanie_({
+    tytul: 'Odpiąć pojazd?', ikona: 'ic-pin',
+    tresc: '„' + bezpiecznyTekst(j.tytul) + '" zniknie z Twojego widoku. ' +
+      'Twoje dotychczasowe wpisy zostaną w ewidencji. Możesz go później ' +
+      'dodać z powrotem.',
+    akcja: 'Odepnij',
+    poAkcji: function(){
+      pokazOverlay('Odpinam…');
+      wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
+        schowajOverlay();
+        if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się odpiąć.'), 'ic-warn'); return; }
+        poOdpieciu_(j.idPojazdu);
+      }).catch(function(){
+        schowajOverlay();
+        pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
+      });
+    }
   });
 };
 // F-22 (wzorzec floty, 01.08.2026): „Anuluj" przy nowym wpisie — bez pytania
