@@ -639,6 +639,73 @@
   [data-motyw="ciemny"] .pasek-glow .pasek-odswiezania{
     background:linear-gradient(rgba(41,128,185,.22), rgba(41,128,185,.22)) var(--tlo);}
 
+  /* ===================== E-35 (19.08.2026): terminy — badge + arkusz ===================== */
+  /* Badge z obracającą się ramką — mechanizm 1:1 z .pasek-glow (Z-84),
+     inne są tylko barwy stożka. Wariant fioletowy dojdzie przy E-36. */
+  .badge-glow{padding:1.5px; border-radius:11.5px; margin:0 0 10px;
+    animation:obrot 2.6s linear infinite;}
+  .badge-glow.uwaga{background:conic-gradient(from var(--kat),
+    transparent 0deg, transparent 235deg,
+    rgba(245,158,11,.45) 300deg, var(--brzeg-uwaga) 342deg,
+    rgba(245,158,11,.45) 358deg, transparent 360deg);}
+  .badge{display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+    border:0; border-radius:10px; padding:9px 11px; font-size:13.5px; line-height:1.35;
+    font-family:inherit; cursor:pointer;}
+  .badge .ik{font-size:17px; display:flex; flex:none;}
+  .badge .tr{flex:1;}
+  .badge .tr b{display:block; font-size:12.5px; margin-bottom:1px;}
+  .badge.uwaga{background:var(--bg-uwaga); color:var(--tekst-uwaga);}
+
+  /* Wysuwany arkusz komunikatu — mechanizm 1:1 z .arkusz-palet (Z-83).
+     z-index NAD wybierakiem palet (60/61), żeby alarm nigdy nie chował się
+     pod niczym. Zamykany WYŁĄCZNIE przyciskiem (świadome kliknięcie) —
+     kliknięcie w tło celowo nic nie robi, inaczej niż przy paletach. */
+  .arkusz-kom{position:fixed; left:0; right:0; bottom:0; z-index:63; background:var(--karta);
+    color:var(--tekst); border-radius:18px 18px 0 0;
+    padding:16px 16px calc(18px + env(safe-area-inset-bottom));
+    transform:translateY(102%); transition:transform .28s cubic-bezier(.22,1,.36,1);
+    max-width:520px; margin:0 auto;}
+  .arkusz-kom.widoczna{transform:translateY(0);}
+  .zaslona.zaslona-kom{z-index:62;}
+  .ak-uchwyt{width:38px; height:4px; border-radius:2px; background:var(--linia); margin:0 auto 12px;}
+  .ak-glowka{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
+  .ak-kolko{width:36px; height:36px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:19px; flex:none;}
+  .arkusz-kom h3{margin:0; font-size:17px;}
+  .ak-wstep{font-size:13px; color:var(--szary); margin:0 0 12px; line-height:1.45;}
+  .ak-lista{margin:0 0 14px; padding:0; list-style:none;}
+  .ak-lista li{display:flex; justify-content:space-between; gap:10px; font-size:13.5px;
+    padding:7px 0; border-bottom:1px solid var(--linia);}
+  .ak-lista li b{font-weight:700; text-align:right;}
+  .arkusz-kom .przycisk-glow{margin-top:2px;}
+
+  /* Wariant CZERWONY (alarm) — czerwień STAŁA, świadomie nie z palety
+     (decyzja Marka: „tu ważne jest to czerwone”); tło i tekst idą normalnie
+     za motywem jasny/ciemny przez --karta/--tekst. Górna ramka z poświatą. */
+  .arkusz-kom.alarm{border-top:3px solid #ef4444;
+    box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 18px rgba(239,68,68,.55);}
+  .arkusz-kom.alarm .ak-kolko{background:var(--bg-blad); color:var(--blad);
+    border:1px solid rgba(239,68,68,.45);}
+  .arkusz-kom.alarm h3{color:var(--tekst-blad);}
+  .arkusz-kom.alarm .ak-lista li b{color:var(--tekst-blad);}
+  .arkusz-kom.alarm .przycisk{background:#dc2626;}
+  [data-motyw="ciemny"] .arkusz-kom.alarm .przycisk{background:#ef4444;}
+
+  /* Wariant ŻÓŁTY (uwaga) — jednorazowy popup progu żółtego. */
+  .arkusz-kom.uwaga{border-top:3px solid var(--brzeg-uwaga);
+    box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 18px rgba(245,158,11,.5);}
+  .arkusz-kom.uwaga .ak-kolko{background:var(--bg-uwaga); color:var(--tekst-uwaga);}
+  .arkusz-kom.uwaga h3{color:var(--tekst-uwaga);}
+  .arkusz-kom.uwaga .ak-lista li b{color:var(--tekst-uwaga);}
+  .arkusz-kom.uwaga .przycisk{background:#d97706;}
+
+  /* Stożek ramki przycisku dopasowany do kontekstu — nadpisuje tylko
+     --stozek z palety, mechanizm .przycisk-glow (Z-81) bez zmian. */
+  .przycisk-glow.stozek-czerwony{--stozek:#fca5a5,#ef4444,#991b1b,#ef4444,#fca5a5;}
+  [data-motyw="ciemny"] .przycisk-glow.stozek-czerwony{--stozek:#f87171,#ef4444,#fecaca,#ef4444,#f87171;}
+  .przycisk-glow.stozek-uwaga{--stozek:#fcd34d,#f59e0b,#92400e,#f59e0b,#fcd34d;}
+  [data-motyw="ciemny"] .przycisk-glow.stozek-uwaga{--stozek:#fcd34d,#d97706,#fef3c7,#d97706,#fcd34d;}
+
   .pole-blad input,.pole-blad select,.pole-blad textarea{
     box-shadow:0 0 0 3px rgba(217,48,37,.14), 0 0 12px rgba(217,48,37,.30);}
   .pole-blad-puls input,.pole-blad-puls select,.pole-blad-puls textarea{
@@ -649,7 +716,7 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .przycisk-glow, .przycisk-glow::after, .pasek-glow,
+    .przycisk-glow, .przycisk-glow::after, .pasek-glow, .badge-glow,   /* E-35 */
     .pole-blad-puls input, .pole-blad-puls select, .pole-blad-puls textarea,
     input:focus, select:focus, textarea:focus{ animation:none; }
     /* Z-87: bez ruchu szkielet nadal spełnia swoją rolę (pokazuje kształt
@@ -885,6 +952,7 @@
 <symbol id="ic-mega" viewBox="0 0 24 24"><path d="M4 10.5v3a1 1 0 0 0 1 1h2.5L18 19V5L7.5 9.5H5a1 1 0 0 0-1 1ZM8 15v3.3a1.2 1.2 0 0 0 1.2 1.2h1"/></symbol>
 <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2"/></symbol>
 <symbol id="ic-warn" viewBox="0 0 24 24"><path d="M12 4 3.5 19h17L12 4ZM12 10v4M12 16.8v.2"/></symbol>
+<symbol id="ic-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6.2 17.8 17.8 6.2"/></symbol>
 <symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 1 5.4-4.1L17 5.3l1.7 1.7 2.9-2.9a4 4 0 0 1-5.1 5.4l-8 8a2 2 0 0 1-2.9-2.9l8-8.1Z"/></symbol>
 <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M9 3.5h6l-.7 6.2 2.7 3.3H7l2.7-3.3L9 3.5ZM12 13v7.5"/></symbol>
 <symbol id="ic-swap" viewBox="0 0 24 24"><path d="M4.5 9.5a8 8 0 0 1 13.6-2.7M18.5 3.5v3.7h-3.7M19.5 14.5a8 8 0 0 1-13.6 2.7M5.5 20.5v-3.7h3.7"/></symbol>
@@ -952,6 +1020,10 @@
           <div class="p2" id="powitanieData"></div>
         </div>
       </div>
+
+      <!-- E-35 (19.08.2026): przypomnienia o terminach (próg żółty) —
+           patrz sekcja E-35 w JS. Klik na badge otwiera pulpit pojazdu. -->
+      <div id="badgeTerminy"></div>
 
       <!-- Dashboard wybranego pojazdu (D54) -->
       <div id="dashboardPojazdu" class="ukryte">
@@ -1217,6 +1289,12 @@
   <p class="pod">Wybór zapamiętuje się na tym telefonie.</p>
   <div id="listaPalet"></div>
 </div>
+
+<!-- E-35 (19.08.2026): wysuwany arkusz komunikatu (alarm terminów /
+     jednorazowe żółte przypomnienie). Świadomie BEZ zamykania kliknięciem
+     w tło — kierowca ma kliknąć przycisk. Wypełniany przez pokazArkuszKom_. -->
+<div class="zaslona zaslona-kom" id="zaslonaKom"></div>
+<div class="arkusz-kom" id="arkuszKom" role="alertdialog" aria-modal="true"></div>
 <script>
 /* =====================================================================
    EWIDENCJA FLOTY RINKON — logika PWA
@@ -1245,6 +1323,9 @@ var KLUCZ_MOTYW = 'ewidencja_motyw';
 var KLUCZ_PALETA = 'ewidencja_paleta';
 var KLUCZ_POJAZD = 'ewidencja_pojazd';
 var KLUCZ_CACHE = 'ewidencja_cache';
+// E-35 (19.08.2026): pamięć przypomnień o terminach — patrz sekcja E-35 niżej.
+var KLUCZ_ALARM_DZIEN = 'ewidencja_terminy_alarm_dzien';   // data ostatniego czerwonego alarmu
+var KLUCZ_ZOLTE = 'ewidencja_terminy_zolte_pokazane';      // {klucz terminu: true} — pokazane żółte
 
 /* ---------- pomocnicze ---------- */
 function el(id){ return document.getElementById(id); }
@@ -1909,6 +1990,7 @@ function pokazZPamieci(){
   STAN.limity = cache.limity || STAN.limity;
   zastosujEtykieteLicznika_(cache.etykietaLicznika, cache.momentLicznika);
   rysujKomunikaty_(cache.komunikaty);
+  rysujBadgeTerminow_();   // E-35 — sam badge; popupy dopiero po świeżych danych
   el('naglowekKto').textContent = cache.imie || '';
   el('avatar').textContent = inicjaly(cache.imie);
   // Z-87: gdy w pamięci nie ma imienia, ZOSTAWIAMY szkielet z HTML-a zamiast
@@ -2022,6 +2104,172 @@ function pokazPasekDodawania_(widoczny){
 /* Owija `odswiezStart()` paskiem. Osobna funkcja, bo `odswiezStart` woła się
    też przy starcie i po zapisie wpisu — tam pasek nad listą pojazdów nie ma
    sensu (kierowca patrzy na pulpit, nie na listę). */
+/* ===================== E-35 (19.08.2026): przypomnienia o terminach =====================
+   Świadoma zmiana filozofii D56 (decyzja Marka): appka dotąd tylko POKAZYWAŁA
+   terminy w karcie pojazdu — od teraz aktywnie PRZYPOMINA. Dane są te same
+   (t.poziom liczone w API.gs przez poziomDni_/poziomKm_, przychodzą w `status`
+   per jednostka) — front nic nowego nie liczy.
+
+   Trzy mechanizmy:
+   - BADGE na ekranie startowym (poziom 'pilny'): wisi, dopóki próg trwa;
+     klik otwiera pulpit pojazdu z boxem „Terminy i serwis";
+   - ARKUSZ ŻÓŁTY: jednorazowo przy pierwszym zobaczeniu danego terminu.
+     Klucz = pojazd|nazwa|data (albo próg km) — odnowienie OC daje nową datę,
+     czyli nowy klucz, czyli świeże przypomnienie przy następnym cyklu;
+   - ARKUSZ CZERWONY (poziom 'krytyczny'): raz dziennie, zbiorczo dla
+     wszystkich krytycznych terminów kierowcy, wymusza kliknięcie OK.
+
+   Liczniki trzymane na telefonie (localStorage) — decyzja Marka: nowy telefon
+   albo wyczyszczone dane = przypomnienie wróci raz więcej, nieszkodliwe.
+   Popupy odpalają się WYŁĄCZNIE po świeżej odpowiedzi serwera (odswiezStart),
+   nie z cache — poziomy w cache mogą być wczorajsze i alarm kłamałby datami.
+   Badge rysuje się także z cache (to samo pokazuje karta pojazdu, D60). */
+
+function terminyPoziomu_(poziom){
+  var wynik = [];
+  (STAN.jednostki || []).forEach(function(j){
+    (j.terminy || []).forEach(function(t){
+      if (t.poziom === poziom) wynik.push({ j: j, t: t });
+    });
+  });
+  return wynik;
+}
+
+// Zwarte zdanie do badge'a i arkuszy — celowo OSOBNE od rysujTerminy
+// (tam pełny format z szarymi dopiskami; tu jedna krótka fraza).
+function opisTerminu_(p){
+  var t = p.t, jed = p.j.jednostkaLicznika;
+  if (t.nazwa === 'Serwis') {
+    if (t.zostalo < 0) return 'przekroczony o ' + formatLicznik_(Math.abs(t.zostalo)) + ' ' + jed;
+    return 'za ' + formatLicznik_(t.zostalo) + ' ' + jed;
+  }
+  if (t.dni < 0) return 'minął ' + dataPL_(t.data);
+  if (t.dni === 0) return 'dziś (' + dataPL_(t.data) + ')';
+  return 'za ' + t.dni + ' dni (' + dataPL_(t.data) + ')';
+}
+
+function kluczZoltego_(p){
+  return p.j.idPojazdu + '|' + p.t.nazwa + '|' + (p.t.data || p.t.wartosc || '');
+}
+
+// Data lokalna, nie toISOString() — UTC przestawiałoby „raz dziennie"
+// o dwie godziny względem polskiej doby.
+function dzisLokalnie_(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) +
+    '-' + ('0' + d.getDate()).slice(-2);
+}
+
+function rysujBadgeTerminow_(){
+  var box = el('badgeTerminy');
+  if (!box) return;
+  var pilne = terminyPoziomu_('pilny');
+  if (!pilne.length) { box.innerHTML = ''; return; }
+  box.innerHTML = pilne.map(function(p){
+    return '<div class="badge-glow uwaga"><button type="button" class="badge uwaga" ' +
+      'data-badge-poj="' + bezpiecznyTekst(p.j.idPojazdu) + '">' +
+      '<span class="ik">' + ikonaHTML_('ic-warn') + '</span>' +
+      '<span class="tr"><b>Zbliżający się termin</b>' +
+      bezpiecznyTekst(p.j.tytul) + ' — ' + bezpiecznyTekst(p.t.nazwa) + ' ' +
+      opisTerminu_(p) + '</span></button></div>';
+  }).join('');
+  box.querySelectorAll('[data-badge-poj]').forEach(function(b){
+    b.onclick = function(){
+      var j = STAN.jednostki.filter(function(x){ return x.idPojazdu === b.dataset.badgePoj; })[0];
+      if (j) wybierzPojazd(j);
+    };
+  });
+}
+
+/* Wspólny wysuwany arkusz (mechanizm arkusza palet, Z-83). Wypełnia
+   #arkuszKom i pokazuje; zamknięcie wyłącznie przyciskiem — `po` odpala
+   się PO zamknięciu. Ten sam komponent obsłuży kolejne zadania
+   (E-37 komunikat Marka, E-38/E-39 zamiana alert/confirm). */
+function pokazArkuszKom_(o){
+  var a = el('arkuszKom');
+  a.className = 'arkusz-kom ' + (o.typ || 'uwaga');
+  var poz = (o.pozycje || []).map(function(x){
+    return '<li><span>' + x.lewa + '</span><b>' + x.prawa + '</b></li>';
+  }).join('');
+  a.innerHTML =
+    '<div class="ak-uchwyt"></div>' +
+    '<div class="ak-glowka"><div class="ak-kolko">' + ikonaHTML_(o.ikona) + '</div>' +
+    '<h3>' + o.tytul + '</h3></div>' +
+    (o.wstep ? '<p class="ak-wstep">' + o.wstep + '</p>' : '') +
+    (poz ? '<ul class="ak-lista">' + poz + '</ul>' : '') +
+    '<div class="przycisk-glow ' + (o.stozek || '') + '">' +
+    '<button type="button" class="przycisk" id="arkuszKomOk">' + o.przycisk + '</button></div>';
+  el('arkuszKomOk').onclick = function(){
+    zamknijArkuszKom_();
+    if (o.po) o.po();
+  };
+  el('zaslonaKom').classList.add('widoczna');
+  a.classList.add('widoczna');
+}
+function zamknijArkuszKom_(){
+  el('zaslonaKom').classList.remove('widoczna');
+  el('arkuszKom').classList.remove('widoczna');
+}
+function arkuszKomOtwarty_(){
+  return el('arkuszKom').classList.contains('widoczna');
+}
+
+function sprawdzPopupyTerminow_(){
+  if (arkuszKomOtwarty_()) return;   // odswiezStart woła wybierzPojazd drugi raz — bez dubli
+  var dzis = dzisLokalnie_();
+
+  // 1. Czerwony alarm — raz dziennie, zbiorczo.
+  var kryt = terminyPoziomu_('krytyczny');
+  if (kryt.length && localStorage.getItem(KLUCZ_ALARM_DZIEN) !== dzis) {
+    pokazArkuszKom_({
+      typ: 'alarm', ikona: 'ic-ban', tytul: 'Uwaga — Przypomnienie',
+      wstep: 'Umów się na serwis jak najszybciej. To przypomnienie wróci jutro, ' +
+        'dopóki terminy nie zostaną zaktualizowane.',
+      pozycje: kryt.map(function(p){ return {
+        lewa: bezpiecznyTekst(p.j.tytul) + ' — ' + bezpiecznyTekst(p.t.nazwa),
+        prawa: opisTerminu_(p)
+      }; }),
+      przycisk: 'Rozumiem, zajmę się tym', stozek: 'stozek-czerwony',
+      po: function(){
+        try { localStorage.setItem(KLUCZ_ALARM_DZIEN, dzis); } catch(e){}
+        sprawdzPopupyTerminow_();   // po alarmie od razu ewentualne żółte
+      }
+    });
+    return;
+  }
+
+  // 2. Żółte — jednorazowo per termin. Klucze terminów, których już nie ma
+  // (odnowione OC, zrobiony serwis), sprzątamy, żeby localStorage nie puchł.
+  var pilne = terminyPoziomu_('pilny');
+  var pokazane;
+  try { pokazane = JSON.parse(localStorage.getItem(KLUCZ_ZOLTE) || '{}'); }
+  catch(e){ pokazane = {}; }
+  var aktualne = {};
+  pilne.forEach(function(p){ aktualne[kluczZoltego_(p)] = true; });
+  Object.keys(pokazane).forEach(function(k){ if (!aktualne[k]) delete pokazane[k]; });
+
+  var nowe = pilne.filter(function(p){ return !pokazane[kluczZoltego_(p)]; });
+  if (nowe.length) {
+    pokazArkuszKom_({
+      typ: 'uwaga', ikona: 'ic-warn', tytul: 'Zbliżający się termin',
+      wstep: 'Warto już zaplanować wizytę w serwisie. Szczegóły znajdziesz też ' +
+        'na ekranie głównym.',
+      pozycje: nowe.map(function(p){ return {
+        lewa: bezpiecznyTekst(p.j.tytul) + ' — ' + bezpiecznyTekst(p.t.nazwa),
+        prawa: opisTerminu_(p)
+      }; }),
+      przycisk: 'OK, wiem', stozek: 'stozek-uwaga',
+      po: function(){
+        // Zaliczamy dopiero przy kliknięciu — zabity ekran = pokaże się znowu.
+        nowe.forEach(function(p){ pokazane[kluczZoltego_(p)] = true; });
+        try { localStorage.setItem(KLUCZ_ZOLTE, JSON.stringify(pokazane)); } catch(e){}
+      }
+    });
+  } else {
+    try { localStorage.setItem(KLUCZ_ZOLTE, JSON.stringify(pokazane)); } catch(e){}
+  }
+}
+
 function odswiezStartZPaskiem_(){
   pokazPasekJednostek_(true);
   szkieletJednostekJesliPusto_();   // Z-87
@@ -2062,6 +2310,8 @@ function odswiezStart(){
     STAN.momentLicznika = odp.momentLicznika || STAN.momentLicznika;
     zastosujEtykieteLicznika_(STAN.etykietaLicznika, STAN.momentLicznika);
     rysujKomunikaty_(STAN.komunikaty);
+    rysujBadgeTerminow_();        // E-35
+    sprawdzPopupyTerminow_();     // E-35 — tylko na świeżych danych, patrz komentarz sekcji
     // Zapisujemy na następne otwarcie (D60) — patrz pokazZPamieci().
     try {
       localStorage.setItem(KLUCZ_CACHE, JSON.stringify({
@@ -2330,8 +2580,12 @@ el('dialogTak').addEventListener('click', function(){
     });
 });
 
-/* D56: terminy i serwis. Aplikacja tylko POKAZUJE to, co już jest w arkuszu
-   — nie przypomina, nie wysyła powiadomień, nie liczy nic ponad odejmowanie. */
+/* D56 (zmienione przez E-35, 19.08.2026): pierwotnie „aplikacja tylko
+   POKAZUJE to, co już jest w arkuszu — nie przypomina". Od E-35 appka
+   także PRZYPOMINA (badge i arkusze na ekranie startowym — świadoma
+   decyzja Marka o zmianie tej filozofii). Ten box zostaje bez zmian:
+   pełny widok terminów w karcie pojazdu. Nadal nie liczymy nic ponad
+   odejmowanie — poziomy przychodzą z API.gs. */
 function rysujTerminy(j){
   var box = el('terminyBox');
   var lista = j.terminy || [];
