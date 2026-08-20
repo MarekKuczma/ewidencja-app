@@ -1032,6 +1032,10 @@
 .naglowek-sekcji-wpisow{font-size:13px; font-weight:700; color:var(--szary);
   text-transform:uppercase; letter-spacing:.4px; margin:16px 2px 8px;}
 .naglowek-sekcji-wpisow:first-child{margin-top:12px;}
+  /* W-22: stopka z wersjami — ma być czytelna, gdy ktoś jej szuka, i niewidoczna,
+     gdy nie szuka. Stąd rozmiar 11 px i szary z palety, bez ramki i tła. */
+  .stopka-wersji{margin-top:14px; text-align:center; font-size:11px; color:var(--szary);
+    letter-spacing:.3px; font-variant-numeric:tabular-nums; user-select:text;}
 </style>
 </head>
 <body>
@@ -1220,6 +1224,9 @@
         <div id="listaJednostek"></div>
         <button class="przycisk-drugi" id="dodajJednostkeBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Dodaj auto lub koparkę</button>
       </div>
+
+      <!-- W-22 (20.08.2026): wersje na dole ekranu głównego — patrz pokazWersje_. -->
+      <div class="stopka-wersji" id="stopkaWersji"></div>
 
       <!-- Dodawanie pojazdu z listy (D59) — zamiast wpisywania z ręki -->
       <div id="dodajBox" class="ukryte" style="margin-top:12px;">
@@ -1484,6 +1491,7 @@ var STAN = {
   // Musi się zgadzać z domyślnym LICZNIK_MOMENT w Setup.gs.
   etykietaLicznika: 'Stan licznika na początek dnia',
   momentLicznika: 'poczatek',
+  wersjaApi: null,        // W-22 — z odpowiedzi serwera (D85)
   // E-20/E-21: `gosc` = {idPojazdu, pin} w trybie QR bez konta (null =
   // zwykły kierowca); `pojazdCel` = maszyna z `?pojazd=` dla ZALOGOWANEGO
   // kierowcy — obsłużona po wczytaniu listy jednostek (obsluzCelQR_).
@@ -1515,6 +1523,11 @@ var KLUCZ_GOSC_PIN = 'ewidencja_gosc_pin';
 var KLUCZ_GOSC_URZ = 'ewidencja_gosc_urzadzenie';
 var KLUCZ_GOSC_IMIE = 'ewidencja_gosc_imie';
 var KLUCZ_GOSC_POJAZD = 'ewidencja_gosc_pojazd';
+/* W-22: wzorzec nazwy cache SHELLA. ⚠ Musi być REGEX, nie sam prefiks —
+   obok żyje cache przekaźnika kodu `ewidencja-kod-relay` (D69) i przy
+   filtrowaniu po prefiksie appka pokazywała JEGO nazwę jako swoją wersję
+   (złapane testem 20.08). */
+var WZORZEC_CACHE = /^ewidencja-v\d+$/;
 
 /* ---------- pomocnicze ---------- */
 function el(id){ return document.getElementById(id); }
@@ -2098,6 +2111,7 @@ function pokazBrakKodu_(){
 function start(){
   wczytajMotyw();
   odswiezKolejkeInfo();
+  pokazWersje_();   // W-22 — od razu, jeszcze przed odpowiedzią serwera
   el('poleData').max = dzisiajISO();     // D52 — brak dat z przyszłości
 
   var parametry = new URLSearchParams(location.search);
@@ -2619,6 +2633,61 @@ function odswiezStartZPaskiem_(){
   });
 }
 
+
+/* ===================== W-22: WERSJE NA EKRANIE STARTOWYM (20.08.2026) =====================
+   Dwie liczby na dole ekranu głównego: co uruchomił TELEFON i co odpowiada
+   SERWER. Powód z 20.08: zgłoszenie „poprawka nie działa" i brak sposobu,
+   żeby odróżnić wadę kodu od starej wersji w cache — sprawdzenie zajęło cykl,
+   który to spojrzenie by oszczędziło.
+
+   ⚠ Wersję frontu pytamy AKTYWNEGO service workera (postMessage), nie
+   odczytujemy stałej z tego pliku: stała mówiłaby o kodzie, który właśnie się
+   wykonuje, a pytanie brzmi „co siedzi w cache telefonu". Gdy worker nie
+   odpowie (brak SW, prywatne okno, stara przeglądarka), pokazujemy nazwę
+   cache z `caches.keys()`, a w ostateczności „—". */
+function wersjaWorkera_(){
+  return new Promise(function(gotowe){
+    var koniec = setTimeout(function(){ gotowe(null); }, 1200);   // nie każemy czekać
+    try {
+      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+        clearTimeout(koniec); gotowe(null); return;
+      }
+      var kanal = new MessageChannel();
+      kanal.port1.onmessage = function(e){
+        clearTimeout(koniec);
+        gotowe(e.data && e.data.wersja ? String(e.data.wersja) : null);
+      };
+      navigator.serviceWorker.controller.postMessage({ typ: 'wersja' }, [kanal.port2]);
+    } catch(e){ clearTimeout(koniec); gotowe(null); }
+  }).then(function(w){
+    if (w) return w;
+    // Zapasowo: nazwa cache aplikacji. Przy aktualizacji może ich być kilka —
+    // bierzemy najwyższy numer, bo to ten świeżo zainstalowany.
+    if (!('caches' in window)) return null;
+    return caches.keys().then(function(klucze){
+      var nasze = klucze.filter(function(k){ return WZORZEC_CACHE.test(k); });
+      if (!nasze.length) return null;
+      nasze.sort(function(a,b){
+        var la = (a.match(/v(\d+)/) || [0,0])[1], lb = (b.match(/v(\d+)/) || [0,0])[1];
+        return Number(lb) - Number(la);
+      });
+      return nasze[0];
+    }).catch(function(){ return null; });
+  });
+}
+
+/* Rysuje stopkę. Woływane po każdym odświeżeniu statusu — wersja API bierze
+   się z odpowiedzi serwera (D85: `wersjaApi` wraca w KAŻDEJ odpowiedzi), więc
+   pokazuje realny stan wdrożenia Apps Script, nie to, co myśli front. */
+function pokazWersje_(){
+  var e = el('stopkaWersji');
+  if (!e) return;
+  wersjaWorkera_().then(function(sw){
+    var api = STAN.wersjaApi ? 'API ' + STAN.wersjaApi : 'API —';
+    e.textContent = (sw || 'front —') + ' \u00b7 ' + api;
+  });
+}
+
 function odswiezStart(){
   return wolajAPI('status', {}).then(function(odp){
     if (!odp.ok) {
@@ -2631,6 +2700,8 @@ function odswiezStart(){
         bezpiecznyTekst(odp.wiadomosc || 'Nie udało się wczytać danych.') + '</div>';
       return;
     }
+    STAN.wersjaApi = odp.wersjaApi || STAN.wersjaApi;   // W-22
+    pokazWersje_();
     STAN.imie = odp.imie;
     // Z-83 poprawka (ta sama klasa błędu co we flocie): flagę nadpisujemy
     // tylko, gdy serwer faktycznie przysłał pole — nie każda odpowiedź je ma.
@@ -4653,9 +4724,16 @@ el('navWpisy').onclick = function(){
 };
 
 /* ---------- service worker ---------- */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js').catch(function(){});
-}
+/* W-22 (20.08.2026): try/catch wokół rejestracji. Znalezione przy testach:
+   gdy `navigator.serviceWorker` ISTNIEJE, ale jest pusty (zdarza się w trybie
+   prywatnym niektórych przeglądarek), samo `.register` rzuca wyjątkiem —
+   a że ta linia stoi PRZED `start()`, aplikacja nie uruchamiała się wcale.
+   Sam `'serviceWorker' in navigator` tego nie wyłapuje. */
+try {
+  if ('serviceWorker' in navigator && navigator.serviceWorker) {
+    navigator.serviceWorker.register('./service-worker.js').catch(function(){});
+  }
+} catch (e) {}
 
 start();
 </script>
