@@ -4605,12 +4605,20 @@ function obsluzCelQR_(){
   };
   var j = znajdz();
   if (j) { wybierzPojazd(j); otworzWpis(j); return; }
+  // E-47a (20.08.2026, zgłoszenie Marka z telefonu): było `typ: 'pytanie'`
+  // — wariant zarezerwowany dla akcji NIEODWRACALNYCH (usuń, odepnij), stąd
+  // czerwona góra i czerwony przycisk. Marek: „jest ono czerwone i wygląda
+  // groźnie". Dodanie maszyny do swojej listy to zwykła czynność, więc
+  // wariant `zgloszenie` (W-20): barwy PALETY, reagujące na motyw jasny
+  // i ciemny. Zieleń zostaje tam, gdzie zawsze — przy opcji bezpiecznej.
+  // Napis „Jeszcze nie" zamiast „Zostaw" — ten sam co przy „Zamykam
+  // miesiąc"; „zostaw" przy DODAWANIU nie mówiło, czego dotyczy.
   pokazArkuszKom_({
-    typ: 'pytanie', ikona: 'ic-plus', tytul: 'Maszyna spoza Twojej listy',
+    typ: 'zgloszenie', ikona: 'ic-plus', tytul: 'Maszyna spoza Twojej listy',
     wstep: 'Zeskanowana maszyna nie jest na Twojej liście. Dodać ją do ' +
       '„Moich jednostek" i otworzyć wpis?',
     dwa: {
-      zostaw: 'Zostaw', akcja: 'Dodaj i wpisz', stozek: 'stozek-zielony',
+      zostaw: 'Jeszcze nie', akcja: 'Dodaj i wpisz', stozek: '',
       poAkcji: function(){
         pokazOverlay('Dodaję maszynę…');
         wolajAPI('dodajJednostke', { idPojazdu: cel }).then(function(odp){
