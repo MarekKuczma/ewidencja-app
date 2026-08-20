@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v84';   // E-41 (19.08.2026): fix ramki przycisku „Zostaw" w arkuszu-pytaniu (zgłoszenie Marka)
+var WERSJA_CACHE = 'ewidencja-v85';   // W-20 (20.08.2026): „Zamykam miesiąc" na wysuwanym arkuszu — koniec natywnych okien
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

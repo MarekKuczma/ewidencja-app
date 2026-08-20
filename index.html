@@ -524,13 +524,9 @@
     gap:8px; color:var(--szary); font-size:12px; margin-top:6px;}
   .ukryte{display:none !important;}
   .srodek{text-align:center; padding:40px 20px; color:var(--szary);}
-  /* W-12 (07.08.2026): okno „Zamykam miesiąc" — te same reguły co we flocie. */
-  dialog{border:none; border-radius:14px; padding:20px; max-width:340px; width:90%;
-    background:var(--karta); color:var(--tekst);}
-  dialog::backdrop{background:rgba(0,0,0,.4);}
-  dialog p{margin:0 0 14px; font-size:16px;}
-  dialog .p{display:flex; gap:10px;}
-  dialog .p button{flex:1;}
+  /* W-12 → W-20 (20.08.2026): style natywnego <dialog> USUNIĘTE razem
+     z ostatnim takim oknem („Zamykam miesiąc" → wysuwany arkusz).
+     W appce nie ma już ani jednego elementu <dialog>. */
   h2{font-size:18px; margin:0 0 12px;}
   /* Z-98 (odpowiednik floty, 19.08.2026): ikona brała currentColor po
      rodzicu — czarna w jasnym, blada w ciemnym. Ten sam zielony co „Popraw"
@@ -767,6 +763,21 @@
      (1 klasa vs 3) — „Zostaw" robił się czerwony (zgłoszenie Marka 19.08). */
   .arkusz-kom.pytanie .przycisk:not(.ak-zostaw){background:#dc2626;}
   [data-motyw="ciemny"] .arkusz-kom.pytanie .przycisk:not(.ak-zostaw){background:#ef4444;}
+  /* W-20: pole wyboru w arkuszu (pierwsze takie — dotąd arkusz miał tylko
+     tekst, listę pozycji i przyciski). `select` bierze appkowe style pól
+     formularza, dokładamy tylko etykietę i odstęp. */
+  .ak-etykieta{font-size:13px; font-weight:600; margin:0 0 6px; display:flex;
+    align-items:center; gap:6px;}
+  .arkusz-kom select{margin-bottom:14px;}
+  /* Wariant ZGŁOSZENIE (W-20, „Zamykam miesiąc") — akcja NIE jest
+     niebezpieczna, to normalna czynność, więc bierze kolory PALETY, a nie
+     czerwień jak przy usuwaniu. Zieleń zostaje tam, gdzie zawsze: przy
+     przycisku bezpiecznym (wariant A wybrany przez Marka 20.08 — żeby
+     zieleń w całej appce znaczyła jedno: „to jest bezpieczna opcja"). */
+  .arkusz-kom.zgloszenie{border-top:3px solid var(--akcent);
+    box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 16px var(--akcent);}
+  .arkusz-kom.zgloszenie .ak-kolko{background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);}
+
   .ak-dwa{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
   /* Oba przyciski MUSZĄ wypełniać swoje obramowanie co do piksela. Bez
      `flex:1` niższy przycisk zostawiał pod sobą odsłonięty gradient —
@@ -1140,8 +1151,10 @@
         </div>
         <button class="przycisk-drugi" id="zamykamBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-check"></use></svg> Zamykam miesiąc</button>
 
-        <!-- W-12 (07.08.2026): rozwijane pudełko zastąpione oknem <dialog>
-             — patrz #dialogMiesiac niżej. Cały przebieg „Zamykam miesiąc"
+        <!-- W-12 (07.08.2026) → W-20 (20.08.2026): rozwijane pudełko
+             zastąpione oknem <dialog>, a to z kolei wysuwanym arkuszem —
+             buduje go `otworzDialogMiesiaca` w JS, nie ma już markupu
+             w HTML-u. Cały przebieg „Zamykam miesiąc" pozostaje
              ujednolicony z flotą (decyzja Marka: kierowcy znają ten proces
              z floty, ma wyglądać i działać tak samo w obu appkach). -->
 
@@ -1345,29 +1358,19 @@
   <div class="tekst" id="overlayTekst">Zapisywanie… proszę czekać</div>
 </div>
 
-<!-- W-12 (07.08.2026): okno „Zamykam miesiąc" — markup, id-eczki i teksty
-     celowo takie same jak w pwa/index.html floty (dialogMiesiac,
-     wyborMiesiaca, dialogNie, dialogTak), żeby oba procesy wyglądały
-     i działały identycznie. Różnica wyłącznie w słownictwie wymuszonym
-     przez D112: tu deklaracja dotyczy MASZYNY, nie osoby, i mówi „daję
-     znać, że skończyłem", nigdy „potwierdzam kompletność" — w ewidencji
-     brak wpisu znaczy postój (D102), więc nie ma listy do odhaczenia. -->
-<dialog id="dialogMiesiac">
-  <p><b>Zamykam miesiąc</b></p>
-  <p style="font-size:15px;">Który miesiąc masz skończony dla tej maszyny?</p>
-  <select id="wyborMiesiaca" style="margin-bottom:14px;"></select>
-  <!-- W-13 (07.08.2026): tekst ujednolicony z flotą (decyzja Marka) —
-       jedno krótkie zdanie zamiast opisu mechanizmu cofania (kierowca
-       i tak ma już dwa kroki potwierdzenia — Tak/Nie tutaj i sam wybór
-       z listy). -->
-  <p style="font-size:14px; color:var(--szary);">Czy na pewno dać znać Markowi, że to koniec
-    wpisów na ten miesiąc? W razie wątpliwości skontaktuj się z Markiem.</p>
-  <div class="p">
-    <button class="przycisk-maly" id="dialogNie" type="button">Nie</button>
-    <button class="przycisk" style="margin-top:0; padding:10px; font-size:16px;"
-            id="dialogTak" type="button">Tak</button>
-  </div>
-</dialog>
+<!-- W-12 (07.08.2026): przebieg „Zamykam miesiąc" celowo identyczny
+     z flotą, żeby kierowcy znali go z jednej appki. Różnica wyłącznie
+     w słownictwie wymuszonym przez D112: tu deklaracja dotyczy MASZYNY,
+     nie osoby, i mówi „daję znać, że skończyłem", nigdy „potwierdzam
+     kompletność" — w ewidencji brak wpisu znaczy postój (D102), więc nie
+     ma listy do odhaczenia. Od W-20 nazwa maszyny jest wprost w treści. -->
+<!-- W-20 (20.08.2026): natywne okno <dialog id="dialogMiesiac"> zastąpione
+     wysuwanym arkuszem (wariant „zgloszenie"), patrz otworzDialogMiesiaca.
+     To było OSTATNIE natywne okno w appce — razem z nim znika wyjątek
+     „dialog jest w warstwie wierzchniej NAD arkuszem", który trzeba było
+     omijać przy każdym komunikacie (E-38). Teksty i logika bez zmian poza
+     nazwami przycisków: „Nie/Tak" → „Jeszcze nie/Zgłaszam" (zasada z E-39:
+     nigdy Tak/Nie, bo klika się odruchowo). -->
 
 <script src="./config.js"></script>
 <!-- Z-83: wybierak palet. Lista budowana z JS (PALETY) — pozycja RGB
@@ -2339,6 +2342,11 @@ function rysujBadgeTerminow_(){
    #arkuszKom i pokazuje; zamknięcie wyłącznie przyciskiem — `po` odpala
    się PO zamknięciu. Ten sam komponent obsłuży kolejne zadania
    (E-37 komunikat Marka, E-38/E-39 zamiana alert/confirm). */
+/* W-20: jeden alias na escapowanie — ewidencja ma `bezpiecznyTekst`,
+   flota `bezpiecznyTekst_` (podkreślnik). Dzięki temu blok arkusza jest
+   w obu appkach IDENTYCZNY i da się go przenosić bez poprawek. */
+function bezpiecznyTekstAK_(t){ return bezpiecznyTekst(String(t == null ? '' : t)); }
+
 function pokazArkuszKom_(o){
   var a = el('arkuszKom');
   a.className = 'arkusz-kom ' + (o.typ || 'uwaga');
@@ -2350,6 +2358,16 @@ function pokazArkuszKom_(o){
     '<div class="ak-glowka"><div class="ak-kolko">' + ikonaHTML_(o.ikona) + '</div>' +
     '<h3>' + o.tytul + '</h3></div>' +
     (o.wstep ? '<p class="ak-wstep">' + o.wstep + '</p>' : '') +
+    // W-20: opcjonalne pole wyboru. `o.pole` = {etykieta, ikona, opcje:[{v,t}]};
+    // wybraną wartość dostaje `poAkcji`/`po` jako pierwszy argument.
+    (o.pole
+      ? '<div class="ak-etykieta">' + ikonaHTML_(o.pole.ikona || 'ic-cal') + ' ' +
+        o.pole.etykieta + '</div><select id="arkuszKomPole">' +
+        (o.pole.opcje || []).map(function(x){
+          return '<option value="' + bezpiecznyTekstAK_(x.v) + '">' +
+            bezpiecznyTekstAK_(x.t) + '</option>';
+        }).join('') + '</select>'
+      : '') +
     (poz ? '<ul class="ak-lista">' + poz + '</ul>' : '') +
     ((o.wiersze && o.wiersze.length)   // E-37: numerowane wiersze komunikatu
       ? '<div class="ak-wiersze">' + o.wiersze.map(function(t, i){
@@ -2360,17 +2378,24 @@ function pokazArkuszKom_(o){
     (o.dwa
       // E-39: wariant dwuprzyciskowy (dawne confirm) — „Zostaw" zamyka
       // bez niczego, przycisk akcji odpala poAkcji PO zamknięciu.
+      // W-20: stożek przycisku akcji jest teraz WYBIERALNY. Domyślnie
+      // czerwony (akcje nieodwracalne — zachowanie z E-39 bez zmian);
+      // `dwa.stozek: ''` daje barwy palety, gdy akcja NIE jest groźna
+      // („Zamykam miesiąc"). Zieleń przy bezpiecznym zostaje zawsze.
       ? '<div class="ak-dwa">' +
         '<div class="przycisk-glow stozek-zielony"><button type="button" class="przycisk ak-zostaw" id="arkuszKomZostaw">' +
         (o.dwa.zostaw || 'Zostaw') + '</button></div>' +
-        '<div class="przycisk-glow stozek-czerwony"><button type="button" class="przycisk" id="arkuszKomOk">' +
+        '<div class="przycisk-glow ' +
+        (o.dwa.stozek === undefined ? 'stozek-czerwony' : o.dwa.stozek) +
+        '"><button type="button" class="przycisk" id="arkuszKomOk">' +
         o.dwa.akcja + '</button></div></div>'
       : '<div class="przycisk-glow ' + (o.stozek || '') + '">' +
         '<button type="button" class="przycisk" id="arkuszKomOk">' + o.przycisk + '</button></div>');
   el('arkuszKomOk').onclick = function(){
+    var wybrane = o.pole ? el('arkuszKomPole').value : undefined;   // W-20
     zamknijArkuszKom_();
-    if (o.dwa) { if (o.dwa.poAkcji) o.dwa.poAkcji(); }
-    else if (o.po) o.po();
+    if (o.dwa) { if (o.dwa.poAkcji) o.dwa.poAkcji(wybrane); }
+    else if (o.po) o.po(wybrane);
   };
   if (o.dwa) el('arkuszKomZostaw').onclick = function(){ zamknijArkuszKom_(); };
   el('zaslonaKom').classList.add('widoczna');
@@ -2701,8 +2726,8 @@ function rysujDeklaracje_(j){
 
 /* W-12 (07.08.2026): cały przebieg przeniesiony 1:1 z floty (decyzja Marka —
    kierowcy znają ten proces z floty, ma być identyczny w obu appkach):
-   okno <dialog> zamiast rozwijanego pudełka, ŚWIEŻY status z serwera przed
-   pokazaniem listy miesięcy, ekran sukcesu zamiast alert().
+   osobne okno zamiast rozwijanego pudełka (od W-20 wysuwany arkusz),
+   ŚWIEŻY status z serwera przed pokazaniem listy miesięcy, ekran sukcesu.
 
    Świeży status ma znaczenie: `STAN.aktywna.zalegleMiesiace` pochodzi
    z ostatniego odświeżenia, a wpis mógł w międzyczasie dopisać ktoś inny
@@ -2727,22 +2752,27 @@ function otworzDialogMiesiaca(){
     // Poprawka przeniesiona z floty (20.07.2026): nie pokazujemy sztywno kilku
     // miesięcy wstecz z kalendarza — w miesiącach sprzed wdrożenia aplikacji
     // maszyna nie ma ani jednego wpisu i takie puste pozycje tylko myliły.
-    var sel = el('wyborMiesiaca');
-    sel.innerHTML = '';
-    (j.zalegleMiesiace || []).slice().sort().forEach(function(m){  // najstarszy u góry
-      var o = document.createElement('option');
-      o.value = m; o.textContent = nazwaMiesiaca_(m);
-      sel.appendChild(o);
+    // W-20: lista jako dane, nie jako <option> — arkusz zbuduje pole sam.
+    // Kolejność bez zmian: najstarszy zaległy u góry (czyli domyślnie
+    // wybrany), bieżący zawsze na końcu.
+    var opcjeMiesiecy = (j.zalegleMiesiace || []).slice().sort().map(function(m){
+      return { v: m, t: nazwaMiesiaca_(m) };
     });
     var biez = dzisiajISO().slice(0, 7);
-    var ob = document.createElement('option');
-    ob.value = biez;
-    ob.textContent = nazwaMiesiaca_(biez) + ' (bieżący)';
-    sel.appendChild(ob);
-    sel.selectedIndex = 0;   // najstarszy zaległy, a jak brak — bieżący
+    opcjeMiesiecy.push({ v: biez, t: nazwaMiesiaca_(biez) + ' (bieżący)' });
 
     schowajOverlay();
-    el('dialogMiesiac').showModal();
+    // W-20: arkusz zamiast showModal(). Lista miesięcy idzie jako `pole`,
+    // wybrana wartość wraca do `poAkcji` argumentem — nie ma już osobnego
+    // `#wyborMiesiaca` żyjącego w HTML-u między otwarciami.
+    pokazArkuszKom_({
+      typ: 'zgloszenie', ikona: 'ic-cal', tytul: 'Zamykam miesiąc',
+      wstep: 'Dajesz znać Markowi, że to koniec wpisów dla <b>' +
+        bezpiecznyTekst(j.tytul) + '</b> w tym miesiącu. W razie wątpliwości ' +
+        'skontaktuj się z nim.',
+      pole: { etykieta: 'Który miesiąc masz skończony?', ikona: 'ic-cal', opcje: opcjeMiesiecy },
+      dwa: { zostaw: 'Jeszcze nie', akcja: 'Zgłaszam', stozek: '', poAkcji: zglosMiesiac_ }
+    });
   }).catch(function(){
     schowajOverlay();
     pokazInfo_('Serwer chwilowo niedostępny', 'Spróbuj za chwilę.', 'ic-warn');
@@ -2750,15 +2780,9 @@ function otworzDialogMiesiaca(){
 }
 
 el('zamykamBtn').addEventListener('click', otworzDialogMiesiaca);
-el('dialogNie').addEventListener('click', function(){ el('dialogMiesiac').close(); });
-el('dialogTak').addEventListener('click', function(){
-  if (!STAN.aktywna) return;
-  var m = el('wyborMiesiaca').value;
-  if (!m) return;
-  // Zamykamy dialog PRZED overlayem — dialog (showModal) jest w warstwie
-  // wierzchniej, więc overlay pod nim by nie było widać (ta sama kolejność
-  // co we flocie). Zamknięcie blokuje też podwójne kliknięcie.
-  el('dialogMiesiac').close();
+
+function zglosMiesiac_(m){
+  if (!STAN.aktywna || !m) return;
   pokazOverlay('Zgłaszam koniec miesiąca…');
   wolajAPI('deklaracja', { idPojazdu: STAN.aktywna.idPojazdu, miesiac: m })
     .then(function(odp){
@@ -2775,7 +2799,7 @@ el('dialogTak').addEventListener('click', function(){
       schowajOverlay();
       pokazInfo_('Brak połączenia', 'Spróbuj za chwilę.', 'ic-link');
     });
-});
+}
 
 /* D56 (zmienione przez E-35, 19.08.2026): pierwotnie „aplikacja tylko
    POKAZUJE to, co już jest w arkuszu — nie przypomina". Od E-35 appka
