@@ -2111,6 +2111,15 @@ function start(){
   if (pojazdZQr) STAN.pojazdCel = pojazdZQr;
   STAN.kod = localStorage.getItem(KLUCZ_KOD);
 
+  // E-47 (20.08.2026): zasłona OD RAZU po wykryciu `?pojazd=`, jeszcze przed
+  // pierwszym żądaniem. Zgłoszenie Marka z żywego telefonu: po zeskanowaniu
+  // naklejki ekran przez kilka sekund wyglądał normalnie i nic nie mówił, że
+  // coś się dzieje — „uznałbym że coś jest nie tak i próbował ponownie".
+  // Przyczyna: `obsluzCelQR_` czeka na `wyslijKolejke` + `odswiezStart`,
+  // czyli na pełną odpowiedź Apps Script. Zdejmuje ją `obsluzCelQR_`
+  // (dla kierowcy z kontem) albo `wejdzGoscia_`/`pokazEkranPin_` (dla gościa).
+  if (pojazdZQr) pokazOverlay('Otwieram maszynę z kodu QR…');
+
   if (STAN.kod) {
     // Zasilamy przekaźnik przy KAŻDYM udanym starcie, nie tylko przy świeżym
     // `?kod=` w adresie — inaczej wejście w karcie przeglądarki, gdzie link
@@ -4351,11 +4360,14 @@ function wolajGoscAPI_(akcja, dane){
 
 function startGoscia_(idPojazdu){
   STAN.gosc = { idPojazdu: idPojazdu, pin: localStorage.getItem(KLUCZ_GOSC_PIN) || '' };
-  if (!STAN.gosc.pin) { pokazEkranPin_(); return; }
+  // E-47: bez zapisanego PIN-u nie ma na co czekać — ekran PIN od razu,
+  // więc zasłona ze `start()` musi zejść tu, a nie dopiero po żądaniu.
+  if (!STAN.gosc.pin) { schowajOverlay(); pokazEkranPin_(); return; }
   wejdzGoscia_(false);
 }
 
 function pokazEkranPin_(blad){
+  schowajOverlay();   // E-47 — ekran PIN to koniec czekania
   el('widokBrakKodu').classList.add('ukryte');
   el('nawigacja').classList.add('ukryte');
   pokazEkran('ekranPin');
@@ -4581,8 +4593,11 @@ function kartaWpisuGoscia_(w, j, moj){
    po stronie serwera). */
 function obsluzCelQR_(){
   var cel = STAN.pojazdCel;
-  if (!cel || STAN.gosc) return;
+  // E-47: zasłona z `start()` MUSI zejść na każdej drodze wyjścia — także
+  // gdy nie ma czego obsługiwać (np. odświeżenie strony bez `?pojazd=`).
+  if (!cel || STAN.gosc) { schowajOverlay(); return; }
   STAN.pojazdCel = null;
+  schowajOverlay();
   var znajdz = function(){
     return (STAN.jednostki || []).filter(function(x){
       return String(x.idPojazdu).trim() === String(cel).trim();
