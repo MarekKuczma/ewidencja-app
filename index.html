@@ -1009,6 +1009,29 @@
     [data-paleta="aurora"] .sukces-ikona::after,
     nav .wskaznik i{ animation:none; }   /* Z-96 */
   }
+/* ===================== E-20/E-21: tryb gościa + „Jeździł ktoś inny?" ===================== */
+/* Zwinięta linijka pod uwagami — wygląda jak link akcentowy, nie przycisk. */
+.linijka-inny{display:flex; align-items:center; gap:8px; margin-top:14px;
+  background:none; border:none; padding:6px 2px; width:auto; min-height:auto;
+  color:var(--tekst-akcentjasny); font-size:15px; font-weight:600;
+  font-family:inherit; cursor:pointer;}
+.linijka-inny .ikona{width:18px; height:18px;}
+.linijka-inny .strzalka{font-size:12px; transition:transform .2s;}
+.linijka-inny.rozwinieta .strzalka{transform:rotate(180deg);}
+#poleKtoJezdzilBox{background:var(--bg-akcentjasny); border:1.5px solid var(--input-brzeg);
+  border-radius:12px; padding:12px; margin-top:8px;}
+/* Gość: dolne menu bez Startu — wskaźnik dzieli pasek na dwie zakładki. */
+#nawigacja.dwa-taby .wskaznik{width:50%;}
+#nawigacja.dwa-taby #navStart{display:none;}
+/* Historia miesiąca u gościa: tylko odczyt — przygaszona, na tle appki
+   zamiast karty (uwaga Marka do mockupu: „zaznaczyć, że to tylko odczyt"). */
+.wpis.tylko-odczyt{opacity:.78; background:var(--tlo);}
+.plakietka-odczyt{display:inline-block; font-size:11px; font-weight:700; color:var(--szary);
+  background:var(--bg-akcentjasny); border-radius:6px; padding:1px 7px;
+  margin-left:6px; vertical-align:1px;}
+.naglowek-sekcji-wpisow{font-size:13px; font-weight:700; color:var(--szary);
+  text-transform:uppercase; letter-spacing:.4px; margin:16px 2px 8px;}
+.naglowek-sekcji-wpisow:first-child{margin-top:12px;}
 </style>
 </head>
 <body>
@@ -1103,6 +1126,33 @@
   </div>
 
   <!-- ===================== EKRAN: START (dashboard pojazdu) ===================== -->
+  <!-- ===================== EKRAN: PIN GOŚCIA (E-20/E-21, 20.08.2026) =====================
+       Widzi go WYŁĄCZNIE telefon bez zapisanego kodu kierowcy, który wszedł
+       linkiem `?pojazd=` z naklejki QR. Nazwa maszyny celowo NIE pojawia się
+       przed poprawnym PIN-em (duch F-62: bez uwierzytelnienia nie zdradzamy
+       floty — ktoś mógłby zgadywać `?pojazd=P001…` i mapować maszyny). -->
+  <section id="ekranPin" class="ukryte">
+    <div class="karta">
+      <div class="sukces-ikona"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-key"></use></svg></div>
+      <h2 style="text-align:center;">Wpis przez kod QR</h2>
+      <p style="text-align:center; color:var(--szary); font-size:14px; margin:4px 0 16px;">
+        Podaj PIN, a zrobisz wpis dla zeskanowanej maszyny — jej nazwę
+        zobaczysz zaraz po wejściu.</p>
+      <div class="pole" id="polePinBox">
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-lock"></use></svg> PIN <span class="wym">*</span></label>
+        <input type="tel" id="polePin" inputmode="numeric" maxlength="8" autocomplete="off"
+          style="text-align:center; letter-spacing:10px; font-size:24px; font-weight:700;">
+        <div class="podpowiedz-pola">PIN dostaniesz od kierowcy głównego albo od Marka.
+          Masz swój kod kierowcy? Otwórz appkę swoim osobistym linkiem — PIN nie będzie potrzebny.</div>
+        <div class="blad-pola" id="bladPin"></div>
+      </div>
+      <div class="komunikat" id="pinKomunikat"></div>
+      <div class="przycisk-glow">
+        <button class="przycisk" id="pinDalejBtn">Dalej</button>
+      </div>
+    </div>
+  </section>
+
   <section id="ekranStart">
     <div class="karta">
       <div class="powitanie">
@@ -1201,6 +1251,16 @@
       <h2 id="wpisTytul">Nowy wpis</h2>
       <div id="wpisPodtytul" style="font-size:14px; color:var(--szary); margin:-8px 0 14px;"></div>
 
+      <!-- E-20/E-21: imię gościa z QR — widoczne i obowiązkowe WYŁĄCZNIE
+           w trybie gościa (steruje otworzWpis). Konta normalne go nie widzą:
+           autor idzie z kodu dostępu (D91). -->
+      <div class="pole ukryte" id="poleImieBox">
+        <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-user"></use></svg> Imię i nazwisko <span class="wym">*</span></label>
+        <input type="text" id="poleImie" autocomplete="name" placeholder="np. Jan Kowalski">
+        <div class="podpowiedz-pola">Wpisujesz siebie — pokażemy Cię jako kierowcę tego dnia.</div>
+        <div class="blad-pola" id="bladImie"></div>
+      </div>
+
       <div class="pole" id="poleDataBox">
         <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-cal"></use></svg> Data <span class="wym">*</span></label>
         <input type="date" id="poleData">
@@ -1256,6 +1316,22 @@
       <div class="pole">
         <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-note"></use></svg> Uwagi</label>
         <textarea id="poleUwagi" placeholder="opis przeglądu / serwisu / naprawy / wymiany opon lub inne uwagi"></textarea>
+      </div>
+
+      <!-- E-20/E-21 pkt 8: zwinięta linijka „Jeździł ktoś inny?" — domyślnie
+           samo jedno zdanie, formularz wygląda jak dotąd. Po kliknięciu jedno
+           pole tekstowe. Autor NIGDY nie znika: osoba jest DOKLEJANA
+           („Marek + Hubert" na wydruku), stąd podpowiedź pod polem.
+           W trybie gościa całość ukryta (gość ma pole imienia wyżej). -->
+      <div id="ktoJezdzilBox">
+        <button type="button" class="linijka-inny" id="ktoJezdzilToggle"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-user"></use></svg> Jeździł ktoś inny? <span class="strzalka">&#9662;</span></button>
+        <div class="pole ukryte" id="poleKtoJezdzilBox">
+          <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-user"></use></svg> Kto jeździł tego dnia?</label>
+          <input type="text" id="poleKtoJezdzil" autocomplete="off" placeholder="np. Hubert Nowak">
+          <div class="podpowiedz-pola">Ta osoba zostanie dopisana <b>obok Ciebie</b> jako kierowca —
+            na wydruku będzie „Ty + ona".</div>
+          <div class="blad-pola" id="bladKtoJezdzil"></div>
+        </div>
       </div>
 
       <div class="komunikat" id="wpisKomunikat"></div>
@@ -1407,7 +1483,12 @@ var STAN = {
   // E-16 — jw.: to tylko wartość na czas przed pierwszą odpowiedzią serwera.
   // Musi się zgadzać z domyślnym LICZNIK_MOMENT w Setup.gs.
   etykietaLicznika: 'Stan licznika na początek dnia',
-  momentLicznika: 'poczatek'
+  momentLicznika: 'poczatek',
+  // E-20/E-21: `gosc` = {idPojazdu, pin} w trybie QR bez konta (null =
+  // zwykły kierowca); `pojazdCel` = maszyna z `?pojazd=` dla ZALOGOWANEGO
+  // kierowcy — obsłużona po wczytaniu listy jednostek (obsluzCelQR_).
+  gosc: null,
+  pojazdCel: null
 };
 var KLUCZ_KOD = 'ewidencja_kod';
 var KLUCZ_KOLEJKA = 'ewidencja_kolejka';
@@ -1426,6 +1507,14 @@ var PROG_KONSERWACJI_DNI = 5;
 
 // E-37 (19.08.2026): ostatnio potwierdzony komunikat Marka — {d: dzień, t: treść}.
 var KLUCZ_KOMUNIKAT = 'ewidencja_komunikat_marka';
+// E-20/E-21 (20.08.2026) — tryb gościa (QR): PIN zapamiętany po pierwszym
+// poprawnym podaniu (pyta ponownie po zmianie PIN-u w arkuszu), losowy
+// identyfikator telefonu (edycja tylko własnych wpisów), ostatnie imię
+// (podpowiedź) i ostatnia maszyna (powrót do appki bez ponownego skanu).
+var KLUCZ_GOSC_PIN = 'ewidencja_gosc_pin';
+var KLUCZ_GOSC_URZ = 'ewidencja_gosc_urzadzenie';
+var KLUCZ_GOSC_IMIE = 'ewidencja_gosc_imie';
+var KLUCZ_GOSC_POJAZD = 'ewidencja_gosc_pojazd';
 
 /* ---------- pomocnicze ---------- */
 function el(id){ return document.getElementById(id); }
@@ -1435,7 +1524,7 @@ function bezpiecznyTekst(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function pokazEkran(nazwa){
-  ['ekranStart','ekranWpis','ekranSukces','ekranWpisy','ekranPodsumowanie'].forEach(function(e){
+  ['ekranStart','ekranWpis','ekranSukces','ekranWpisy','ekranPodsumowanie','ekranPin'].forEach(function(e){
     el(e).classList.add('ukryte');
   });
   el(nazwa).classList.remove('ukryte');
@@ -1454,7 +1543,11 @@ function pokazEkran(nazwa){
 function ustawWskaznikNawigacji_(){
   var w = el('wskaznikNawigacji');
   if (!w) return;
-  var zakladki = ['navStart', 'navNowy', 'navWpisy'];
+  // E-20: w trybie gościa Start nie istnieje — wskaźnik liczy tylko
+  // WIDOCZNE zakładki (offsetParent === null u ukrytych przez CSS).
+  var zakladki = ['navStart', 'navNowy', 'navWpisy'].filter(function(id){
+    return el(id).offsetParent !== null;
+  });
   var i = -1;
   zakladki.forEach(function(id, n){ if (el(id).classList.contains('aktywna')) i = n; });
   w.classList.toggle('bez-zakladki', i === -1);
@@ -1498,7 +1591,8 @@ function bladPola(idBox, idBlad, tekst){
   el(idBlad).textContent = tekst;
 }
 function wyczyscBledy(){
-  ['poleDataBox','poleLicznikBox','poleBudowaBox'].forEach(function(i){
+  ['poleDataBox','poleLicznikBox','poleBudowaBox','poleImieBox','poleKtoJezdzilBox'].forEach(function(i){
+    if (!el(i)) return;
     el(i).classList.remove('pole-blad');
     el(i).classList.remove('pole-blad-puls');   // Z-81
   });
@@ -1995,6 +2089,7 @@ function odrzucKod_(wiadomosc){
    człowiek bez działającego kodu widział „Dodaj wpis" i mógł w to kliknąć. */
 function pokazBrakKodu_(){
   el('ekranStart').classList.add('ukryte');
+  el('ekranPin').classList.add('ukryte');   // E-20
   el('nawigacja').classList.add('ukryte');
   el('widokBrakKodu').classList.remove('ukryte');
 }
@@ -2005,11 +2100,15 @@ function start(){
   odswiezKolejkeInfo();
   el('poleData').max = dzisiajISO();     // D52 — brak dat z przyszłości
 
-  var zUrl = new URLSearchParams(location.search).get('kod');
-  if (zUrl) {
-    localStorage.setItem(KLUCZ_KOD, zUrl);
-    history.replaceState(null, '', location.pathname);
-  }
+  var parametry = new URLSearchParams(location.search);
+  var zUrl = parametry.get('kod');
+  // E-20/E-21: naklejka QR maszyny niesie `?pojazd=P0xx`. Gdy w linku są
+  // oba parametry naraz, `kod` działa jak logowanie, a `pojazd` jak cel
+  // (ustalenie z 13.08 — jeden link przy wdrażaniu nowego kierowcy).
+  var pojazdZQr = parametry.get('pojazd');
+  if (zUrl) localStorage.setItem(KLUCZ_KOD, zUrl);
+  if (zUrl || pojazdZQr) history.replaceState(null, '', location.pathname);
+  if (pojazdZQr) STAN.pojazdCel = pojazdZQr;
   STAN.kod = localStorage.getItem(KLUCZ_KOD);
 
   if (STAN.kod) {
@@ -2027,6 +2126,10 @@ function start(){
       localStorage.setItem(KLUCZ_KOD, zRelay);
       STAN.kod = zRelay;
       uruchomAplikacje_();
+    } else if (STAN.pojazdCel || localStorage.getItem(KLUCZ_GOSC_POJAZD)) {
+      // E-20/E-21: telefon BEZ kodu, ale z naklejki QR (albo z zapamiętaną
+      // maszyną gościa — powrót do appki bez ponownego skanowania).
+      startGoscia_(STAN.pojazdCel || localStorage.getItem(KLUCZ_GOSC_POJAZD));
     } else {
       ustawPodpowiedzBrakKodu_();
       pokazBrakKodu_();
@@ -2049,7 +2152,9 @@ function uruchomAplikacje_(){
   // rzuciła wyjątkiem, odświeżenie i tak MUSI się odbyć (bez tego lista
   // zostawała na wersji z pamięci i pasek wisiałby w nieskończoność).
   pokazPasekJednostek_(true);
-  wyslijKolejke().catch(function(){}).then(odswiezStartZPaskiem_);
+  wyslijKolejke().catch(function(){}).then(odswiezStartZPaskiem_).then(function(){
+    obsluzCelQR_();   // E-20/E-21: skan naklejki przez kierowcę Z kontem
+  });
 }
 
 /* E-37 (19.08.2026): komunikat Marka wysuwanym arkuszem zamiast paska W-05.
@@ -3042,6 +3147,19 @@ function otworzWpis(j, wpisDoEdycji){
   el('poleDataBox').style.display = wpisDoEdycji ? 'none' : '';
   el('listaTankowan').innerHTML = '';
 
+  // E-20/E-21: gość widzi obowiązkowe pole imienia (podpowiedź: ostatnio
+  // użyte na tym telefonie), konta normalne — zwiniętą linijkę „Jeździł
+  // ktoś inny?" (rozwinięta od razu przy poprawce wpisu z wypełnionym R).
+  var trybGoscia = !!STAN.gosc;
+  el('poleImieBox').classList.toggle('ukryte', !trybGoscia);
+  el('ktoJezdzilBox').classList.toggle('ukryte', trybGoscia);
+  if (trybGoscia) {
+    el('poleImie').value = wpisDoEdycji
+      ? (wpisDoEdycji.kierowca || '')
+      : (localStorage.getItem(KLUCZ_GOSC_IMIE) || '');
+  }
+  ustawKtoJezdzil_(wpisDoEdycji ? (wpisDoEdycji.ktoJezdzil || '') : '');
+
   if (wpisDoEdycji) {
     el('poleData').value = wpisDoEdycji.data;
     el('poleLicznik').value = wpisDoEdycji.licznik || '';
@@ -3161,6 +3279,22 @@ el('zapiszBtn').onclick = function(){
   var licznik = el('poleLicznik').value;
   var zlePola = [];   // D96 — nazwy pól do wypisania w komunikacie
 
+  // E-20/E-21: imię gościa (obowiązkowe) / „Jeździł ktoś inny?" (opcjonalne).
+  // Ta sama lista znaków co serwer (E033) — błąd widać przy polu, od razu.
+  var imieGoscia = '';
+  if (STAN.gosc) {
+    imieGoscia = el('poleImie').value.replace(/\s+/g, ' ').trim();
+    if (!poprawneImie_(imieGoscia)) {
+      bladPola('poleImieBox','bladImie','Podaj imię i nazwisko — tylko litery, 2–60 znaków.');
+      zlePola.push('Imię i nazwisko');
+    }
+  }
+  var ktoJezdzil = el('poleKtoJezdzil').value.replace(/\s+/g, ' ').trim();
+  if (!STAN.gosc && ktoJezdzil && !poprawneImie_(ktoJezdzil)) {
+    bladPola('poleKtoJezdzilBox','bladKtoJezdzil','Tylko litery, spacja, myślnik i apostrof (2–60 znaków).');
+    zlePola.push('Kto jeździł');
+  }
+
   if (!STAN.edytowanyId) {
     if (!data) { bladPola('poleDataBox','bladData','Podaj datę.'); zlePola.push('Data'); }
     else if (data > dzisiajISO()) {
@@ -3223,8 +3357,19 @@ el('zapiszBtn').onclick = function(){
     serwisKategoria: pobierzSerwisKategorie_(),
     uwagi: el('poleUwagi').value
   };
+  // E-20/E-21 pkt 8: przy poprawce pole idzie ZAWSZE (puste = wyczyszczenie
+  // wpisanej wcześniej osoby), przy nowym wpisie tylko gdy wypełnione.
+  if (!STAN.gosc) {
+    if (STAN.edytowanyId) payload.ktoJezdzil = ktoJezdzil;
+    else if (ktoJezdzil) payload.ktoJezdzil = ktoJezdzil;
+  }
 
   pokazOverlay(STAN.edytowanyId ? 'Zapisywanie poprawki…' : 'Zapisywanie… proszę czekać');
+
+  // ===== E-20/E-21: ścieżka gościa (QR) — PIN + urządzenie zamiast kodu,
+  // ŚWIADOMIE bez kolejki offline (rzadki, jednorazowy użytkownik; kolejka
+  // wymagałaby osobnego toru i podwoiłaby powierzchnię błędów). =====
+  if (STAN.gosc) { zapiszGoscia_(payload, imieGoscia); return; }
 
   if (STAN.edytowanyId) {
     // D66: poprawka wymaga sieci — nie da się jej zakolejkować, bo w tym
@@ -3375,6 +3520,8 @@ function pokazSukces(odp){
   }
 
   sukcesPoEdycji = !!STAN.edytowanyId;
+  // E-20: gość nie ma ekranu głównego — przycisk „Ekran główny" znika.
+  el('sStart').style.display = STAN.gosc ? 'none' : '';
   el('sKolejny').innerHTML = sukcesPoEdycji ? ikonaHTML_('ic-clip') + ' Moje wpisy' : ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis'; // Z-82: innerHTML — wstawiamy element
   el('sWpisy').innerHTML = sukcesPoEdycji ? ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis' : ikonaHTML_('ic-clip') + ' Moje wpisy';
 
@@ -3523,8 +3670,10 @@ function odswiezHistorie_(j){
 }
 
 function otworzWpisy(j){
+  if (STAN.gosc) { otworzWpisyGoscia_(); return; }   // E-20/E-21
   if (!j) { pokazEkran('ekranStart'); return; }
   STAN.aktywna = j;
+  el('wpisyPodsumowanieBtn').style.display = '';     // E-20: gość mógł schować
   el('wpisyTytul').textContent = 'Moje wpisy';
   el('wpisyPodtytul').textContent = j.tytul + ' · ' + j.podtytul;
   pokazEkran('ekranWpisy');
@@ -3775,7 +3924,10 @@ function rysujWpisy(){
             ? '<div class="wpis-uwaga"><b>' + ikonaHTML_('ic-warn') + ' Wymaga uwagi</b>' +
               bezpiecznyTekst(w.cofniety) + '</div>'
             : '') +
-          '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
+          // E-20/E-21: autor + osoba z „Jeździł ktoś inny?" (doklejona przez
+          // „ + ", jak na wydruku); wpis gościa (autor „Aplikacja") pokazuje
+          // samo imię z kolumny R.
+          '<div class="linia2">' + bezpiecznyTekst(kierowcaLinii_(w)) +
             (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
           // E-27 (07.08.2026): współkierowcy dnia — widoczni od razu na
           // liście, bez rozwijania (jak kierowca i budowa wyżej).
@@ -4115,6 +4267,7 @@ el('odepnijBtn').onclick = function(){
 // skąd wszedł użytkownik, i czyści tryb edycji.
 el('wpisWrocBtn').onclick = function(){
   STAN.edytowanyId = null;
+  if (STAN.gosc) { otworzWpisyGoscia_(); return; }   // E-20: gość nie ma Startu
   pokazEkran('ekranStart');
 };
 el('wpisAnulujEdycjeBtn').onclick = function(){
@@ -4135,6 +4288,337 @@ el('sWpisy').onclick = function(){
   otworzWpisy(STAN.aktywna);
 };
 el('sStart').onclick = function(){ pokazEkran('ekranStart'); };
+/* ===================== E-20/E-21: TRYB GOŚCIA (QR) — 20.08.2026 =====================
+   Kierowca BEZ konta po zeskanowaniu naklejki maszyny. Zasady (komplet
+   decyzji Marka z 20.08, opis w planie prac): PIN z Ustawień jako jedyna
+   bramka, tylko JEDNA maszyna (zero dashboardu i listy floty), pełny
+   normalny formularz + obowiązkowe imię, „Moje wpisy" = własne z tego
+   telefonu (edytowalne w oknie DNI_EDYCJI) + pełna historia miesiąca
+   TYLKO do odczytu, kolizja dnia = arkusz zamiast E008 z „użyj Popraw".
+   Świadomie BEZ kolejki offline i BEZ przycisku „Usuń" (anulować może
+   kierowca główny albo Marek). */
+
+function poprawneImie_(t){
+  var s = String(t || '').replace(/\s+/g, ' ').trim();
+  return s.length >= 2 && s.length <= 60 &&
+    /^[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż .'\-]+$/.test(s);
+}
+
+/* E-20/E-21: „autor + kto jeździł" w jednej linii listy wpisów; wpis
+   gościa (autor „Aplikacja") pokazuje samo imię — spójnie z wydrukiem. */
+function kierowcaLinii_(w){
+  if (w.wpisGoscia) return w.ktoJezdzil || w.kierowca || '';
+  return (w.kierowca || '') + (w.ktoJezdzil ? ' + ' + w.ktoJezdzil : '');
+}
+
+/* Zwinięta linijka „Jeździł ktoś inny?" — stan początkowy przy otwarciu
+   formularza (rozwinięta tylko, gdy poprawiany wpis ma już wpisaną osobę). */
+function ustawKtoJezdzil_(wartosc){
+  el('poleKtoJezdzil').value = wartosc || '';
+  var otwarte = !!wartosc;
+  el('poleKtoJezdzilBox').classList.toggle('ukryte', !otwarte);
+  el('ktoJezdzilToggle').classList.toggle('rozwinieta', otwarte);
+}
+el('ktoJezdzilToggle').onclick = function(){
+  var box = el('poleKtoJezdzilBox');
+  var otwarte = box.classList.contains('ukryte');
+  box.classList.toggle('ukryte', !otwarte);
+  this.classList.toggle('rozwinieta', otwarte);
+  if (otwarte) el('poleKtoJezdzil').focus();
+};
+
+/* Losowy identyfikator telefonu — trafia do ukrytej kolumny S i decyduje,
+   które wpisy gość może poprawiać. Zabezpieczenie wygodowe, nie granica
+   bezpieczeństwa (plan 13.08) — stąd zwykły hex z crypto. */
+function urzadzenieGoscia_(){
+  var u = localStorage.getItem(KLUCZ_GOSC_URZ);
+  if (!u) {
+    var b = new Uint8Array(16);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(b);
+    else for (var i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
+    u = Array.prototype.map.call(b, function(x){ return ('0' + x.toString(16)).slice(-2); }).join('');
+    try { localStorage.setItem(KLUCZ_GOSC_URZ, u); } catch(e){}
+  }
+  return u;
+}
+
+function wolajGoscAPI_(akcja, dane){
+  var payload = Object.assign({ akcja: akcja, token: KONFIG.TOKEN,
+    pin: (STAN.gosc && STAN.gosc.pin) || '', urzadzenie: urzadzenieGoscia_() }, dane || {});
+  return fetch(KONFIG.URL_API, { method: 'POST', body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); });
+}
+
+function startGoscia_(idPojazdu){
+  STAN.gosc = { idPojazdu: idPojazdu, pin: localStorage.getItem(KLUCZ_GOSC_PIN) || '' };
+  if (!STAN.gosc.pin) { pokazEkranPin_(); return; }
+  wejdzGoscia_(false);
+}
+
+function pokazEkranPin_(blad){
+  el('widokBrakKodu').classList.add('ukryte');
+  el('nawigacja').classList.add('ukryte');
+  pokazEkran('ekranPin');
+  el('polePin').value = '';
+  el('bladPin').textContent = '';
+  if (blad) komunikat('pinKomunikat', bezpiecznyTekst(blad), 'blad');
+  else schowajKomunikat('pinKomunikat');
+}
+
+el('pinDalejBtn').onclick = function(){
+  var pin = el('polePin').value.trim();
+  el('bladPin').textContent = '';
+  if (!pin) { bladPola('polePinBox','bladPin','Podaj PIN.'); return; }
+  STAN.gosc.pin = pin;
+  wejdzGoscia_(true);
+};
+el('polePin').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') el('pinDalejBtn').click();
+});
+
+function wejdzGoscia_(zapamietajPin){
+  if (!navigator.onLine) {
+    pokazEkranPin_('Brak internetu — wejście przez QR wymaga zasięgu.');
+    return;
+  }
+  pokazOverlay('Otwieram maszynę…');
+  wolajGoscAPI_('goscStatus', { idPojazdu: STAN.gosc.idPojazdu }).then(function(odp){
+    schowajOverlay();
+    if (!odp.ok) { obsluzBladGoscia_(odp); return; }
+    // PIN zapamiętany dopiero po POTWIERDZENIU przez serwer — telefon nie
+    // pyta przy każdym wejściu; zmiana PIN-u w arkuszu = E032 = pyta znowu.
+    if (zapamietajPin) { try { localStorage.setItem(KLUCZ_GOSC_PIN, STAN.gosc.pin); } catch(e){} }
+    try { localStorage.setItem(KLUCZ_GOSC_POJAZD, STAN.gosc.idPojazdu); } catch(e){}
+    zastosujStatusGoscia_(odp);
+    trybGoscia_();
+    otworzWpis(STAN.aktywna);
+  }).catch(function(){
+    schowajOverlay();
+    pokazEkranPin_('Nie udało się połączyć — spróbuj za chwilę.');
+  });
+}
+
+function zastosujStatusGoscia_(odp){
+  var p = odp.pojazd;
+  STAN.aktywna = {
+    idPojazdu: p.idPojazdu, tytul: p.tytul, podtytul: p.podtytul, typ: p.typ,
+    kolor: p.kolor, jednostkaLicznika: p.jednostkaLicznika, maLicznik: p.maLicznik,
+    ostatniStanLicznika: p.ostatniStanLicznika, ostatniaData: p.ostatniaData,
+    ostatniaBudowa: p.ostatniaBudowa
+  };
+  STAN.budowy = odp.budowy || [];
+  STAN.kategorie = odp.kategorie || [];
+  if (odp.limity) STAN.limity = odp.limity;
+  if (odp.etykietaLicznika) zastosujEtykieteLicznika_(odp.etykietaLicznika, odp.momentLicznika);
+  STAN.wpisy = odp.wpisy || [];
+}
+
+function trybGoscia_(){
+  el('navStart').style.display = 'none';
+  el('nawigacja').classList.add('dwa-taby');
+  el('nawigacja').classList.remove('ukryte');
+}
+
+function obsluzBladGoscia_(odp){
+  if (odp.blad === 'E032') {
+    // Zły PIN — także po ZMIANIE PIN-u w arkuszu (zapamiętany stary).
+    try { localStorage.removeItem(KLUCZ_GOSC_PIN); } catch(e){}
+    STAN.gosc.pin = '';
+    pokazEkranPin_(odp.wiadomosc || 'Nieprawidłowy PIN.');
+    return;
+  }
+  if (odp.blad === 'E030' || odp.blad === 'E031') {
+    pokazEkranPin_(odp.wiadomosc || '');
+    return;
+  }
+  if (odp.blad === 'E002') {
+    // Ekran „pojazd niedostępny" (ustalenie 12.08 pkt 3 — zabezpieczenie
+    // na wypadek pomyłki, nie ścieżka użytkowa).
+    pokazEkranPin_('');
+    pokazInfo_('Pojazd niedostępny',
+      'Ta maszyna nie jest prowadzona w ewidencji albo naklejka jest ' +
+      'nieaktualna. Skontaktuj się z Markiem.', 'ic-ban');
+    return;
+  }
+  pokazEkranPin_(odp.wiadomosc || 'Coś poszło nie tak — spróbuj ponownie.');
+}
+
+function odswiezGoscia_(){
+  return wolajGoscAPI_('goscStatus', { idPojazdu: STAN.gosc.idPojazdu }).then(function(odp){
+    if (odp.ok) zastosujStatusGoscia_(odp);
+    return odp;
+  });
+}
+
+function zapiszGoscia_(payload, imieGoscia){
+  if (!navigator.onLine) {
+    schowajOverlay();
+    komunikat('wpisKomunikat', 'Brak internetu — wpis przez QR wymaga zasięgu. ' +
+      'Spróbuj ponownie, gdy złapiesz sieć.', 'blad');
+    return;
+  }
+  var akcja = STAN.edytowanyId ? 'goscEdytujWpis' : 'goscNowyWpis';
+  payload.imie = imieGoscia;
+  if (STAN.edytowanyId) payload.idWpisu = STAN.edytowanyId;
+  wolajGoscAPI_(akcja, payload).then(function(odp){
+    schowajOverlay();
+    if (!odp.ok) {
+      if (odp.blad === 'E008' && odp.istniejacy) { pokazKolizjeGoscia_(odp.istniejacy); return; }
+      if (odp.blad === 'E030' || odp.blad === 'E031' || odp.blad === 'E032') { obsluzBladGoscia_(odp); return; }
+      komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad');
+      el('wpisKomunikat').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    try { localStorage.setItem(KLUCZ_GOSC_IMIE, imieGoscia); } catch(e){}
+    if (odp.stanPo) {
+      STAN.aktywna.ostatniStanLicznika = odp.stanPo.ostatniStanLicznika;
+      STAN.aktywna.ostatniaData = odp.stanPo.ostatniaData;
+      STAN.aktywna.ostatniaBudowa = odp.stanPo.ostatniaBudowa;
+    }
+    pokazSukces(odp);
+    odswiezGoscia_().catch(function(){});   // lista w tle, bez blokowania
+  }).catch(function(){
+    schowajOverlay();
+    komunikat('wpisKomunikat', 'Brak połączenia — spróbuj za chwilę.', 'blad');
+  });
+}
+
+/* Mockup D (zatwierdzony 20.08): zamiast E008 z „użyj Popraw" (nie
+   zadziałałoby na cudzym wpisie) — arkusz z danymi istniejącego wpisu
+   i jasną instrukcją. Poświata glow na górze = standard komponentu. */
+function pokazKolizjeGoscia_(ist){
+  var poz = [{ lewa: 'Data', prawa: bezpiecznyTekstAK_(dataPL_(ist.data)) },
+             { lewa: 'Kierowca', prawa: bezpiecznyTekstAK_(ist.kierowca) }];
+  if (ist.licznik !== null && ist.licznik !== undefined && ist.licznik !== '') {
+    poz.push({ lewa: 'Licznik', prawa: bezpiecznyTekstAK_(formatLicznik_(ist.licznik) +
+      ' ' + (ist.jednostkaLicznika || '')) });
+  }
+  if (ist.budowa) poz.push({ lewa: 'Budowa', prawa: bezpiecznyTekstAK_(ist.budowa) });
+  pokazArkuszKom_({
+    typ: 'uwaga', ikona: 'ic-warn', tytul: 'Wpis na dziś już istnieje',
+    wstep: 'Każdy dzień maszyny ma jeden wpis. Jeśli coś się nie zgadza albo Ty ' +
+      'też dziś jeździłeś — <b>powiedz kierowcy głównemu</b>: on może poprawić ' +
+      'wpis lub dopisać Cię jako kierowcę.',
+    pozycje: poz,
+    przycisk: 'OK, rozumiem', stozek: 'stozek-uwaga'
+  });
+}
+
+function otworzWpisyGoscia_(){
+  el('wpisyTytul').textContent = 'Wpisy maszyny';
+  el('wpisyPodtytul').textContent = STAN.aktywna.tytul + ' · ' + STAN.aktywna.podtytul;
+  el('wpisyPodsumowanieBtn').style.display = 'none';   // podsumowanie = nie dla gościa
+  pokazEkran('ekranWpisy');
+  rysujWpisyGoscia_();
+  if (!navigator.onLine) { pokazPasekWpisow_(null); return; }
+  pokazPasekWpisow_('ladowanie');
+  odswiezGoscia_().then(function(odp){
+    pokazPasekWpisow_(null);
+    if (odp.ok) rysujWpisyGoscia_();
+  }).catch(function(){ pokazPasekWpisow_(null); });
+}
+
+/* Dwie sekcje (uwagi Marka do mockupu): najpierw wpisy z TEGO telefonu
+   (z „Popraw"), pod spodem pełna historia miesiąca w zmienionym kolorze
+   jako „tylko odczyt". Wygląd kart 1:1 z listą „Moje wpisy". */
+function rysujWpisyGoscia_(){
+  var j = STAN.aktywna;
+  var pokazAnul = el('pokazAnulowane').checked;
+  var wszystkie = (STAN.wpisy || []).filter(function(w){ return pokazAnul || !w.anulowany; });
+  var moje = wszystkie.filter(function(w){ return w.mojWpis; });
+  var reszta = wszystkie.filter(function(w){ return !w.mojWpis; });
+
+  var html = '<div class="naglowek-sekcji-wpisow">Moje wpisy (ten telefon)</div>';
+  html += moje.length
+    ? moje.map(function(w){ return kartaWpisuGoscia_(w, j, true); }).join('')
+    : '<div class="srodek" style="padding:8px 0 4px;">Jeszcze nic nie wpisałeś z tego telefonu.</div>';
+  html += '<div class="naglowek-sekcji-wpisow">Historia miesiąca ' +
+    '<span class="plakietka-odczyt">TYLKO ODCZYT</span></div>';
+  html += reszta.length
+    ? reszta.map(function(w){ return kartaWpisuGoscia_(w, j, false); }).join('')
+    : '<div class="srodek" style="padding:8px 0 4px;">Brak innych wpisów w tym miesiącu.</div>';
+  el('listaWpisow').innerHTML = html;
+
+  el('listaWpisow').querySelectorAll('[data-gosc-edytuj]').forEach(function(b){
+    b.onclick = function(){
+      var w = (STAN.wpisy || []).filter(function(x){
+        return String(x.idWpisu) === b.dataset.goscEdytuj;
+      })[0];
+      if (w) otworzWpis(STAN.aktywna, w);
+    };
+  });
+}
+
+function kartaWpisuGoscia_(w, j, moj){
+  var jed = w.jednostkaLicznika || j.jednostkaLicznika;
+  return '<div class="wpis' + (w.anulowany ? ' anulowany' : '') + (moj ? '' : ' tylko-odczyt') +
+    '" style="border-left-color:' + (w.anulowany ? '' : j.kolor) + '">' +
+    '<div style="flex:1; min-width:0;">' +
+      '<div class="wpis-tresc">' +
+        '<div class="linia1"><span>' + dataPL_(w.data) + '</span>' +
+          (w.licznik !== '' && w.licznik != null
+            ? '<span class="licznik-rog">Licznik: <b>' + formatLicznik_(w.licznik) + ' ' + jed + '</b></span>'
+            : '') +
+        '</div>' +
+        (w.anulowany ? '<div><span class="plakietka plakietka-blad">Anulowany</span></div>' : '') +
+        '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
+          (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
+        (w.tankowanie ? '<div class="linia2">' + ikonaHTML_('ic-fuel') + ' ' + bezpiecznyTekst(w.tankowanie) + '</div>' : '') +
+        (w.serwisKategoria ? '<div class="linia2">' + ikonaHTML_('ic-wrench') + ' ' + bezpiecznyTekst(w.serwisKategoria) + '</div>' : '') +
+        (w.uwagi ? '<div class="linia2">' + ikonaHTML_('ic-note') + ' ' + bezpiecznyTekst(w.uwagi) + '</div>' : '') +
+        '<div class="linia-data"><span class="plakietka-id">' + bezpiecznyTekst(w.idWpisu) + '</span></div>' +
+      '</div>' +
+      (moj && w.edytowalny
+        ? '<div class="akcja"><button class="przycisk-maly" data-gosc-edytuj="' +
+          bezpiecznyTekst(w.idWpisu) + '">' + ikonaHTML_('ic-pencil') + ' Popraw</button></div>'
+        : '') +
+    '</div></div>';
+}
+
+/* Kierowca Z KONTEM zeskanował naklejkę: maszyna z listy → od razu wpis;
+   spoza listy → pytanie o dodanie (dopięcie ma konsekwencje — prawo
+   deklaracji D112 — więc NIGDY po cichu; ustalenie 13.08 + bramka D108
+   po stronie serwera). */
+function obsluzCelQR_(){
+  var cel = STAN.pojazdCel;
+  if (!cel || STAN.gosc) return;
+  STAN.pojazdCel = null;
+  var znajdz = function(){
+    return (STAN.jednostki || []).filter(function(x){
+      return String(x.idPojazdu).trim() === String(cel).trim();
+    })[0];
+  };
+  var j = znajdz();
+  if (j) { wybierzPojazd(j); otworzWpis(j); return; }
+  pokazArkuszKom_({
+    typ: 'pytanie', ikona: 'ic-plus', tytul: 'Maszyna spoza Twojej listy',
+    wstep: 'Zeskanowana maszyna nie jest na Twojej liście. Dodać ją do ' +
+      '„Moich jednostek" i otworzyć wpis?',
+    dwa: {
+      zostaw: 'Zostaw', akcja: 'Dodaj i wpisz', stozek: 'stozek-zielony',
+      poAkcji: function(){
+        pokazOverlay('Dodaję maszynę…');
+        wolajAPI('dodajJednostke', { idPojazdu: cel }).then(function(odp){
+          if (!odp.ok) {
+            schowajOverlay();
+            pokazInfo_('Nie udało się dodać', bezpiecznyTekst(odp.wiadomosc ||
+              'Spróbuj ponownie za chwilę.'), 'ic-warn');
+            return;
+          }
+          odswiezStart().then(function(){
+            schowajOverlay();
+            var j2 = znajdz();
+            if (j2) { wybierzPojazd(j2); otworzWpis(j2); }
+          });
+        }).catch(function(){
+          schowajOverlay();
+          pokazInfo_('Brak połączenia', 'Nie udało się dodać maszyny — spróbuj przy zasięgu.', 'ic-warn');
+        });
+      }
+    }
+  });
+}
+
 el('navStart').onclick = function(){ pokazEkran('ekranStart'); };
 el('navNowy').onclick = function(){
   if (STAN.aktywna) otworzWpis(STAN.aktywna);
