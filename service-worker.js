@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v89';   // W-22 (20.08.2026): numer wersji na ekranie głównym — worker odpowiada na pytanie o wersję
+var WERSJA_CACHE = 'ewidencja-v90';   // W-23 (20.08.2026): podpowiedzi w polach kursywą i przygaszone — nie mylą się z wpisanymi danymi
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
