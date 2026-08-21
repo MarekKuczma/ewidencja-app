@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v90';   // W-23 (20.08.2026): podpowiedzi w polach kursywą i przygaszone — nie mylą się z wpisanymi danymi
+var WERSJA_CACHE = 'ewidencja-v91';   // 21.08.2026: przegląd kodu — usunięte martwe ikony SVG i nieużywane klasy CSS
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
