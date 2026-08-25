@@ -1118,8 +1118,26 @@
   content:''; position:absolute; left:9px; top:6px; bottom:14px;
   width:2px; background:var(--linia); border-radius:2px;
 }
-/* nagłówek miesiąca stoi POZA osią — inaczej oś biegłaby przez napis */
-.wpisy-naglowek-miesiac { margin-left:-26px; }
+/* ⚠ POPRAWKA 25.08.2026 (zgłoszenie Marka: „nazwa miesiąca wychodzi poza
+   container"). Miałem tu `margin-left:-26px`.
+
+   Założyłem, że nagłówek SIEDZI W grupie i trzeba go wyciągnąć z jej
+   wcięcia. Nieprawda — nagłówek jest RODZEŃSTWEM grupy, oba są dziećmi
+   `#listaWpisow`, a lista nie ma żadnego paddingu:
+
+       #listaWpisow            padding-left: 0
+         .wpisy-naglowek-miesiac       ← tutaj
+         .wpisy-grupa-miesiaca   padding-left: 26px  (oś w tym wcięciu)
+
+   Ujemny margines nie „wyciągał z wcięcia", którego nagłówek nigdy nie
+   miał — wypychał go 26 px NA ZEWNĄTRZ listy. Zmierzone: lista x=30,
+   nagłówek x=4.
+
+   Bez marginesu nagłówek stoi równo z lewą krawędzią listy, a oś zaczyna
+   się 10 px dalej, już pod nim — czyli dokładnie to, co margines miał
+   osiągnąć. Zostawiam regułę wprost (zamiast ją skasować), żeby zerowała
+   ewentualny margines z bloku bazowego. */
+.wpisy-naglowek-miesiac { margin-left:0; }
 
 .wpis {
   position:relative; border-left:none; border-radius:12px;
@@ -1214,7 +1232,6 @@
   #listaWpisow:not(:has(.wpisy-grupa-miesiaca)) { padding-left:20px; }
   .wpisy-grupa-miesiaca::before,
   #listaWpisow:not(:has(.wpisy-grupa-miesiaca))::before { left:6px; }
-  .wpisy-naglowek-miesiac { margin-left:-20px; }
   .wpis::before { left:-19px; }
   .wpis .linia1 { font-size:15px; }
   .wpis .licznik-rog { font-size:11px; }

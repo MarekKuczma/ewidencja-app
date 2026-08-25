@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v92';   // 24.08.2026: E-49 (wygląd listy „Moje wpisy") + E-52 (dzień tygodnia — jedyna zmiana w JS)
+var WERSJA_CACHE = 'ewidencja-v93';   // 25.08.2026: E-53 — nazwa miesiąca wychodziła poza kontener (ujemny margines nagłówka)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
