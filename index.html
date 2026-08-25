@@ -1063,6 +1063,225 @@
      kierowcę przez telefon o odczytanie wersji, tu jest miejsce do podbicia. */
   .stopka-wersji{margin-top:10px; text-align:center; font-size:10px; color:var(--szary);
     opacity:.30; font-variant-numeric:tabular-nums; user-select:text;}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   E-49 + E-52 (24.08.2026) — WYGLĄD LISTY „MOJE WPISY"
+
+   Prawie wyłącznie CSS. Jedyny wyjątek to skrót dnia tygodnia (E-52) —
+   CSS nie policzy dnia z daty, więc dochodzi jedna mała funkcja `dataZDniem_`
+   i podmiana w DWÓCH miejscach rysowania listy (konto normalne + gość).
+
+   ⚠ UWAGA DLA PRZYSZŁEGO SIEBIE: w komentarzu CSS NIE WOLNO napisać
+   dosłownie zamykającego znacznika stylu. Przeglądarka kończy arkusz na tym
+   ciągu znaków nawet w środku komentarza — reszta reguł przepada, a strona
+   wygląda, jakby CSS w ogóle nie wszedł. Wpadka z 24.08.2026, złapana
+   testem (26 z 56 na czerwono).
+
+   Ustalone z Markiem przez makiety renderowane PRAWDZIWYM kodem aplikacji
+   (podstawione dane z arkusza + wywołana własna funkcja rysująca), nie
+   rysunkiem — dzięki temu wyszły rzeczy, których żaden szkic by nie pokazał.
+
+   Co się zmienia:
+     1. wpisy jako punkty na OSI miesiąca, nie osobne kafelki obok siebie,
+     2. „Popraw" i „Usuń" WIDOCZNE (nie chowamy ich za rozwinięciem — nie
+        każdy kierowca wpadnie na to, że trzeba kliknąć), ale o połowę
+        niższe: 40 px → 26 px, nadal para o równej szerokości,
+     3. rozwijanie PODPISANE słowem („szczegóły ▾" / „zwiń ▴"),
+     4. pastylka ZAWSZE w prawym dolnym rogu — kotwiczona, nie układana,
+     5. kropka osi w KOLORZE TYPU maszyny (z zakładki `Typy`),
+     6. skrót dnia tygodnia obok daty, weekend kolorem palety.
+
+   ⚠ Progi dla wąskich telefonów NIE są ozdobą. Powstały po pomiarze na
+   320/360/390/430 px — każdy z tych błędów był niewidoczny w podglądzie:
+     · przy 360 px data nachodziła na licznik (nachodził SAM TEKST, pola
+       formalnie się nie przecinały),
+     · po dołożeniu dnia tygodnia zabrakło 22 px w linii z licznikiem.
+   ═════════════════════════════════════════════════════════════════════ */
+/* ══ WARIANT C2 — „Oś czasu", akcje zawsze widoczne ═════════════════════
+   Poprawki po uwagach Marka (24.08.2026):
+     1. „Popraw" i „Usuń" ZOSTAJĄ na wierzchu — nie każdy kierowca wpadnie
+        na to, że trzeba rozwinąć wpis, żeby cokolwiek z nim zrobić.
+        Zamiast chować: obniżamy wysokość o połowę (40 px → 26 px).
+     2. Rozwijanie jest teraz PODPISANE słowem, nie samą strzałką.
+     3. Tytuł łamie się ŚWIADOMIE na dwie linie, a nie przypadkiem.        */
+
+/* ── oś miesiąca ───────────────────────────────────────────────────── */
+.wpisy-grupa-miesiaca, #listaWpisow { position:relative; padding-left:26px; }
+.wpisy-grupa-miesiaca::before, #listaWpisow::before {
+  content:''; position:absolute; left:9px; top:6px; bottom:14px;
+  width:2px; background:var(--linia); border-radius:2px;
+}
+/* nagłówek miesiąca stoi POZA osią — inaczej oś biegłaby przez napis */
+.wpisy-naglowek-miesiac { margin-left:-26px; }
+
+.wpis {
+  position:relative; border-left:none; border-radius:12px;
+  padding:10px 12px; margin-bottom:8px; gap:10px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+}
+.wpis::before {
+  content:''; position:absolute; left:-22px; top:16px;
+  width:11px; height:11px; border-radius:50%;
+  background:var(--karta); border:3px solid var(--akcent); box-sizing:border-box;
+}
+.wpis.anulowany::before { border-color:var(--linia); }
+
+/* EWIDENCJA: ikona typu znika — „Moje wpisy" pokazują JEDNĄ wybraną maszynę,
+   więc ta sama ikonka powtarzała się przy każdym wierszu, nic nie wnosząc.
+   Jej rolę przejęła kropka na osi. */
+.wpis .ikona-krag { display:none; }
+
+/* ── tytuł: dwie linie z premedytacją ──────────────────────────────── */
+/* `baseline` wyrównywało kwotę do PIERWSZEJ linii tytułu; przy tytule
+   dwuliniowym wyglądało to na przesunięcie. `flex-start` trzyma kwotę
+   przy górnej krawędzi niezależnie od tego, ile linii ma tytuł. */
+.wpis .linia1 { align-items:flex-start; font-size:16px; line-height:1.25; }
+.wpis .linia1 > span:first-child { min-width:0; }
+
+/* ── licznik / kwota: cicha etykieta, mocna liczba ─────────────────── */
+.wpis .licznik-rog { font-size:12px; color:var(--szary); }
+.wpis .licznik-rog b { font-size:15px; }
+
+.wpis .linia2 { margin-top:2px; }
+.wpis .plakietka-id { background:transparent; padding:0; font-size:11px; opacity:.6; }
+.wpis .linia-data { margin-top:5px; }
+
+/* ── ROZWIJANIE: strzałka dostaje podpis ───────────────────────────── */
+/* Sam znak ▾ gasimy `font-size:0` i podmieniamy na tekst z ::before —
+   dzięki temu nie ruszamy JS-a. Obrót wyłączony: obracałby też napis. */
+.wpis .wpis-strzalka {
+  width:auto; height:22px; padding:0 9px; border-radius:999px;
+  font-size:0; margin-left:6px;
+}
+.wpis .wpis-strzalka::before {
+  content:'szczegóły ▾'; font-size:11.5px; font-weight:700; letter-spacing:.01em;
+}
+.wpis.rozwiniety .wpis-strzalka { transform:none; }
+.wpis.rozwiniety .wpis-strzalka::before { content:'zwiń ▴'; }
+
+/* ── STOPKA KARTY: pastylka ZAWSZE w prawym dolnym rogu ────────────────
+   ⚠ Problem zgłoszony przez Marka: w ciemnym (czytaj: wąskim, 360 px)
+   „szczegóły" spadały do własnej linii. Przyczyna nie leżała w motywie —
+   leżała w szerokości. Ten wiersz układał się `flex`-em, więc gdy treści
+   brakowało miejsca, pastylka jechała niżej razem z resztą.
+
+   `flex` UKŁADA elementy względem siebie; my potrzebujemy KOTWICY. Stąd
+   pozycjonowanie bezwzględne: pastylka jest przypięta do prawego dolnego
+   rogu wiersza i nie obchodzi jej, ile miejsca zajmuje numer wpisu obok.
+   `padding-right` rezerwuje jej miejsce, żeby nic nie weszło pod spód. */
+.wpis .linia-data { position:relative; padding-right:92px; min-height:22px; flex-wrap:nowrap; }
+.wpis .linia-data > span:last-child { position:absolute; right:0; bottom:0; margin:0; }
+
+/* Numer wpisu ustępuje pierwszy — przy 320 px woli się skrócić
+   („E-000198…") niż zepchnąć cokolwiek do nowej linii. */
+.wpis .plakietka-id { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* ── AKCJE: widoczne, o połowę niższe, ale nadal PARA ──────────────────
+   Poprawka po uwadze Marka (24.08.2026): przyciski wracają na pełną
+   szerokość, po połowie każdy, wyśrodkowane — czyli tak, jak są dziś.
+   Zmieniamy WYŁĄCZNIE wysokość: 40 px → 26 px.
+
+   ⚠ Świadomie NIE nadpisujemy `flex` ani `justify-content`. Aplikacja ma
+   już regułę `.wpis .akcja > button { flex:1 1 0 }`, która robi dokładnie
+   to, o co chodzi — dwa równe pola na całą szerokość. Wcześniejsza wersja
+   psuła to przez `flex:none` i `justify-content:flex-end`, przez co
+   przyciski zbijały się w prawy róg i miały różne szerokości (dłuższy
+   napis = szerszy przycisk). */
+.wpis .akcja { margin-top:8px; gap:8px; }
+.wpis .akcja .przycisk-maly,
+.wpis .akcja .przycisk-czerwony {
+  font-size:13px; font-weight:600;
+  padding:0 10px; min-height:26px; height:26px;   /* było 40 px */
+  border-radius:8px; border-width:1px;
+}
+.wpis .akcja svg { width:14px; height:14px; }
+
+/* ── WĄSKIE TELEFONY ────────────────────────────────────────────────────
+   ⚠ Wykryte pomiarem, nie na oko: przy 360 px data zaczynała nachodzić na
+   „Licznik: …". Oś zabiera 26 px szerokości, a powiększona data dokłada
+   swoje — na iPhonie SE i starszych Androidach to razem za dużo.
+   Zbite pudełko nie było widoczne w zwykłym podglądzie, bo nachodził SAM
+   TEKST, a pola formalnie się nie przecinały.                            */
+@media (max-width: 380px) {
+  .wpisy-grupa-miesiaca, #listaWpisow { padding-left:20px; }
+  .wpisy-grupa-miesiaca::before, #listaWpisow::before { left:6px; }
+  .wpisy-naglowek-miesiac { margin-left:-20px; }
+  .wpis::before { left:-19px; }
+  .wpis .linia1 { font-size:15px; }
+  .wpis .licznik-rog { font-size:11px; }
+  .wpis .licznik-rog b { font-size:13.5px; }
+  .wpis .wpis-strzalka { padding:0 7px; }
+  .wpis .wpis-strzalka::before { font-size:11px; }
+}
+
+/* 320 px (iPhone SE 1. gen i podobne) — ostatni próg. Poniżej tej szerokości
+   data i licznik nie zmieszczą się obok siebie w żadnym rozsądnym stopniu
+   pisma, więc licznik schodzi do własnej linii i wyrównuje się do prawej.
+   Świadomie: lepiej dwie czytelne linie niż jedna, w której coś znika. */
+@media (max-width: 340px) {
+  .wpis .linia1 { flex-wrap:wrap; }
+  .wpis .linia1 > span:first-child { flex:1 0 100%; }
+  .wpis .licznik-rog { flex:1 0 100%; text-align:right; margin-top:1px; }
+}
+
+
+/* ═══ KROPKA W KOLORZE TYPU MASZYNY (24.08.2026) ═════════════════════════
+   Pomysł Marka („ikona jako węzeł osi") we flocie daje +24 px szerokości,
+   bo tam ikona ROZRÓŻNIA rodzaj wydatku. W ewidencji „Moje wpisy" pokazują
+   JEDNĄ maszynę, więc ikona byłaby tym samym samochodzikiem pięć razy pod
+   rząd — i kosztowałaby 36 px szerszej rynny (zmierzone). Dlatego zostaje
+   kropka, ale przejmuje z tamtego pomysłu to, co wartościowe: KOLOR.
+
+   ⚠ Sztuczka bez ani jednej linii JS: kropką jest `.ikona-krag` skurczone
+   do rozmiaru kropki, z ukrytym SVG w środku. Po co tak? Bo aplikacja
+   ustawia na tym elemencie `style="border-color: <kolor typu>"` wprost
+   z arkusza (zakładka `Typy`). CSS nie umie przenieść cudzej wartości
+   koloru gdzie indziej — ale umie ten element zmniejszyć. Dzięki temu
+   kropka bierze kolor maszyny za darmo i zmieni się sama, gdy Marek
+   zmieni kolor w arkuszu.
+
+   ⚠ GEOMETRIA — środek kropki == środek osi:
+       rynna 26 px · oś: left 9 px, szerokość 2 px  → środek osi = 10 px
+       kropka 12 px → lewa krawędź na 10 − 6 = 4 px
+       `.wpis` zaczyna się na 26 px, więc left = 4 − 26 = −22 px          */
+.wpis::before { display:none; }              /* stara, jednokolorowa kropka */
+.wpis .ikona-krag {
+  display:block;
+  position:absolute; left:-22px; top:16px;
+  width:12px; height:12px; border-width:3px; border-radius:50%;
+  background:var(--karta); box-sizing:border-box; z-index:1;
+}
+.wpis .ikona-krag svg { display:none; }
+.wpis.anulowany .ikona-krag { opacity:.5; }
+
+@media (max-width: 380px) {
+  /* rynna 20 · oś left 6 → środek 7 · kropka 12 → lewa krawędź 1 → −19 */
+  .wpis .ikona-krag { left:-19px; }
+}
+
+/* ═══ E-52 (24.08.2026) — SKRÓT DNIA TYGODNIA OBOK DATY ══════════════════
+   Prośba Marka: „wiadomo, jakim dniem tygodnia jest data". Wartość dodana
+   ponad sam skrót: WEEKEND ma inny kolor, więc sobotę i niedzielę widać bez
+   czytania — a to zwykle po nie się tu sięga.
+
+   Kolor bierzemy ze ZMIENNEJ PALETY (`--tekst-akcentjasny`), nie na sztywno.
+   Jest zdefiniowana we wszystkich ośmiu paletach i w obu motywach, więc
+   weekend dopasuje się do tego, co Marek wybierze w aplikacji.
+
+   ⚠ To JEDYNE miejsce w E-49, które wymaga JS-a (funkcja `dataZDniem_`) —
+   CSS nie umie policzyć dnia tygodnia z daty. Reszta bloku jest czystym CSS. */
+.dzien-tyg { margin-left:6px; font-size:12px; font-weight:600; color:var(--szary); }
+.dzien-tyg.weekend { color:var(--tekst-akcentjasny); }
+
+/* ⚠ Poniżej 400 px data + dzień + „Licznik: 24 980 km" nie mieszczą się
+   w jednej linii — brakuje 22 px (zmierzone). Decyzja Marka: chowamy samo
+   SŁOWO „Licznik:", liczba zostaje. Alternatywa (licznik do własnej linii)
+   rozciągała listę z 878 na 1033 px, czyli o 18%.
+   `font-size:0` gasi tekst etykiety; `<b>` z liczbą dostaje swój rozmiar. */
+@media (max-width: 400px) {
+  .wpis .licznik-rog { font-size:0; }
+  .wpis .licznik-rog b { font-size:14px; }
+}
 </style>
 </head>
 <body>
@@ -1688,6 +1907,29 @@ function odmianaWpisow_(n){
 function dataPL_(iso){
   var s = String(iso || '');
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.split('-').reverse().join('.') : s;
+}
+/* E-52 (24.08.2026, prośba Marka): skrót dnia tygodnia obok daty na liście
+   wpisów. Sens praktyczny: od razu widać sobotę i niedzielę, i łatwiej
+   wypatrzeć dziury w tygodniu roboczym.
+
+   ⚠ Dzień liczymy przez `Date.UTC` + `getUTCDay()`, NIE przez
+   `new Date('2026-08-24')`. Ten drugi zapis ISO parsuje się jako PÓŁNOC UTC,
+   więc w strefach na zachód od Greenwich wypada poprzedniego dnia i skrót
+   byłby przesunięty o jeden. Polska leży na wschód, czyli akurat u nas by
+   działało — i dokładnie dlatego jest to pułapka: błędu nie dałoby się
+   zauważyć na miejscu. Wersja z `Date.UTC` nie zależy od strefy w ogóle.
+
+   ⚠ Osobna funkcja, a NIE zmiana w `dataPL_`: tamta jest używana w 13
+   miejscach (terminy, komunikaty, arkusz kolizji, podsumowania) i wszędzie
+   tam dzień tygodnia byłby szumem. */
+var DNI_SKROT_ = ['nd', 'pon', 'wt', 'śr', 'czw', 'pt', 'sob'];
+function dataZDniem_(iso){
+  var s = String(iso || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return dataPL_(s);
+  var cz = s.split('-');
+  var n = new Date(Date.UTC(+cz[0], +cz[1] - 1, +cz[2])).getUTCDay();
+  return dataPL_(s) + '<span class="dzien-tyg' + (n === 0 || n === 6 ? ' weekend' : '') +
+         '">' + DNI_SKROT_[n] + '</span>';
 }
 function ikonaTypu(typ, kolor){
   var t = String(typ||'').toLowerCase(), k = 'inne';
@@ -3990,7 +4232,7 @@ function rysujWpisy(){
         '<div class="wpis-tresc">' +
           // Data z lewej, licznik z PRAWEJ strony tej samej linii (uwaga Marka
           // 27.07.2026) — bez osobnego wiersza i bez ikony, sam podpis „Licznik:".
-          '<div class="linia1"><span>' + dataPL_(w.data) + '</span>' +
+          '<div class="linia1"><span>' + dataZDniem_(w.data) + '</span>' +
             (w.licznik !== '' && w.licznik != null
               ? '<span class="licznik-rog">Licznik: <b>' + formatLicznik_(w.licznik) + ' ' + jed + '</b>' +
                 '</span>'
@@ -4652,7 +4894,7 @@ function kartaWpisuGoscia_(w, j, moj){
     '" style="border-left-color:' + (w.anulowany ? '' : j.kolor) + '">' +
     '<div style="flex:1; min-width:0;">' +
       '<div class="wpis-tresc">' +
-        '<div class="linia1"><span>' + dataPL_(w.data) + '</span>' +
+        '<div class="linia1"><span>' + dataZDniem_(w.data) + '</span>' +
           (w.licznik !== '' && w.licznik != null
             ? '<span class="licznik-rog">Licznik: <b>' + formatLicznik_(w.licznik) + ' ' + jed + '</b></span>'
             : '') +
