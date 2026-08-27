@@ -1523,6 +1523,18 @@
   font-size: 13px; color: var(--szary); overflow-wrap: anywhere;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   E-60 (25.08.2026) — cienie pod płytami ZDJĘTE (wybór Marka: wariant S2)
+   Po E-54/E-58 cień pod ostatnim wierszem sekcji i pod metrykami został
+   jako jedyny „uniesiony" element płaskiego układu — Marek: „trochę
+   dziwnie to wygląda". Znika bez zamiennika (odrzucona ramka S1).
+   Świadomy koszt: w jasnym motywie płyty zlewają się z kartą ekranu —
+   porządek trzymają nagłówki sekcji i włosowe kreski. SAM CSS.           */
+#listaJednostek .jedn:last-child,
+#listaJednostek .jedn:has(+ .sekcja-jednostek-naglowek) { box-shadow: none; }
+#dashboardPojazdu .metryki { box-shadow: none; }
+
 </style>
 </head>
 <body>

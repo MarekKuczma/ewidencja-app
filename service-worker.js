@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v95';   // 25.08.2026: E-58 — metryki pulpitu (płaskie połówki + ikony) i E-59 — chip pojazdu w „Moje wpisy" (CSS + 2 linie JS)
+var WERSJA_CACHE = 'ewidencja-v96';   // 25.08.2026: E-60 — cienie pod płytami zdjęte (wybór Marka: bez zamiennika, sam CSS)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
