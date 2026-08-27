@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- E-56 (25.08.2026, decyzja Marka): appka znika z wyszukiwarek. To NIE jest
+     kontrola dostępu — kto zna adres, ten wejdzie; granicą pozostają kod
+     kierowcy i PIN, sprawdzane serwerowo. Chodzi tylko o to, żeby Google
+     nie pokazywało appki nikomu, kto jej nie szuka z linku albo QR. -->
+<meta name="robots" content="noindex, nofollow">
 <title>Ewidencja Floty Rinkon</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./ikona-192.png">
@@ -1307,6 +1312,137 @@
   .wpis .licznik-rog { font-size:0; }
   .wpis .licznik-rog b { font-size:14px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   E-54 (25.08.2026) — „kapsułka" pojazdu: lista i pulpit w stylu systemowym
+   Decyzja Marka po dwóch turach makiet (wariant E1): czysto i technicznie,
+   wzorzec systemowy, kolor typu TYLKO w ikonie, bez paska z lewej.
+   SAM CSS — zero zmian w JS. Cofnięcie = usunięcie bloku do </sty|le>.
+   (⚠ ten zapis z kreską jest CELOWY: dosłowny znacznik zamknięcia stylu
+   w komentarzu CSS urywa arkusz — lekcja z 24.08, 26/56 testów czerwonych.)
+   ═══════════════════════════════════════════════════════════════════════ */
+/* ══ E1 — „Systemowa, grupowana" ══════════════════════════════════════
+   Kierunek z odpowiedzi Marka (25.08): czysto i technicznie, wzorzec
+   systemowy, tożsamość na karcie, kolor TYLKO w ikonie.
+
+   Wygląd list ustawień iPhone'a: sekcje jako ZAOKRĄGLONE PŁYTY, wiersze
+   rozdzielone włosową kreską WCIĘTĄ do linii tekstu, strzałka po prawej.
+   Element-niespodzianka: ikona jak w Ustawieniach iOS — pełny kolorowy
+   kwadracik z zaokrągleniem i BIAŁYM znakiem. Kolor typu dostaje mocne,
+   ale szczelnie zamknięte pudełko 40×40 px — reszta wiersza jest czysta.
+
+   SAM CSS. Kolor bierze się z inline'owego `border-color` na `.ikona-krag`
+   (aplikacja i tak go ustawia) przez `border-color: inherit` na ::after;
+   biały znak — bo CSS `stroke` wygrywa z atrybutem prezentacyjnym SVG.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── sekcje jako płyty ────────────────────────────────────────────── */
+/* DOM to płaska lista: nagłówek, wiersze, nagłówek, wiersze. Płytę
+   „sklejamy" z wierszy: pierwszy po nagłówku dostaje górne rogi, ostatni
+   przed następnym nagłówkiem (albo ostatni w ogóle) — dolne. */
+#listaJednostek .jedn {
+  position: relative;
+  border-left: 0; border-radius: 0;
+  margin-bottom: 0;
+  padding: 13px 36px 13px 14px;      /* prawa: miejsce na strzałkę */
+  gap: 13px;
+  box-shadow: none;
+}
+#listaJednostek .jedn:first-child,
+#listaJednostek .sekcja-jednostek-naglowek + .jedn {
+  border-top-left-radius: 16px; border-top-right-radius: 16px;
+}
+#listaJednostek .jedn:last-child,
+#listaJednostek .jedn:has(+ .sekcja-jednostek-naglowek) {
+  border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;
+  margin-bottom: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+#listaJednostek .sekcja-jednostek-naglowek { margin: 14px 0 6px 14px; }
+#listaJednostek .sekcja-jednostek-naglowek:first-child { margin-top: 0; }
+
+/* Włosowa kreska między wierszami — wcięta do linii TEKSTU (nie od
+   krawędzi), jak w systemie. Pierwszy wiersz płyty bez kreski. */
+#listaJednostek .jedn + .jedn::before {
+  content: ''; position: absolute; left: 67px; right: 0; top: 0;
+  height: 1px; background: var(--linia);
+}
+#listaJednostek .sekcja-jednostek-naglowek + .jedn::before { display: none; }
+
+/* ── ikona: kolorowy kwadracik z białym znakiem (jak Ustawienia iOS) ── */
+#listaJednostek .jedn .ikona-krag {
+  width: 40px; height: 40px; border-radius: 12px;
+  border-width: 0; background: transparent; position: relative;
+}
+#listaJednostek .jedn .ikona-krag::after {
+  content: ''; position: absolute; inset: 0; border-radius: 12px;
+  border-left: 40px solid; border-color: inherit; z-index: 0;
+}
+#listaJednostek .jedn .ikona-krag svg {
+  width: 22px; height: 22px; position: relative; z-index: 1;
+  stroke: #fff;                      /* CSS wygrywa z atrybutem stroke SVG */
+}
+
+/* ── strzałka „wejdź" ─────────────────────────────────────────────── */
+#listaJednostek .jedn::after {
+  content: ''; position: absolute; right: 16px; top: 50%;
+  width: 8px; height: 8px; margin-top: -5px;
+  border-right: 2px solid var(--szary); border-top: 2px solid var(--szary);
+  transform: rotate(45deg); opacity: .4;
+}
+
+/* ── typografia ───────────────────────────────────────────────────── */
+#listaJednostek .jedn .linia1 { font-size: 16px; letter-spacing: -.01em;
+  white-space: normal; overflow: visible; text-overflow: clip;
+  line-height: 1.25; overflow-wrap: break-word; }
+#listaJednostek .jedn .linia2 { font-size: 13px; margin-top: 2px;
+  overflow-wrap: anywhere; }
+
+/* ── zaległość: czerwony tekst zamiast czerwonej płyty ────────────── */
+/* Czerwony prostokąt rozrywałby płytę sekcji. Sygnałem jest tekst
+   + kropka ostrzegawcza przy strzałce. */
+#listaJednostek .jedn.uwaga { background: var(--karta); }
+#listaJednostek .jedn.uwaga .linia2 { color: var(--tekst-blad); font-weight: 600; }
+#listaJednostek .jedn.uwaga::after { border-color: var(--tekst-blad); opacity: .9; }
+
+/* ── „odepnij": cichy, przy strzałce ──────────────────────────────── */
+#listaJednostek .jedn .przycisk-czerwony {
+  position: absolute; right: 34px; top: 50%; transform: translateY(-50%);
+  background: transparent; border-color: transparent; color: var(--szary);
+  padding: 6px; min-height: 0; height: auto; opacity: .45;
+}
+#listaJednostek .jedn .przycisk-czerwony:hover,
+#listaJednostek .jedn .przycisk-czerwony:active { opacity: 1; color: var(--blad); }
+#listaJednostek .jedn .przycisk-czerwony svg { width: 16px; height: 16px; }
+
+/* ── pulpit: jedna płyta, ta sama ikona ───────────────────────────── */
+#dashboardPojazdu #kartaWybranego {
+  border-left: 0; margin-bottom: 0;
+  border-radius: 16px 16px 0 0; box-shadow: none;
+  border-bottom: 1px solid var(--linia); padding: 14px;
+}
+#dashboardPojazdu #kartaWybranego .ikona-krag {
+  width: 44px; height: 44px; border-radius: 13px;
+  border-width: 0; position: relative;
+}
+#dashboardPojazdu #kartaWybranego .ikona-krag::after {
+  content: ''; position: absolute; inset: 0; border-radius: 13px;
+  border-left: 44px solid; border-color: inherit; z-index: 0;
+}
+#dashboardPojazdu #kartaWybranego .ikona-krag svg {
+  width: 24px; height: 24px; position: relative; z-index: 1; stroke: #fff;
+}
+#dashboardPojazdu .metryki {
+  gap: 1px; margin-bottom: 12px;
+  border-radius: 0 0 16px 16px; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+#dashboardPojazdu .metryka { border-radius: 0; }
+
+/* ⚠ Wiersz z pinezką („odepnij") potrzebuje szerszego prawego marginesu —
+   na renderze tekst „od 14 dni" wchodził pod pinezkę. Mierzone, nie na oko. */
+#listaJednostek .jedn:has(.przycisk-czerwony) { padding-right: 60px; }
+
 </style>
 </head>
 <body>

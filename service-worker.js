@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v93';   // 25.08.2026: E-53 — nazwa miesiąca wychodziła poza kontener (ujemny margines nagłówka)
+var WERSJA_CACHE = 'ewidencja-v94';   // 25.08.2026: E-54 — systemowa lista pojazdów i pulpit (sam CSS) + E-56 — noindex
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
