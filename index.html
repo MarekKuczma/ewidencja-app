@@ -1443,6 +1443,86 @@
    na renderze tekst „od 14 dni" wchodził pod pinezkę. Mierzone, nie na oko. */
 #listaJednostek .jedn:has(.przycisk-czerwony) { padding-right: 60px; }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   E-58 (25.08.2026) — metryki pulpitu: „płaskie połówki" + ikony
+   Wybór Marka po makietach (M2b): gradientowe kafelki były ostatnim
+   reliktem starego wyglądu po E-54. SAM CSS — cofnięcie = usunięcie bloku.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* ══ M2b — „Płaskie połówki" + ikony (wybór Marka, 25.08.2026) ════════
+   Jak M2, plus ikony przy etykietach: licznik = ic-gauge, wpisy = ic-note.
+   DOM metryk nie ma elementu na ikonę, a wariant ma zostać SAMYM CSS-em —
+   więc ikona wchodzi jako MASKA na ::before, ze ścieżkami przepisanymi
+   1:1 z symboli, które appka już ma w <defs> (ic-gauge, ic-note).
+   Maska + background-color = ikona w kolorze tekstu etykiety, więc sama
+   przechodzi jasny/ciemny motyw i wszystkie palety.                      */
+
+#dashboardPojazdu .metryki {
+  gap: 0;
+  background: var(--karta);
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+#dashboardPojazdu .metryka {
+  background: transparent;
+  padding: 13px 14px;
+}
+#dashboardPojazdu .metryka + .metryka { border-left: 1px solid var(--linia); }
+#dashboardPojazdu .metryka .m-et {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
+  display: flex; align-items: center; gap: 6px;
+}
+#dashboardPojazdu .metryka .m-w { font-size: clamp(19px, 6vw, 24px); margin-top: 3px; }
+
+/* ── ikony: te same rysunki co ic-gauge / ic-note z <defs> appki ────── */
+#dashboardPojazdu .metryka .m-et::before {
+  content: ''; width: 15px; height: 15px; flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--m2b-ikona) center / contain no-repeat;
+  mask: var(--m2b-ikona) center / contain no-repeat;
+}
+#dashboardPojazdu .metryka:first-child .m-et {
+  --m2b-ikona: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 15.5a8 8 0 1 1 15 0'/%3E%3Cpath d='M12 13.5 15.5 9'/%3E%3Ccircle cx='12' cy='14.5' r='1.2'/%3E%3Cpath d='M4.5 19h15'/%3E%3C/svg%3E");
+}
+#dashboardPojazdu .metryka:last-child .m-et {
+  --m2b-ikona: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 3.5h11A1.5 1.5 0 0 1 19 5v14a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V5a1.5 1.5 0 0 1 1.5-1.5ZM9 8.5h6M9 12h6M9 15.5h3.5'/%3E%3C/svg%3E");
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   E-59 (25.08.2026) — chip pojazdu w nagłówku „Moje wpisy"
+   Prośba Marka: zamiast szarej linijki „Citroën Jumper · WP 7740R" —
+   ta sama ikona co na liście pojazdów (E-54) + nazwa + rejestracja.
+   Świadome powtórzenie: kierowca z kilkoma maszynami widzi kolor i ikonę,
+   zanim przeczyta pierwszą literę — „jestem w dobrym pojeździe".
+   Działa też w widoku gościa („Wpisy maszyny" po QR) — tam tym bardziej.
+   CSS + budowa chipa w JS (otworzWpisy / otworzWpisyGoscia_).
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Chip pojazdu w nagłówku „Moje wpisy" — makieta. Ta sama ikona co na
+   liście pojazdów po E-54: kolorowy kwadracik z białym znakiem. */
+#wpisyPodtytul.wpisy-pojazd {
+  display: flex; align-items: center; gap: 10px;
+  margin: 8px 0 14px;
+}
+#wpisyPodtytul .wpisy-pojazd-ikona {
+  width: 34px; height: 34px; border-radius: 10px; flex: none;
+  position: relative; display: flex; align-items: center; justify-content: center;
+}
+#wpisyPodtytul .wpisy-pojazd-ikona::after {
+  content: ''; position: absolute; inset: 0; border-radius: 10px;
+  border-left: 34px solid; border-color: inherit; z-index: 0;
+}
+#wpisyPodtytul .wpisy-pojazd-ikona svg {
+  width: 19px; height: 19px; position: relative; z-index: 1; stroke: #fff;
+}
+#wpisyPodtytul .wpisy-pojazd-tekst { display: flex; flex-direction: column; min-width: 0; }
+#wpisyPodtytul .wpisy-pojazd-tekst b {
+  font-size: 15px; color: var(--tekst); line-height: 1.25;
+  overflow-wrap: break-word;
+}
+#wpisyPodtytul .wpisy-pojazd-tekst span {
+  font-size: 13px; color: var(--szary); overflow-wrap: anywhere;
+}
+
 </style>
 </head>
 <body>
@@ -4159,13 +4239,24 @@ function odswiezHistorie_(j){
   });
 }
 
+// E-59: chip pojazdu do nagłówka „Moje wpisy" — ikona jak na liście (E-54),
+// nazwa pogrubiona, rejestracja pod spodem. Tytul/podtytul przez
+// bezpiecznyTekst — do innerHTML nic nie wchodzi na surowo (D51-owy nawyk).
+function chipPojazduHtml_(j){
+  return '<span class="wpisy-pojazd-ikona" style="border-color:' + j.kolor + '">' +
+    ikonaTypu(j.typ, j.kolor) + '</span>' +
+    '<span class="wpisy-pojazd-tekst"><b>' + bezpiecznyTekst(j.tytul) + '</b>' +
+    '<span>' + bezpiecznyTekst(j.podtytul) + '</span></span>';
+}
+
 function otworzWpisy(j){
   if (STAN.gosc) { otworzWpisyGoscia_(); return; }   // E-20/E-21
   if (!j) { pokazEkran('ekranStart'); return; }
   STAN.aktywna = j;
   el('wpisyPodsumowanieBtn').style.display = '';     // E-20: gość mógł schować
   el('wpisyTytul').textContent = 'Moje wpisy';
-  el('wpisyPodtytul').textContent = j.tytul + ' · ' + j.podtytul;
+  el('wpisyPodtytul').className = 'wpisy-pojazd';        // E-59
+  el('wpisyPodtytul').innerHTML = chipPojazduHtml_(j);
   pokazEkran('ekranWpisy');
 
   var zCache = wpisyCache_(j.idPojazdu);
@@ -4999,7 +5090,8 @@ function pokazKolizjeGoscia_(ist){
 
 function otworzWpisyGoscia_(){
   el('wpisyTytul').textContent = 'Wpisy maszyny';
-  el('wpisyPodtytul').textContent = STAN.aktywna.tytul + ' · ' + STAN.aktywna.podtytul;
+  el('wpisyPodtytul').className = 'wpisy-pojazd';        // E-59
+  el('wpisyPodtytul').innerHTML = chipPojazduHtml_(STAN.aktywna);
   el('wpisyPodsumowanieBtn').style.display = 'none';   // podsumowanie = nie dla gościa
   pokazEkran('ekranWpisy');
   rysujWpisyGoscia_();
