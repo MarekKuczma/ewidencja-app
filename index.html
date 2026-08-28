@@ -181,9 +181,12 @@
   .karta{background:var(--karta); border-radius:14px; padding:16px;
     box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:14px;}
   .powitanie{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
-  .avatar-krag{width:42px; height:42px; border-radius:50%; background:var(--ikona-grad);
+  .avatar-krag{width:48px; height:48px; border-radius:50%; background:var(--ikona-grad);
     color:#fff; display:flex; align-items:center; justify-content:center;
-    font-weight:600; font-size:15px; flex:none;}
+    font-weight:600; font-size:17px; flex:none;}
+  /* W-30 (28.08.2026): 42px → 48px — trochę więcej miejsca dla plakietki
+     Beta-tester, która teraz nachodzi na dół avatara (patrz .plakietka-beta
+     niżej) zamiast siedzieć w linii z powitaniem. */
   .powitanie .p1{font-size:18px; font-weight:600;}
   .powitanie .p2{font-size:14px; color:var(--szary);}
   label{display:block; font-size:14px; font-weight:600; color:var(--szary); margin:0 0 6px;}
@@ -1578,10 +1581,18 @@
   border-radius:50%; background:conic-gradient(from var(--kat), var(--stozek));
   filter:blur(9px); opacity:var(--glow-krycie); z-index:-1;}
 
-/* Plakietka beta — 1:1 z flotą (margines, oddech poświaty). Kolor pulsu
-   z --przycisk-cien (rgba akcentu danej palety) — ewidencja nie ma
-   flotowej zmiennej --beta-poswiata, a ta niesie tę samą informację. */
-.plakietka-beta{margin-left:6px; vertical-align:middle;
+/* Plakietka beta — 1:1 z flotą (oddech poświaty). Kolor pulsu z
+   --przycisk-cien (rgba akcentu danej palety) — ewidencja nie ma
+   flotowej zmiennej --beta-poswiata, a ta niesie tę samą informację.
+   W-30 (28.08.2026, zgłoszenie Marka): odznaka przeniesiona z linii
+   powitania (gdzie przy dłuższym „Dobry wieczór, Marek" zawsze się
+   zawijała — kolumna tekstu ma tylko ok. 240px, za mało na obie rzeczy
+   naraz) na dół avatara, wyśrodkowana, dół równo z dołem avatara.
+   Wymaga, żeby #ewBeta siedział w HTML wewnątrz .avatar-pierscien
+   (position:relative), nie w .p1 jak wcześniej. */
+.plakietka-beta{position:absolute; left:50%; bottom:0;
+  transform:translateX(-50%); margin:0; font-size:9px; padding:1.5px 5px;
+  white-space:nowrap; width:max-content;
   animation:oddechBeta 2.8s ease-in-out infinite;}
 @keyframes oddechBeta{
   0%,100%{ box-shadow:0 0 0 0 rgba(0,0,0,0); }
@@ -1705,19 +1716,21 @@
   <section id="ekranStart">
     <div class="karta">
       <div class="powitanie">
-        <div class="avatar-pierscien"><div class="avatar-krag" id="avatar">?</div></div>
+        <div class="avatar-pierscien"><div class="avatar-krag" id="avatar">?</div>
+          <!-- W-30 (28.08.2026): plakietka PRZENIESIONA tutaj (z .p1) — musi
+               być dzieckiem .avatar-pierscien (position:relative), żeby
+               position:absolute w .plakietka-beta liczyło się względem
+               avatara, nie względem tekstu. Sama plakietka (klasy, ikona,
+               tekst) bez zmian. -->
+          <span id="ewBeta" class="plakietka plakietka-beta ukryte"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-flask"></use></svg> Beta-tester</span>
+        </div>
         <div>
           <!-- Z-87: zamiast słowa „Ładowanie…" zarys w miejscu imienia.
                Ma tę samą wysokość co linia tekstu, więc kafelek nie
                podskakuje, gdy imię się pojawi. Kto ma imię w pamięci
                telefonu, i tak nie zdąży tego zobaczyć — `pokazZPamieci()`
                podmienia je jeszcze przed pierwszym malowaniem. -->
-          <!-- W-26: tekst powitania w osobnym spanie, żeby plakietka beta
-               obok przeżywała podmiany treści (textContent na całym p1
-               kasowałby ją przy każdym odświeżeniu — dokładnie ten sam
-               układ co dPowitanie/dBeta we flocie). -->
-          <div class="p1"><span id="powitanieImie"><span class="sz-l sz-imie" aria-hidden="true"></span></span><span id="ewBeta"
-            class="plakietka plakietka-beta ukryte"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-flask"></use></svg> Beta-tester</span></div>
+          <div class="p1"><span id="powitanieImie"><span class="sz-l sz-imie" aria-hidden="true"></span></span></div>
           <div class="p2" id="powitanieData"></div>
         </div>
       </div>

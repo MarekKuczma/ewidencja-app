@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v98';   // 28.08.2026: W-29 — kreska aktywnej zakładki w dolnym menu przeniesiona na górę paska (wzorem Asystenta Floty)
+var WERSJA_CACHE = 'ewidencja-v99';   // 28.08.2026: W-30 — plakietka Beta-tester przeniesiona z linii powitania na dół avatara (wyśrodkowana), avatar 42px → 48px
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
