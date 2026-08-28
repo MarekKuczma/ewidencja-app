@@ -36,7 +36,6 @@
     --bg-blad:#fce8e6; --tekst-blad:#a50e0e;
     --bg-akcentjasny:#f4f4f5; --tekst-akcentjasny:#3f3f46;
     --metryka-grad:linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
-    --paleta-ikona:#d4d4d8;
     /* W-05 (01.08.2026): komunikat Marka ma zawsze bordowo-czerwony akcent
        (wzięty z palety „burgund"), NIEZALEŻNIE od tego, którą paletę appki
        wybrał kierowca — Marek zgłosił, że w grafitowej ciemnej wersji
@@ -85,12 +84,93 @@
     --przycisk-cien:rgba(159,18,57,.35);
     --bg-akcentjasny:#fff1f2; --tekst-akcentjasny:#9f1239;
     --metryka-grad:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    --paleta-ikona:#fda4af;
     --stozek:#fb7185,#e11d48,#9f1239,#e11d48,#fb7185;   /* Z-81 */
     --luk:#fda4af 0deg, #fb7185 45deg, #e11d48 86deg;   /* Z-87 */
     /* Z-96: kreska w menu, najsłabszy przystanek #e11d48 = 4,70:1 na białym. */
     --wskaznik-grad:linear-gradient(90deg,#450a1e,#881337,#e11d48,#881337,#450a1e);
     --luk-glow:#e11d48;                                  /* Z-87 */
+  }
+  /* ============ W-31 (28.08.2026): palety wspólne dla OBU appek ============
+     Decyzja Marka: te same cztery podstawowe w ewidencji i we flocie, różni
+     się TYLKO domyślna (ewidencja startuje na graficie, flota na pomarańczu).
+     „Grafit" nie ma tu własnego bloku — jego wartości siedzą w :root, a że
+     żaden blok palety wtedy nie pasuje, :root sam wygrywa. Dokładnie ten sam
+     mechanizm co przed W-31, tylko teraz świadomie.
+     ⚠ Bloki JASNE muszą stać PRZED `[data-motyw="ciemny"]` (niżej), inaczej
+     przy równej wadze selektora biją wartości ciemnego motywu. Ciemne
+     nadpisania palet — po tamtym bloku. */
+
+  /* ---- Pomarańcz (z floty) ----
+     ⚠ Jedyna świadoma różnica wobec floty: --akcent to #c2410c, nie #f97316.
+     Pomarańcz floty ma na białej karcie 2,80:1 (próg 4,5:1) — działa u nich
+     od zawsze, ale nie ma powodu wnosić tej słabości do nowego kodu.
+     #c2410c daje 5,18:1, a nagłówek i gradient zostają identyczne. */
+  [data-paleta="pomaranczowa"]{
+    --akcent:#c2410c; --akcent-c:#9a3412;
+    --gradient:linear-gradient(135deg, #fbbf24 0%, #f97316 55%, #dc2626 100%);
+    --ikona-grad:linear-gradient(135deg, #9a3412, #f97316);
+    --przycisk-cien:rgba(234,88,12,.35);
+    --bg-akcentjasny:#fff1e6; --tekst-akcentjasny:#c2410c;
+    --metryka-grad:linear-gradient(135deg, #fff7ed 0%, #fef2f2 100%);
+    --stozek:#fbbf24,#f97316,#dc2626,#f97316,#fbbf24;
+    --wskaznik-grad:linear-gradient(90deg,#c2410c,#ea580c,#f97316,#ea580c,#c2410c);
+    --glow-krycie:.40;
+    --luk:#fde68a 0deg, #fbbf24 34deg, #f97316 62deg, #ef4444 86deg;
+    --luk-glow:#f97316;
+  }
+  /* ---- Błękit (z floty, tam „niebieska") ---- */
+  [data-paleta="blekit"]{
+    --akcent:#1d4ed8; --akcent-c:#1e3a8a;
+    --gradient:linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #38bdf8 100%);
+    --ikona-grad:linear-gradient(135deg, #1e3a8a, #38bdf8);
+    --przycisk-cien:rgba(56,189,248,.32);
+    --bg-akcentjasny:#eff6ff; --tekst-akcentjasny:#1d4ed8;
+    --metryka-grad:linear-gradient(135deg, #f0f7ff 0%, #dbeafe 100%);
+    --stozek:#bae6fd,#38bdf8,#2563eb,#38bdf8,#bae6fd;
+    --wskaznik-grad:linear-gradient(90deg,#2563eb,#3b82f6,#38bdf8,#3b82f6,#2563eb);
+    --glow-krycie:.40;
+    --luk:#e0f2fe 0deg, #7dd3fc 40deg, #2563eb 86deg;
+    --luk-glow:#38bdf8;
+  }
+  /* ---- Gamma (specjalna, animowana) ----
+     Barwa bazowa z „Asystenta Floty" (zieleń→fiolet), ale TAM jest statyczna —
+     animację robimy od zera naszym warsztatem (plyn + obrot + poświaty),
+     na poziomie Aurory/Full RGB. Kontrast akcentu: 6,98:1 na białym. */
+  [data-paleta="gamma"]{
+    --akcent:#7e22ce; --akcent-c:#581c87;
+    /* Gradient wraca do koloru początkowego (A…D…A) — inaczej na zapętleniu
+       animacji widać szew. Lekcja Z-95. */
+    --gradient:linear-gradient(90deg,#14532d,#22c55e,#4ade80,#9333ea,#22c55e,#14532d);
+    --ikona-grad:linear-gradient(135deg,#14532d,#9333ea);
+    --przycisk-cien:rgba(126,34,206,.38);
+    --bg-akcentjasny:#f5f0ff; --tekst-akcentjasny:#7e22ce;
+    --metryka-grad:linear-gradient(135deg,#f3fdf6 0%,#f7f2ff 100%);
+    --stozek:#4ade80,#22c55e,#9333ea,#22c55e,#4ade80;
+    --wskaznik-grad:linear-gradient(90deg,#166534,#16a34a,#9333ea,#16a34a,#166534);
+    --glow-krycie:.42;
+    --luk:#86efac 0deg,#4ade80 42deg,#9333ea 86deg;
+    --luk-glow:#9333ea;
+  }
+  /* ---- Heros (specjalna, animowana) ----
+     Barwa bazowa z „Asystenta Floty" (czerwień→błękit), też tam statyczna.
+     ⚠ --przycisk-grad: duży przycisk akcji NIE bierze tu --gradient, tylko
+     osobny, przechylony w błękit. Powód: czerwień w naszych appkach znaczy
+     błąd i usuwanie, a to jest główny przycisk „Nowy wpis" — czerwony przez
+     większość pętli animacji mówiłby coś innego, niż robi. Czerwień zostaje
+     tam, gdzie jest tłem, nie wezwaniem do działania: w nagłówku. */
+  [data-paleta="heros"]{
+    --akcent:#1d4ed8; --akcent-c:#1e3a8a;
+    --gradient:linear-gradient(90deg,#7f1d1d,#dc2626,#f87171,#2563eb,#dc2626,#7f1d1d);
+    --przycisk-grad:linear-gradient(90deg,#1e3a8a,#2563eb,#60a5fa,#b91c1c,#2563eb,#1e3a8a);
+    --ikona-grad:linear-gradient(135deg,#7f1d1d,#2563eb);
+    --przycisk-cien:rgba(29,78,216,.38);
+    --bg-akcentjasny:#eff4ff; --tekst-akcentjasny:#1d4ed8;
+    --metryka-grad:linear-gradient(135deg,#fff5f5 0%,#f0f5ff 100%);
+    --stozek:#f87171,#dc2626,#2563eb,#dc2626,#f87171;
+    --wskaznik-grad:linear-gradient(90deg,#7f1d1d,#dc2626,#2563eb,#dc2626,#7f1d1d);
+    --glow-krycie:.42;
+    --luk:#fca5a5 0deg,#f87171 42deg,#2563eb 86deg;
+    --luk-glow:#2563eb;
   }
   /* W ciemnym motywie akcent MUSI się rozjaśnić. Paleta grafitowa ma
      --akcent:#3f3f46, czyli prawie czerń — na ciemnym tle znikały przez to
@@ -144,6 +224,51 @@
        najsłabszy przystanek #e11d48 = 3,51:1. */
     --wskaznik-grad:linear-gradient(90deg,#e11d48,#fb7185,#fda4af,#fb7185,#e11d48);
   }
+  /* ===== W-31: ciemne nadpisania nowych palet =====
+     ⚠ Zasada wyłapana we flocie przy Z-91: zmienna ustawiona w bloku palety
+     obowiązuje w OBU motywach, dopóki blok ciemny jej nie nadpisze. Blok
+     `[data-motyw="ciemny"]` wyżej niesie SZARE wartości grafitu (bo grafit
+     jest tu domyślny) — więc każda nowa paleta musi tu odzyskać swój kolor
+     akcentu, tło akcentu i kafelki. Sprawdzać oba motywy, nie jeden. */
+  [data-motyw="ciemny"][data-paleta="pomaranczowa"]{
+    /* Prawy koniec gradientu przycięty o ton (#dc2626 → #b91c1c): na ciemnym
+       tle jaskrawy koniec robił z paska najjaśniejszy punkt ekranu — ta sama
+       poprawka co Z-89 we flocie i Z-90 w burgundzie. */
+    --gradient:linear-gradient(135deg, #d97706 0%, #ea580c 55%, #b91c1c 100%);
+    --akcent:#fb923c; --akcent-c:#fdba74;
+    --bg-akcentjasny:#432614; --tekst-akcentjasny:#fb923c;
+    --metryka-grad:linear-gradient(135deg, #2c2115 0%, #2b1c1c 100%);
+    --stozek:#f97316,#fb923c,#fbbf24,#fb923c,#f97316;
+    --wskaznik-grad:linear-gradient(90deg,#ea580c,#f97316,#fbbf24,#f97316,#ea580c);
+  }
+  [data-motyw="ciemny"][data-paleta="blekit"]{
+    --gradient:linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #0ea5e9 100%);
+    --akcent:#7dd3fc; --akcent-c:#bae6fd;
+    --bg-akcentjasny:#12314d; --tekst-akcentjasny:#7dd3fc;
+    --metryka-grad:linear-gradient(135deg, #17222f 0%, #1b2733 100%);
+    --stozek:#2563eb,#38bdf8,#bae6fd,#38bdf8,#2563eb;
+    --wskaznik-grad:linear-gradient(90deg,#2563eb,#38bdf8,#7dd3fc,#38bdf8,#2563eb);
+  }
+  [data-motyw="ciemny"][data-paleta="gamma"]{
+    /* Palety specjalne przebarwiają też tła (jak Aurora) — stąd --tlo/--karta. */
+    --tlo:#0d1f14; --karta:#16281c; --input-tlo:#1e3527; --input-brzeg:#2c4936;
+    --linia:#24402d; --glow-krycie:.85;
+    --akcent:#c084fc; --akcent-c:#d8b4fe;
+    --bg-akcentjasny:#221a2e; --tekst-akcentjasny:#d8b4fe;
+    --metryka-grad:linear-gradient(135deg,#16281c 0%,#1e1a2b 100%);
+    --gradient:linear-gradient(90deg,#0f3d21,#16a34a,#22c55e,#7e22ce,#16a34a,#0f3d21);
+    --sz-baza:#223a2a;
+  }
+  [data-motyw="ciemny"][data-paleta="heros"]{
+    --tlo:#101223; --karta:#1b1d2e; --input-tlo:#252840; --input-brzeg:#343854;
+    --linia:#2a2d45; --glow-krycie:.85;
+    --akcent:#93c5fd; --akcent-c:#bfdbfe;
+    --bg-akcentjasny:#1c2440; --tekst-akcentjasny:#bfdbfe;
+    --metryka-grad:linear-gradient(135deg,#241a1f 0%,#1b1d2e 100%);
+    --gradient:linear-gradient(90deg,#6b1717,#b91c1c,#dc2626,#1d4ed8,#b91c1c,#6b1717);
+    --przycisk-grad:linear-gradient(90deg,#1e3a8a,#1d4ed8,#3b82f6,#991b1b,#1d4ed8,#1e3a8a);
+    --sz-baza:#2b2f45;
+  }
   /* Z-90/B2 — najważniejsza poprawka tej paczki, i to NIE jest kwestia gustu.
      `.przycisk-maly` bierze --akcent, `.przycisk-czerwony` bierze --blad.
      W burgundzie akcent to #9f1239, a błąd #d93025 — dwie czerwienie obok
@@ -169,14 +294,15 @@
   header h1{margin:0; font-size:clamp(15px, 3.9vw, 21px); font-weight:600; line-height:1.25;}
   header .kto{font-size:14px; opacity:.9; margin-top:2px;}
   header .naglowek-tekst{flex:1; min-width:0;}
-  #motywBtn,#paletaBtn{background:rgba(255,255,255,.2); border:none; border-radius:10px;
+  /* W-31: jedna zębatka zamiast #motywBtn i #paletaBtn (obie usunięte razem
+     z ikoną paletki i jej regułami .ikona-paletki/.paleta-kropka). */
+  #ustawieniaBtn{background:rgba(255,255,255,.2); border:none; border-radius:10px;
     width:40px; height:40px; font-size:18px; color:#fff; flex:none; min-height:auto;
-    display:inline-flex; align-items:center; justify-content:center; padding:0;}
-  /* Z-82 (uwaga Marka o spójności): korpus paletki konturowy jak cały zestaw,
-     kolor palety został na kropkach farby. */
-  .ikona-paletki{fill:none; stroke:currentColor; stroke-width:1.75;
-    stroke-linecap:round; stroke-linejoin:round;}
-  .paleta-kropka{fill:var(--paleta-ikona); stroke:none;}
+    display:inline-flex; align-items:center; justify-content:center; padding:0;
+    transition:background .2s;}
+  /* Podświetlona, gdy ekran ustawień jest otwarty — widać, że to przełącznik,
+     a nie zwykły przycisk (wzorzec z „Asystenta Floty"). */
+  #ustawieniaBtn.otwarte{background:rgba(255,255,255,.42);}
   main{max-width:560px; margin:0 auto; padding:14px 14px 90px;}
   .karta{background:var(--karta); border-radius:14px; padding:16px;
     box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:14px;}
@@ -275,7 +401,12 @@
   .pole-blad input,.pole-blad select,.pole-blad textarea{border-color:var(--blad);}
   .pole-blad .blad-pola{display:block;}
   button{font-family:inherit; cursor:pointer;}
-  .przycisk{display:block; width:100%; background:var(--gradient); color:#fff;
+  /* W-31: `--przycisk-grad` z zapasem na `--gradient`. Prawie każda paleta
+     zostawia to puste i przycisk bierze gradient nagłówka, tak jak dotąd —
+     osobna zmienna istnieje dla Herosa, gdzie czerwony przycisk główny
+     kłóciłby się ze znaczeniem czerwieni (błąd / usuwanie). */
+  .przycisk{display:block; width:100%; color:#fff;
+    background:var(--przycisk-grad, var(--gradient));
     font-size:19px; font-weight:600; border:none; border-radius:12px;
     padding:15px; min-height:54px; margin-top:18px;
     box-shadow:0 4px 12px var(--przycisk-cien);}
@@ -881,7 +1012,6 @@
     --luk-glow:#a855f7;
     --bg-akcentjasny:#f3e8ff; --tekst-akcentjasny:#7e22ce;
     --metryka-grad:linear-gradient(135deg,#faf5ff 0%,#eff6ff 100%);
-    --paleta-ikona:#22d3ee;
     /* Z-96: bez zmian względem dzisiejszego stanu — gradient Full RGB już
        wraca do koloru początkowego (#ff2d95 … #ff2d95) i to on animował
        kreskę do tej pory. */
@@ -918,7 +1048,6 @@
     --przycisk-cien:rgba(138,43,226,.38);
     --bg-akcentjasny:#eef4ff; --tekst-akcentjasny:#1d63d8;
     --metryka-grad:linear-gradient(135deg, #f2f7ff 0%, #f0eeff 100%);
-    --paleta-ikona:#4D96FF;
     --stozek:#79DFFF,#4D96FF,#8A2BE2,#4D96FF,#79DFFF;
     --luk:#79DFFF 0deg, #4D96FF 42deg, #8A2BE2 86deg;   /* Z-87 */
     --luk-glow:#8A2BE2;                                  /* Z-87 */
@@ -1014,25 +1143,37 @@
     border-radius:50%; border:2px solid var(--akcent); animation:fala 2.4s ease-out infinite;
     pointer-events:none;}
   [data-paleta="rgb"] .sukces-ikona::after{animation-delay:1.2s;}
+  /* ===== W-31: animacja Gammy i Herosa =====
+     Dokładnie ten sam zestaw miejsc co Aurora/Full RGB — decyzja Marka:
+     „tyle co Aurora i Full RGB dziś", bez ruchu na kafelkach metryk i tłach
+     kart („kierowca ma tam coś odczytać i wpisać"). Obwódka avatara ma już
+     swoją wspólną regułę od W-26, tu tylko własne tempo. */
+  [data-paleta="gamma"] header,
+  [data-paleta="gamma"] .przycisk,
+  [data-paleta="gamma"] .avatar-krag,
+  [data-paleta="heros"] header,
+  [data-paleta="heros"] .przycisk,
+  [data-paleta="heros"] .avatar-krag{ background-size:300% 100%;
+    animation:plyn 11s linear infinite; }
+  [data-paleta="gamma"] .avatar-pierscien,
+  [data-paleta="heros"] .avatar-pierscien{ animation:obrot 4.2s linear infinite; }
+  [data-paleta="gamma"] .ikona-krag{ box-shadow:0 0 10px rgba(74,222,128,.38); }
+  [data-paleta="heros"] .ikona-krag{ box-shadow:0 0 10px rgba(248,113,113,.38); }
+  [data-paleta="gamma"] nav .wskaznik i,
+  [data-paleta="heros"] nav .wskaznik i{ box-shadow:0 0 9px var(--akcent); }
+  [data-paleta="gamma"] nav button.aktywna .i svg,
+  [data-paleta="heros"] nav button.aktywna .i svg{
+    filter:drop-shadow(0 0 6px currentColor); }
+  [data-paleta="gamma"] .metryka .m-w{ filter:drop-shadow(0 0 8px rgba(147,51,234,.55)); }
+  [data-paleta="heros"] .metryka .m-w{ filter:drop-shadow(0 0 8px rgba(37,99,235,.55)); }
 
-  /* ---------- wybierak palet (arkusz wysuwany od dołu) ---------- */
+  /* ---------- zasłona pod wysuwane arkusze ----------
+     W-31: reguły .arkusz-palet i .paleta-opcja USUNIĘTE razem z samym
+     wybierakiem (patrz ekran #ekranUstawienia). Sama .zaslona zostaje —
+     korzysta z niej arkusz komunikatu Marka (E-35). */
   .zaslona{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:60;
     opacity:0; pointer-events:none; transition:opacity .2s;}
   .zaslona.widoczna{opacity:1; pointer-events:auto;}
-  .arkusz-palet{position:fixed; left:0; right:0; bottom:0; z-index:61; background:var(--karta);
-    color:var(--tekst); border-radius:18px 18px 0 0; padding:16px 16px calc(18px + env(safe-area-inset-bottom));
-    box-shadow:0 -10px 30px rgba(0,0,0,.4); transform:translateY(102%);
-    transition:transform .28s cubic-bezier(.22,1,.36,1); max-width:520px; margin:0 auto;}
-  .arkusz-palet.widoczna{transform:translateY(0);}
-  .arkusz-palet h3{margin:0 0 3px; font-size:17px;}
-  .arkusz-palet .pod{margin:0 0 13px; font-size:12.5px; color:var(--szary);}
-  .paleta-opcja{display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px;
-    border:1.5px solid var(--linia); margin-bottom:9px; width:100%; background:var(--karta);
-    color:var(--tekst); font-family:inherit; text-align:left;}
-  .paleta-opcja.wybrana{border-color:var(--akcent); box-shadow:0 0 0 3px rgba(34,211,238,.16);}
-  .paleta-opcja .probka{width:36px; height:36px; border-radius:10px; flex:none;}
-  .paleta-opcja b{font-size:15px; display:block;}
-  .paleta-opcja span{font-size:12px; color:var(--szary);}
 
   @media (prefers-reduced-motion: reduce){
     [data-paleta="rgb"] header, [data-paleta="rgb"] .przycisk, [data-paleta="rgb"] .metryka .m-w,
@@ -1043,6 +1184,12 @@
     [data-paleta="aurora"] .avatar-krag, [data-paleta="aurora"] .avatar-pierscien,
     [data-paleta="aurora"] .sukces-ikona::before,
     [data-paleta="aurora"] .sukces-ikona::after,
+    /* W-31 */
+    [data-paleta="gamma"] header, [data-paleta="gamma"] .przycisk,
+    [data-paleta="gamma"] .avatar-krag, [data-paleta="gamma"] .avatar-pierscien,
+    [data-paleta="heros"] header, [data-paleta="heros"] .przycisk,
+    [data-paleta="heros"] .avatar-krag, [data-paleta="heros"] .avatar-pierscien,
+    .pal-poz.spec .probka,
     nav .wskaznik i{ animation:none; }   /* Z-96 */
   }
 /* ===================== E-20/E-21: tryb gościa + „Jeździł ktoś inny?" ===================== */
@@ -1603,6 +1750,53 @@
   .avatar-pierscien, .plakietka-beta{ animation:none; }
 }
 
+/* ==================== W-31: ekran „Ustawienia" ====================
+   Pełny ekran zamiast dawnego wysuwanego arkusza palet (arkuszPalet
+   usunięty w całości — HTML, CSS i JS). Układ dwukolumnowy 2×2: przy
+   ośmiu paletach (4 + 4) trzy kolumny zostawiałyby jeden kafel sam
+   w wierszu, dwa razy na ekranie. */
+.ust-sekcja{font-size:11.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.07em; color:var(--szary); margin:18px 2px 9px;
+  display:flex; align-items:center; gap:7px;}
+.ust-sekcja:first-of-type{margin-top:2px;}
+.ust-sekcja .ikona{width:14px; height:14px;}
+
+/* Tryb — TRZY opcje. „Jak w telefonie" (auto) to jedyna pozycja, której
+   nie ma ani u nas, ani w Asystencie: idzie za ustawieniem systemu. */
+.ust-tryb{display:flex; gap:8px;}
+.ust-tryb button{flex:1; min-width:0; border:1.5px solid var(--linia);
+  background:var(--karta); color:var(--szary); font-family:inherit;
+  font-size:12px; font-weight:600; line-height:1.25; padding:11px 3px 9px;
+  border-radius:12px; display:flex; flex-direction:column; align-items:center;
+  gap:6px; min-height:auto; transition:border-color .2s, color .2s, background .2s;}
+.ust-tryb button .ikona{width:19px; height:19px;}
+.ust-tryb button.wybrany{border-color:var(--akcent);
+  color:var(--tekst-akcentjasny); background:var(--bg-akcentjasny);
+  font-weight:700;}
+
+.pal-lista{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
+.pal-poz{display:block; width:100%; padding:9px; border-radius:13px;
+  border:1.5px solid var(--linia); background:var(--karta); color:var(--tekst);
+  font-family:inherit; text-align:left; position:relative; min-height:auto;
+  transition:border-color .2s, box-shadow .2s;}
+.pal-poz .probka{display:block; width:100%; height:38px; border-radius:9px;
+  margin-bottom:7px;}
+/* Próbki palet specjalnych ruszają się już TUTAJ — widać, że są inne,
+   zanim się je wybierze. U Asystenta ten sam pomysł, ale tylko na dwóch. */
+.pal-poz.spec .probka{background-size:250% 100%; animation:plyn 5s linear infinite;}
+.pal-poz .tekst{display:block;}
+.pal-poz b{font-size:13.5px; display:block; line-height:1.2;}
+.pal-poz .opis{display:block; font-size:11px; color:var(--szary);}
+.pal-poz .ptaszek{position:absolute; top:16px; right:16px; width:20px; height:20px;
+  color:#fff; opacity:0; filter:drop-shadow(0 1px 3px rgba(0,0,0,.55));}
+.pal-poz.wybrana{border-color:var(--akcent); box-shadow:0 0 0 3px var(--przycisk-cien);}
+.pal-poz.wybrana .ptaszek{opacity:1;}
+.pal-poz.wybrana b{font-weight:700;}
+
+.ust-notka{font-size:11.5px; color:var(--szary); line-height:1.45;
+  margin:11px 2px 0; display:flex; gap:7px; align-items:flex-start;}
+.ust-notka .ikona{width:14px; height:14px; flex:none; margin-top:1px; opacity:.7;}
+
 </style>
 </head>
 <body>
@@ -1640,6 +1834,10 @@
 <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M9 3.5h6l-.7 6.2 2.7 3.3H7l2.7-3.3L9 3.5ZM12 13v7.5"/></symbol>
 <symbol id="ic-swap" viewBox="0 0 24 24"><path d="M4.5 9.5a8 8 0 0 1 13.6-2.7M18.5 3.5v3.7h-3.7M19.5 14.5a8 8 0 0 1-13.6 2.7M5.5 20.5v-3.7h3.7"/></symbol>
 <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<!-- W-31: zębatka wzięta 1:1 z „Asystenta Floty" (spójność rodziny appek),
+     telefon dorysowany w tym samym stylu (kontur, viewBox 24). -->
+<symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.1 13.6a7.6 7.6 0 0 0 0-3.2l1.8-1.4-1.8-3.1-2.1.8a7.6 7.6 0 0 0-2.7-1.6L14 2.8h-4l-.3 2.3a7.6 7.6 0 0 0-2.7 1.6l-2.1-.8-1.8 3.1 1.8 1.4a7.6 7.6 0 0 0 0 3.2l-1.8 1.4 1.8 3.1 2.1-.8a7.6 7.6 0 0 0 2.7 1.6l.3 2.3h4l.3-2.3a7.6 7.6 0 0 0 2.7-1.6l2.1.8 1.8-3.1-1.8-1.4Z"/></symbol>
+<symbol id="ic-phone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10.5 5.2h3M10.8 18.6h2.4"/></symbol>
 </defs></svg>
 
 <header>
@@ -1648,19 +1846,14 @@
     <h1>Ewidencja Floty Rinkon</h1>
     <div class="kto" id="naglowekKto"></div>
   </div>
-  <button type="button" id="motywBtn" aria-label="Zmień motyw"></button>
-  <button type="button" id="paletaBtn" aria-label="Zmień paletę kolorów">
-    <!-- Z-82 (uwaga Marka): paletka przerysowana na KONTUR 1.75, spójnie
-         z resztą zestawu. Podpowiedź koloru palety przeniesiona z korpusu
-         na kropki farby (--paleta-ikona) — korpus jest teraz biały jak
-         księżyc/słońce obok. -->
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path class="ikona-paletki" d="M12 2.9c-4.8 0-8.9 3.7-8.9 8.3 0 2.6 2.2 3.7 3.7 3.7h1.7c1.2 0 2.2 1 2.2 2.2 0 .6-.3 1.2-.7 1.6-.4.4-.6.8-.6 1.2 0 .7.7 1.3 1.6 1.3 4.9 0 8.6-3.9 8.6-8.9 0-5.2-3.5-9.4-7.6-9.4Z"/>
-      <circle class="paleta-kropka" cx="7.6" cy="10.3" r="1.3"/>
-      <circle class="paleta-kropka" cx="11.6" cy="6.9" r="1.3"/>
-      <circle class="paleta-kropka" cx="15.9" cy="9" r="1.3"/>
-      <circle class="paleta-kropka" cx="15.9" cy="13.3" r="1.3"/>
-    </svg>
+  <!-- W-31 (28.08.2026): jedna zębatka ZAMIAST dwóch ikon (słońce/księżyc
+       + paletka). Decyzja Marka: czysty nagłówek, kosztem tego, że zmiana
+       motywu to teraz trzy kliknięcia zamiast jednego. Zębatka działa jako
+       PRZEŁĄCZNIK — drugie kliknięcie wraca na ekran, z którego przyszedłeś
+       (wzorzec z „Asystenta Floty", gdzie zapisali to jako naprawiony bug
+       „zębatka otwierała, ale nie zamykała"). -->
+  <button type="button" id="ustawieniaBtn" aria-label="Ustawienia">
+    <svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-gear"></use></svg>
   </button>
 </header>
 
@@ -1989,6 +2182,13 @@
       <button type="button" class="przycisk-drugi" id="podsumowanieWstecz" style="margin-top:14px;">← Wróć na pulpit</button>
     </div>
   </section>
+
+  <!-- W-31: ekran „Ustawienia". Wnętrze rysuje rysujUstawienia_() — lista
+       palet musi powstawać z tablicy PALETY, bo bramka Z-83 decyduje przy
+       każdym otwarciu, które pozycje w ogóle pokazać. -->
+  <section id="ekranUstawienia" class="ukryte">
+    <div class="karta" id="ustawieniaKarta"></div>
+  </section>
 </main>
 
 <!-- Dolna nawigacja — emoji, dokładnie jak w aplikacji floty. Płaskie SVG
@@ -2021,14 +2221,11 @@
      nigdy Tak/Nie, bo klika się odruchowo). -->
 
 <script src="./config.js"></script>
-<!-- Z-83: wybierak palet. Lista budowana z JS (PALETY) — pozycja RGB
-     pojawia się tylko przy fladze z serwera. -->
-<div class="zaslona" id="zaslonaPalet"></div>
-<div class="arkusz-palet" id="arkuszPalet" role="dialog" aria-label="Kolory aplikacji">
-  <h3>Kolory aplikacji</h3>
-  <p class="pod">Wybór zapamiętuje się na tym telefonie.</p>
-  <div id="listaPalet"></div>
-</div>
+<!-- W-31: dawny wysuwany wybierak palet (#arkuszPalet + #zaslonaPalet)
+     USUNIĘTY. Po zabraniu paletki z nagłówka nie miał już żadnego wejścia,
+     a martwy kod myli przy następnym czytaniu pliku. Jego rolę przejął
+     ekran #ekranUstawienia. Zasłona .zaslona zostaje — używa jej arkusz
+     komunikatu niżej. -->
 
 <!-- E-35 (19.08.2026): wysuwany arkusz komunikatu (alarm terminów /
      jednorazowe żółte przypomnienie). Świadomie BEZ zamykania kliknięciem
@@ -2103,10 +2300,14 @@ function bezpiecznyTekst(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function pokazEkran(nazwa){
-  ['ekranStart','ekranWpis','ekranSukces','ekranWpisy','ekranPodsumowanie','ekranPin'].forEach(function(e){
+  ['ekranStart','ekranWpis','ekranSukces','ekranWpisy','ekranPodsumowanie','ekranPin',
+   'ekranUstawienia'].forEach(function(e){                      // W-31
     el(e).classList.add('ukryte');
   });
   el(nazwa).classList.remove('ukryte');
+  // W-31: zębatka podświetlona tylko na swoim ekranie — widać, że to
+  // przełącznik, i że drugie kliknięcie cofnie.
+  el('ustawieniaBtn').classList.toggle('otwarte', nazwa === 'ekranUstawienia');
   // W-26: podsumowanie to teraz „dziecko" PULPITU (wejście z dPodsumowanie,
   // powrót na pulpit) — dokładnie jak we flocie, gdzie podsumowanie
   // podświetla Start. Do 28.08 wisiało pod „Moje wpisy" (E-07).
@@ -2275,10 +2476,22 @@ function ikonaTypu(typ, kolor){
    pełny kolor, gradientu tam być nie może, więc bierzemy najciemniejszy
    odcień nagłówka danej palety. */
 var KOLOR_PASKA = { grafit: '#27272a', burgund: '#4c0519' };
+/* W-31: trzeci tryb „auto" — idzie za ustawieniem telefonu. W localStorage
+   trzymamy WYBÓR ('jasny' / 'ciemny' / 'auto'), a nie wynik — inaczej po
+   zmianie ustawień systemu appka zostałaby przy starym wyglądzie i nie
+   dałoby się odróżnić „użytkownik chciał jasny" od „system był wtedy jasny". */
+function wyborMotywu_(){ return localStorage.getItem(KLUCZ_MOTYW) || 'jasny'; }
+function motywSystemu_(){
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ? 'ciemny' : 'jasny';
+}
+function motywEfektywny_(){
+  var w = wyborMotywu_();
+  return w === 'auto' ? motywSystemu_() : w;
+}
 function wczytajMotyw(){
-  var m = localStorage.getItem(KLUCZ_MOTYW) || 'jasny';
+  var m = motywEfektywny_();
   document.documentElement.setAttribute('data-motyw', m);
-  el('motywBtn').innerHTML = ikonaHTML_(m === 'ciemny' ? 'ic-moon' : 'ic-sun'); // Z-82: innerHTML — wstawiamy element
   var p = localStorage.getItem(KLUCZ_PALETA) || KONFIG.PALETA_DOMYSLNA;
   // Z-83: ktoś mógł stracić uprawnienie (albo mieć w telefonie paletę z czasów,
   // gdy je miał) — cicho wracamy do domyślnej zamiast pokazywać coś, czego
@@ -2293,29 +2506,49 @@ function wczytajMotyw(){
     ? PALETY.filter(function(x){ return x.id === p; })[0] : null;   // Z-83
   if (meta) meta.setAttribute('content',
     (wybrana && wybrana.pasek) || KOLOR_PASKA[p] || KOLOR_PASKA.grafit);
+  if (el('ekranUstawienia') && !el('ekranUstawienia').classList.contains('ukryte')) {
+    rysujUstawienia_();   // ekran otwarty — odśwież zaznaczenia po zmianie
+  }
 }
-el('motywBtn').addEventListener('click', function(){
-  var teraz = document.documentElement.getAttribute('data-motyw');
-  localStorage.setItem(KLUCZ_MOTYW, teraz === 'ciemny' ? 'jasny' : 'ciemny');
-  wczytajMotyw();
-});
+/* W-31: w trybie „auto" wygląd ma iść za telefonem NA ŻYWO — kierowca
+   przełącza ciemny motyw w systemie i appka zmienia się bez restartu. */
+if (window.matchMedia) {
+  var zapytanieMotywu_ = window.matchMedia('(prefers-color-scheme: dark)');
+  var naZmianeSystemu_ = function(){ if (wyborMotywu_() === 'auto') wczytajMotyw(); };
+  if (zapytanieMotywu_.addEventListener) zapytanieMotywu_.addEventListener('change', naZmianeSystemu_);
+  else if (zapytanieMotywu_.addListener) zapytanieMotywu_.addListener(naZmianeSystemu_);   // starsze iOS
+}
 // Z-83: rejestr palet. Dołożenie kolejnej = jedna pozycja tutaj + jeden blok
 // CSS `[data-paleta="..."]`. `specjalna:true` = widoczna tylko dla osób z TAK
 // w kolumnie „Paleta specjalna" (flaga z serwera przy `status`).
+// W-31 (28.08.2026): osiem palet, te same w OBU appkach. Różni się wyłącznie
+// domyślna — tu grafit, we flocie pomarańcz.
+// ⚠ NAZWY skrócone (decyzja Marka: podstawowe = kolor, specjalne = nazwa
+// własna), ale `id` NIETKNIĘTE — siedzą w localStorage telefonów i w
+// selektorach CSS. Ta sama lekcja co Z-96 („RGB" → „Full RGB", id został `rgb`).
 var PALETY = [
-  { id:'grafit',   nazwa:'Grafitowa', opis:'domyślna',           pasek:'#27272a',
+  { id:'grafit',   nazwa:'Grafit',   opis:'domyślna',      pasek:'#27272a',
     probka:'linear-gradient(135deg,#27272a,#52525b 70%,#a1a1aa)' },
-  { id:'burgund',  nazwa:'Burgundowa', opis:'cieplejsza',        pasek:'#4c0519',
+  { id:'burgund',  nazwa:'Burgund',  opis:'cieplejsza',    pasek:'#4c0519',
     probka:'linear-gradient(135deg,#4c0519,#9f1239 55%,#e11d48)' },
-  // Z-96: „Aurora Nebula" przed „Full RGB" — spokojniejsza z dwóch specjalnych.
-  // `pasek` trafia do <meta name="theme-color">, więc bierzemy najciemniejszy
-  // odcień nagłówka, tak jak przy pozostałych paletach.
-  { id:'aurora',   nazwa:'Aurora Nebula', opis:'gaming vibe', pasek:'#1A1F36',
+  // W-31: dwie przeniesione z floty.
+  { id:'pomaranczowa', nazwa:'Pomarańcz', opis:'energiczna', pasek:'#c2410c',
+    probka:'linear-gradient(135deg,#fbbf24,#f97316 55%,#dc2626)' },
+  { id:'blekit',   nazwa:'Błękit',   opis:'spokojniejsza', pasek:'#1d4ed8',
+    probka:'linear-gradient(135deg,#2563eb,#3b82f6 50%,#38bdf8)' },
+  // Z-96: „Aurora" przed „Full RGB" — spokojniejsza z dwóch pierwszych
+  // specjalnych. `pasek` trafia do <meta name="theme-color">, więc bierzemy
+  // najciemniejszy odcień nagłówka, tak jak przy pozostałych paletach.
+  { id:'aurora',   nazwa:'Aurora',   opis:'chłodna poświata', pasek:'#1A1F36',
     probka:'linear-gradient(90deg,#24314A,#4D96FF,#79DFFF,#8A2BE2)', specjalna:true },
-  // Z-96: „RGB" -> „Full RGB" (ta sama zmiana nazwy co we flocie w Z-94).
-  // ⚠ Samo `id` ZOSTAJE 'rgb': siedzi w localStorage telefonów i w selektorach CSS.
-  { id:'rgb',      nazwa:'Full RGB',   opis:'gaming vibe', pasek:'#a855f7',
-    probka:'linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15)', specjalna:true }
+  { id:'rgb',      nazwa:'Full RGB', opis:'pełne kolory',  pasek:'#a855f7',
+    probka:'linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15)', specjalna:true },
+  // W-31: dwie nowe, animowane. Barwy bazowe z „Asystenta Floty" — tam
+  // STATYCZNE, animację dorobiliśmy u siebie.
+  { id:'gamma',    nazwa:'Gamma',    opis:'zieleń i fiolet', pasek:'#14532d',
+    probka:'linear-gradient(135deg,#14532d,#22c55e 45%,#9333ea)', specjalna:true },
+  { id:'heros',    nazwa:'Heros',    opis:'czerwień i błękit', pasek:'#7f1d1d',
+    probka:'linear-gradient(135deg,#7f1d1d,#dc2626 45%,#2563eb)', specjalna:true }
 ];
 var KLUCZ_PALETY_SPEC = 'ewidencja_palety_specjalne';
 function paletaDozwolona_(id){
@@ -2323,35 +2556,84 @@ function paletaDozwolona_(id){
   if (!p) return false;
   return !p.specjalna || localStorage.getItem(KLUCZ_PALETY_SPEC) === 'TAK';
 }
-function rysujWybierakPalet_(){
+/* ==================== W-31: ekran „Ustawienia" ====================
+   Zastępuje dawny wysuwany wybierak palet (rysujWybierakPalet_ /
+   zamknijWybierakPalet_ / #arkuszPalet — wszystko usunięte).
+   Lista palet MUSI powstawać przy każdym otwarciu, bo bramka Z-83
+   (paletaDozwolona_) decyduje o tym, które pozycje w ogóle pokazać,
+   a flaga z serwera potrafi się zmienić w trakcie sesji. */
+function rysujUstawienia_(){
+  var tryb  = wyborMotywu_();
   var teraz = localStorage.getItem(KLUCZ_PALETA) || KONFIG.PALETA_DOMYSLNA;
-  el('listaPalet').innerHTML = PALETY.filter(function(p){
-    return paletaDozwolona_(p.id);
-  }).map(function(p){
-    return '<button type="button" class="paleta-opcja' + (p.id === teraz ? ' wybrana' : '') +
-      '" data-paleta-id="' + p.id + '">' +
+  var widoczne = PALETY.filter(function(p){ return paletaDozwolona_(p.id); });
+  var zwykle = widoczne.filter(function(p){ return !p.specjalna; });
+  var spec   = widoczne.filter(function(p){ return  p.specjalna; });
+
+  function kafel(p){
+    return '<button type="button" class="pal-poz' + (p.specjalna ? ' spec' : '') +
+      (p.id === teraz ? ' wybrana' : '') + '" data-paleta-id="' + p.id + '">' +
       '<span class="probka" style="background:' + p.probka + '"></span>' +
-      '<span><b>' + p.nazwa + '</b><span>' + p.opis + '</span></span></button>';
-  }).join('');
-  el('listaPalet').querySelectorAll('[data-paleta-id]').forEach(function(b){
+      '<span class="tekst"><b>' + p.nazwa + '</b>' +
+      '<span class="opis">' + p.opis + '</span></span>' +
+      '<svg class="ikona ptaszek" viewBox="0 0 24 24" aria-hidden="true">' +
+      '<use href="#ic-check"></use></svg></button>';
+  }
+  function przyciskTrybu(id, ikona, napis){
+    return '<button type="button" class="' + (tryb === id ? 'wybrany' : '') +
+      '" data-tryb="' + id + '">' + ikonaHTML_(ikona) + napis + '</button>';
+  }
+
+  var h = '<h2 class="ekran-baner">Ustawienia</h2>' +
+    '<div class="ust-sekcja">Tryb</div><div class="ust-tryb">' +
+      przyciskTrybu('jasny',  'ic-sun',   'Jasny') +
+      przyciskTrybu('ciemny', 'ic-moon',  'Ciemny') +
+      przyciskTrybu('auto',   'ic-phone', 'Jak w telefonie') +
+    '</div>' +
+    '<div class="ust-sekcja">Paleta</div>' +
+    '<div class="pal-lista">' + zwykle.map(kafel).join('') + '</div>';
+
+  // Cała sekcja specjalnych znika, gdy kierowca nie ma do nich prawa (Z-83) —
+  // nie pokazujemy pustej ramki z nagłówkiem „Palety specjalne".
+  if (spec.length) {
+    h += '<div class="ust-sekcja">' + ikonaHTML_('ic-lock') + 'Palety specjalne</div>' +
+      '<div class="pal-lista">' + spec.map(kafel).join('') + '</div>' +
+      '<div class="ust-notka">' + ikonaHTML_('ic-user') +
+      '<span>Przyznane Tobie przez Marka — innym kierowcom te palety się nie pokazują.</span></div>';
+  }
+  h += '<div class="ust-notka">' + ikonaHTML_('ic-phone') +
+    '<span>Wygląd zapamiętuje się w tym telefonie. Na innym urządzeniu ustawisz go osobno.</span></div>';
+
+  el('ustawieniaKarta').innerHTML = h;
+
+  el('ustawieniaKarta').querySelectorAll('[data-tryb]').forEach(function(b){
+    b.onclick = function(){
+      localStorage.setItem(KLUCZ_MOTYW, b.dataset.tryb);
+      wczytajMotyw();          // sam odświeży ten ekran
+    };
+  });
+  el('ustawieniaKarta').querySelectorAll('[data-paleta-id]').forEach(function(b){
     b.onclick = function(){
       localStorage.setItem(KLUCZ_PALETA, b.dataset.paletaId);
-      wczytajMotyw();
-      rysujWybierakPalet_();
-      setTimeout(zamknijWybierakPalet_, 260);   // chwila, żeby było widać zmianę
+      wczytajMotyw();          // jw. — zostajemy na ekranie, widać zmianę
     };
   });
 }
-function zamknijWybierakPalet_(){
-  el('arkuszPalet').classList.remove('widoczna');
-  el('zaslonaPalet').classList.remove('widoczna');
-}
-el('paletaBtn').addEventListener('click', function(){
-  rysujWybierakPalet_();
-  el('arkuszPalet').classList.add('widoczna');
-  el('zaslonaPalet').classList.add('widoczna');
+/* Zębatka jako PRZEŁĄCZNIK: drugie kliknięcie wraca na ekran, z którego
+   przyszedłeś. Wzorzec z „Asystenta Floty" — u nich zapisany jako naprawiony
+   bug „zębatka otwierała, ale nie zamykała". */
+var EKRAN_PRZED_USTAWIENIAMI = 'ekranStart';
+el('ustawieniaBtn').addEventListener('click', function(){
+  if (!el('ekranUstawienia').classList.contains('ukryte')) {
+    pokazEkran(EKRAN_PRZED_USTAWIENIAMI);
+    return;
+  }
+  var widoczny = document.querySelector('main > section:not(.ukryte)');
+  // Ekran sukcesu jest przelotowy — wracanie na niego nie miałoby sensu.
+  EKRAN_PRZED_USTAWIENIAMI =
+    (widoczny && widoczny.id && widoczny.id !== 'ekranSukces') ? widoczny.id : 'ekranStart';
+  rysujUstawienia_();
+  pokazEkran('ekranUstawienia');
 });
-el('zaslonaPalet').addEventListener('click', zamknijWybierakPalet_);
 
 /* ---------- komunikacja z API ---------- */
 function wolajAPI(akcja, dane){
