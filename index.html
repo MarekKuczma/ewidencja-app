@@ -1497,29 +1497,32 @@
    Działa też w widoku gościa („Wpisy maszyny" po QR) — tam tym bardziej.
    CSS + budowa chipa w JS (otworzWpisy / otworzWpisyGoscia_).
    ═══════════════════════════════════════════════════════════════════════ */
-/* Chip pojazdu w nagłówku „Moje wpisy" — makieta. Ta sama ikona co na
-   liście pojazdów po E-54: kolorowy kwadracik z białym znakiem. */
-#wpisyPodtytul.wpisy-pojazd {
+/* Chip pojazdu — ta sama ikona co na liście pojazdów po E-54: kolorowy
+   kwadracik z białym znakiem. W-26: selektory uogólnione z #wpisyPodtytul
+   na klasę, bo ten sam chip stoi teraz też w „Nowym wpisie"
+   (#wpisPodtytul) — jedna definicja zamiast dwóch kopii, które by się
+   kiedyś rozjechały. */
+.wpisy-pojazd {
   display: flex; align-items: center; gap: 10px;
   margin: 8px 0 14px;
 }
-#wpisyPodtytul .wpisy-pojazd-ikona {
+.wpisy-pojazd .wpisy-pojazd-ikona {
   width: 34px; height: 34px; border-radius: 10px; flex: none;
   position: relative; display: flex; align-items: center; justify-content: center;
 }
-#wpisyPodtytul .wpisy-pojazd-ikona::after {
+.wpisy-pojazd .wpisy-pojazd-ikona::after {
   content: ''; position: absolute; inset: 0; border-radius: 10px;
   border-left: 34px solid; border-color: inherit; z-index: 0;
 }
-#wpisyPodtytul .wpisy-pojazd-ikona svg {
+.wpisy-pojazd .wpisy-pojazd-ikona svg {
   width: 19px; height: 19px; position: relative; z-index: 1; stroke: #fff;
 }
-#wpisyPodtytul .wpisy-pojazd-tekst { display: flex; flex-direction: column; min-width: 0; }
-#wpisyPodtytul .wpisy-pojazd-tekst b {
+.wpisy-pojazd .wpisy-pojazd-tekst { display: flex; flex-direction: column; min-width: 0; }
+.wpisy-pojazd .wpisy-pojazd-tekst b {
   font-size: 15px; color: var(--tekst); line-height: 1.25;
   overflow-wrap: break-word;
 }
-#wpisyPodtytul .wpisy-pojazd-tekst span {
+.wpisy-pojazd .wpisy-pojazd-tekst span {
   font-size: 13px; color: var(--szary); overflow-wrap: anywhere;
 }
 
@@ -1534,6 +1537,55 @@
 #listaJednostek .jedn:last-child,
 #listaJednostek .jedn:has(+ .sekcja-jednostek-naglowek) { box-shadow: none; }
 #dashboardPojazdu .metryki { box-shadow: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   W-26 (28.08.2026) — nagłówki ekranów i powitanie (decyzje Marka po
+   czterech rundach makiet; wybrany wariant B — tło w stylu palety,
+   BEZ gradientowych ramek):
+   1. Baner tytułu ekranu („NOWY WPIS" / „MOJE WPISY"): wyśrodkowany pasek
+      na górze karty, wielkie litery, tło --bg-akcentjasny (w grafitowej
+      palecie szarość, w burgundzie róż — samo idzie za paletą).
+   2. Płyta powitania na dashboardzie: to samo tło POD SEKCJĄ (avatar +
+      „Dzień dobry"), nie pod całą kartą.
+   3. Avatar: animowana obwódka-stożek w KAŻDEJ palecie (mechanizm 1:1
+      z .przycisk-glow / Z-81; dotąd miały ją tylko rgb i aurora). Ta
+      reguła stoi PO blokach palet, więc ujednolica im czas obrotu (4s)
+      i siłę poświaty (--glow-krycie) — świadomie, jeden rytm w appce.
+   4. Plakietka Beta-tester przy imieniu (wzorem floty, pkt 5 FEEDBACKU) —
+      pokazuje ją JS, gdy serwer zwróci beta:true (kolumna „W pilocie"
+      w Kierowcach, czytana od API v46).
+   ═══════════════════════════════════════════════════════════════════════ */
+.ekran-baner{margin:-16px -16px 14px; padding:11px 14px; text-align:center;
+  font-size:15px; font-weight:700; letter-spacing:.09em;
+  text-transform:uppercase; border-radius:14px 14px 0 0;
+  background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);}
+
+.powitanie{gap:14px; border-radius:16px; background:var(--bg-akcentjasny);
+  padding:12px 14px; margin-bottom:18px;}
+#dashboardPojazdu #kartaWybranego{margin-bottom:4px;}
+#dashboardPojazdu .metryki{margin-bottom:16px;}
+
+.avatar-pierscien{padding:2.5px; border-radius:50%; position:relative;
+  isolation:isolate; flex:none;
+  background:conic-gradient(from var(--kat), var(--stozek));
+  animation:obrot 4s linear infinite;}
+.avatar-pierscien::after{content:''; position:absolute; inset:0;
+  border-radius:50%; background:conic-gradient(from var(--kat), var(--stozek));
+  filter:blur(9px); opacity:var(--glow-krycie); z-index:-1;}
+
+/* Plakietka beta — 1:1 z flotą (margines, oddech poświaty). Kolor pulsu
+   z --przycisk-cien (rgba akcentu danej palety) — ewidencja nie ma
+   flotowej zmiennej --beta-poswiata, a ta niesie tę samą informację. */
+.plakietka-beta{margin-left:6px; vertical-align:middle;
+  animation:oddechBeta 2.8s ease-in-out infinite;}
+@keyframes oddechBeta{
+  0%,100%{ box-shadow:0 0 0 0 rgba(0,0,0,0); }
+  50%    { box-shadow:0 0 9px 1px var(--przycisk-cien); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .avatar-pierscien, .plakietka-beta{ animation:none; }
+}
 
 </style>
 </head>
@@ -1552,6 +1604,8 @@
 <symbol id="ic-site" viewBox="0 0 24 24"><path d="M4 20.5h16M7 20.5V9l10-4.5v16M10.5 9.5v2.5M13.5 8.5v3.5M10.5 15v2.5M13.5 14.5V18"/></symbol>
 <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 4.5v14a1.5 1.5 0 0 0 1.5 1.5H20M8.5 16v-4M12.5 16V8.5M16.5 16v-6"/></symbol>
 <symbol id="ic-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.5 2.6 4.9-5.4"/></symbol>
+<!-- W-26: kolba plakietki Beta-tester — 1:1 z floty -->
+<symbol id="ic-flask" viewBox="0 0 24 24"><path d="M10 3.5h4M10.8 3.5v5.2L5.9 17a2.2 2.2 0 0 0 2 3.5h8.2a2.2 2.2 0 0 0 2-3.5l-4.9-8.3V3.5M8.2 14.5h7.6"/></symbol>
 <symbol id="ic-home" viewBox="0 0 24 24"><path d="m4 11 8-7 8 7M6.5 9.5v9A1.5 1.5 0 0 0 8 20h8a1.5 1.5 0 0 0 1.5-1.5v-9M10 20v-5.5h4V20"/></symbol>
 <symbol id="ic-pencil" viewBox="0 0 24 24"><path d="m5 19 .9-3.7L16.7 4.5a1.6 1.6 0 0 1 2.3 0l.5.5a1.6 1.6 0 0 1 0 2.3L8.7 18.1 5 19ZM14.8 6.4l2.8 2.8"/></symbol>
 <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V5A1.5 1.5 0 0 1 11 3.5h2A1.5 1.5 0 0 1 14.5 5v1.5M6.5 6.5l.8 12A2 2 0 0 0 9.3 20.5h5.4a2 2 0 0 0 2-1.9l.8-12.1M10 10.5v6M14 10.5v6"/></symbol>
@@ -1653,7 +1707,12 @@
                podskakuje, gdy imię się pojawi. Kto ma imię w pamięci
                telefonu, i tak nie zdąży tego zobaczyć — `pokazZPamieci()`
                podmienia je jeszcze przed pierwszym malowaniem. -->
-          <div class="p1" id="powitanieImie"><span class="sz-l sz-imie" aria-hidden="true"></span></div>
+          <!-- W-26: tekst powitania w osobnym spanie, żeby plakietka beta
+               obok przeżywała podmiany treści (textContent na całym p1
+               kasowałby ją przy każdym odświeżeniu — dokładnie ten sam
+               układ co dPowitanie/dBeta we flocie). -->
+          <div class="p1"><span id="powitanieImie"><span class="sz-l sz-imie" aria-hidden="true"></span></span><span id="ewBeta"
+            class="plakietka plakietka-beta ukryte"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-flask"></use></svg> Beta-tester</span></div>
           <div class="p2" id="powitanieData"></div>
         </div>
       </div>
@@ -1689,6 +1748,11 @@
         <div class="przycisk-glow">
           <button class="przycisk" id="startNowyWpisBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Nowy wpis</button>
         </div>
+        <!-- W-26: „Podsumowanie" przeniesione z „Moich wpisów" tutaj —
+             bliźniaczo do floty (dNowy / dPodsumowanie / dMiesiacBtn).
+             Ten sam ekranPodsumowanie co dotąd, tylko wejście i powrót
+             idą przez pulpit. -->
+        <button class="przycisk-drugi" id="dPodsumowanie"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-chart"></use></svg> Podsumowanie miesiąca</button>
         <button class="przycisk-drugi" id="zamykamBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-check"></use></svg> Zamykam miesiąc</button>
 
         <!-- W-12 (07.08.2026) → W-20 (20.08.2026): rozwijane pudełko
@@ -1741,8 +1805,11 @@
   <!-- ===================== EKRAN: WPIS ===================== -->
   <section id="ekranWpis" class="ukryte">
     <div class="karta">
-      <h2 id="wpisTytul">Nowy wpis</h2>
-      <div id="wpisPodtytul" style="font-size:14px; color:var(--szary); margin:-8px 0 14px;"></div>
+      <!-- W-26: tytuł jako baner + chip pojazdu (ten sam co w „Moich
+           wpisach", E-59) zamiast szarej linijki tekstu — kierowca widzi
+           kolor i ikonę, zanim przeczyta pierwszą literę. -->
+      <h2 id="wpisTytul" class="ekran-baner">Nowy wpis</h2>
+      <div id="wpisPodtytul" style="margin:0 0 14px;"></div>
 
       <!-- E-20/E-21: imię gościa z QR — widoczne i obowiązkowe WYŁĄCZNIE
            w trybie gościa (steruje otworzWpis). Konta normalne go nie widzą:
@@ -1865,17 +1932,11 @@
   <!-- ===================== EKRAN: MOJE WPISY ===================== -->
   <section id="ekranWpisy" class="ukryte">
     <div class="karta">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <h2 id="wpisyTytul" style="margin:0;">Moje wpisy</h2>
-        <!-- E-07 (10.08.2026): podsumowanie miesiąca dla TEJ maszyny —
-             wzorem przycisku „📊 Podsumowanie miesiąca” z floty (pkt 19),
-             tylko per pojazd zamiast per kierowca (patrz ekranPodsumowanie
-             niżej — dane już wczytane tutaj, więc bez nowego zapytania). -->
-        <button type="button" class="przycisk-maly" id="wpisyPodsumowanieBtn" style="flex:none;"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-chart"></use></svg> Podsumowanie</button>
-      </div>
-      <!-- E1: ujemny margines wsuwał podtytuł POD przycisk „Podsumowanie”,
-           bo przycisk jest wyższy od nagłówka. Teraz rząd wyrównany do środka,
-           podtytuł normalnie pod spodem. -->
+      <!-- W-26: tytuł jako baner na całą szerokość karty. Przycisk
+           „Podsumowanie" wyprowadzony STĄD na dashboard (id dPodsumowanie,
+           bliźniaczo do floty) — chip pojazdu ma dzięki temu pełną
+           szerokość i długie nazwy się nie łamią. -->
+      <h2 id="wpisyTytul" class="ekran-baner">Moje wpisy</h2>
       <div class="p2" id="wpisyPodtytul" style="font-size:14px; color:var(--szary); margin:2px 0 12px;"></div>
       <label style="display:flex; align-items:center; gap:8px; font-weight:400; color:var(--tekst);">
         <input type="checkbox" id="pokazAnulowane" style="width:auto; min-height:auto;">
@@ -1907,7 +1968,7 @@
       </div>
       <div class="metryki" id="podsumowanieKafelki" style="margin-bottom:0;"></div>
       <div class="srodek ukryte" id="podsumowaniePusto" style="padding:16px;">Brak wpisów w tym miesiącu.</div>
-      <button type="button" class="przycisk-drugi" id="podsumowanieWstecz" style="margin-top:14px;">← Wróć do wpisów</button>
+      <button type="button" class="przycisk-drugi" id="podsumowanieWstecz" style="margin-top:14px;">← Wróć na pulpit</button>
     </div>
   </section>
 </main>
@@ -1990,6 +2051,7 @@ var KLUCZ_MOTYW = 'ewidencja_motyw';
 var KLUCZ_PALETA = 'ewidencja_paleta';
 var KLUCZ_POJAZD = 'ewidencja_pojazd';
 var KLUCZ_CACHE = 'ewidencja_cache';
+var KLUCZ_BETA = 'ewidencja_beta';   // W-26 — jak flota_beta we flocie
 // E-35 (19.08.2026): pamięć przypomnień o terminach — patrz sekcja E-35 niżej.
 var KLUCZ_ALARM_DZIEN = 'ewidencja_terminy_alarm_dzien';   // data ostatniego czerwonego alarmu
 var KLUCZ_ZOLTE = 'ewidencja_terminy_zolte_pokazane';      // {klucz terminu: true} — pokazane żółte
@@ -2027,12 +2089,12 @@ function pokazEkran(nazwa){
     el(e).classList.add('ukryte');
   });
   el(nazwa).classList.remove('ukryte');
-  el('navStart').classList.toggle('aktywna', nazwa === 'ekranStart');
+  // W-26: podsumowanie to teraz „dziecko" PULPITU (wejście z dPodsumowanie,
+  // powrót na pulpit) — dokładnie jak we flocie, gdzie podsumowanie
+  // podświetla Start. Do 28.08 wisiało pod „Moje wpisy" (E-07).
+  el('navStart').classList.toggle('aktywna', nazwa === 'ekranStart' || nazwa === 'ekranPodsumowanie');
   el('navNowy').classList.toggle('aktywna', nazwa === 'ekranWpis');
-  // E-07: podsumowanie to „dziecko” Moje wpisy (wejście stamtąd, powrót
-  // tam samo) — wzorem floty, gdzie podsumowanie podświetla Start (skąd
-  // się wchodzi), nie osobną, nieistniejącą pozycję nawigacji.
-  el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy' || nazwa === 'ekranPodsumowanie');
+  el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy');
   ustawWskaznikNawigacji_();   // Z-86
   animujWejscie_(nazwa);       // Z-86
   window.scrollTo(0, 0);
@@ -2583,6 +2645,7 @@ el('poleKodRecznie').addEventListener('keydown', function(e){
 function odrzucKod_(wiadomosc){
   localStorage.removeItem(KLUCZ_KOD);
   localStorage.removeItem(KLUCZ_PALETY_SPEC);   // Z-83
+  localStorage.removeItem(KLUCZ_BETA);          // W-26 — jak Z-83
   localStorage.removeItem(KLUCZ_CACHE);
   localStorage.removeItem(KLUCZ_POJAZD);
   if ('caches' in window) caches.delete(NAZWA_RELAY_KODU).catch(function(){});
@@ -2758,8 +2821,9 @@ function pokazZPamieci(){
   // Z-87: gdy w pamięci nie ma imienia, ZOSTAWIAMY szkielet z HTML-a zamiast
   // czyścić kafelek do pustego miejsca — imię i tak zaraz dojdzie z serwera.
   if (cache.imie) {
-    el('powitanieImie').textContent = 'Cześć, ' + String(cache.imie).trim().split(/\s+/).pop() + '!';
+    el('powitanieImie').textContent = powitanieDnia_() + ', ' + String(cache.imie).trim().split(/\s+/).pop() + '!';
   }
+  pokazOdznakeBeta_();   // W-26 — z pamięci, świeża flaga dojdzie ze statusem
   rysujSlowniki();
 
   var zapamietany = localStorage.getItem(KLUCZ_POJAZD);
@@ -2808,10 +2872,34 @@ function zachowajPowitanie_(tekstGdyNieWiemy){
   var e = el('powitanieImie');
   if (!e) return;
   if (STAN.imie) {
-    e.textContent = 'Cześć, ' + String(STAN.imie).trim().split(/\s+/).pop() + '!';
+    e.textContent = powitanieDnia_() + ', ' + String(STAN.imie).trim().split(/\s+/).pop() + '!';
   } else {
     e.textContent = tekstGdyNieWiemy;
   }
+}
+
+/* W-26: powitanie wg pory dnia zamiast wiecznego „Cześć". Granica o 18:00
+   — po niej „Dobry wieczór"; nocne godziny (przed 4:00) też liczą się jako
+   wieczór, bo kierowca kończący zmianę o 1 w nocy nie zaczyna dnia. */
+function powitanieDnia_(){
+  var g = new Date().getHours();
+  return (g >= 18 || g < 4) ? 'Dobry wieczór' : 'Dzień dobry';
+}
+
+/* W-26: „sierpień 2026" do podtytułu powitania. */
+function miesiacTeraz_(){
+  var t = new Date();
+  return MIESIACE_PL[t.getMonth()] + ' ' + t.getFullYear();
+}
+
+/* W-26: plakietka Beta-tester przy imieniu (wzorem floty, pkt 5 FEEDBACKU).
+   Flagę przysyła serwer w `status` (kolumna „W pilocie" w Kierowcach,
+   od API v46); pamięć telefonu trzyma ją na starty offline. Starsze API
+   bez pola = plakietka po prostu się nie pokazuje. */
+function pokazOdznakeBeta_(){
+  var e = el('ewBeta');
+  if (!e) return;
+  e.classList.toggle('ukryte', localStorage.getItem(KLUCZ_BETA) !== 'TAK');
 }
 
 function szkieletWpisow_(){
@@ -3211,6 +3299,12 @@ function odswiezStart(){
       localStorage.setItem(KLUCZ_PALETY_SPEC, odp.paletySpecjalne ? 'TAK' : 'NIE');
       wczytajMotyw();
     }
+    // W-26: plakietka Beta-tester — ta sama zasada co wyżej: nadpisujemy
+    // tylko, gdy serwer faktycznie przysłał pole (API v46+).
+    if (typeof odp.beta !== 'undefined') {
+      localStorage.setItem(KLUCZ_BETA, odp.beta ? 'TAK' : 'NIE');
+      pokazOdznakeBeta_();
+    }
     STAN.jednostki = odp.jednostki || [];
     STAN.budowy = odp.budowy || [];
     STAN.kategorie = odp.kategorie || [];
@@ -3236,7 +3330,7 @@ function odswiezStart(){
     el('avatar').textContent = inicjaly(odp.imie);
     // W zakładce Kierowcy imiona są zapisane jako „Nazwisko Imię", więc
     // imię to OSTATNI człon — tak samo jak w aplikacji floty.
-    el('powitanieImie').textContent = 'Cześć, ' + String(odp.imie).trim().split(/\s+/).pop() + '!';
+    el('powitanieImie').textContent = powitanieDnia_() + ', ' + String(odp.imie).trim().split(/\s+/).pop() + '!';
 
     // D54: pamiętamy ostatnio wybrany pojazd i od razu pokazujemy jego pulpit.
     var zapamietany = localStorage.getItem(KLUCZ_POJAZD);
@@ -3320,7 +3414,7 @@ function pokazWyborPojazdu(){
   el('dashboardPojazdu').classList.add('ukryte');
   el('wyborPojazdu').classList.remove('ukryte');
   el('powitanieData').textContent = STAN.jednostki.length
-    ? 'Wybierz pojazd' : 'Nie masz jeszcze przypisanego pojazdu';
+    ? 'Wybierz pojazd · ' + miesiacTeraz_() : 'Nie masz jeszcze przypisanego pojazdu';
   rysujJednostki();
 }
 
@@ -3332,9 +3426,13 @@ function wybierzPojazd(j, zPamieci){
   // To jest pulpit JEDNEGO pojazdu, więc „Moje pojazdy" wprowadzało w błąd
   // (zgłoszenie Marka). Nazwa pojazdu jest na karcie poniżej, więc tutaj
   // mówimy tylko, na co się patrzy.
+  // W-26: miesiąc i rok w podtytule (decyzja Marka — „miesiąc i rok mogą
+  // zostać"). Przy kilku pojazdach ważniejsza jest liczba „masz ich N",
+  // więc miesiąc ustępuje jej miejsca — dwie informacje naraz nie mieszczą
+  // się na 320 px.
   el('powitanieData').textContent = STAN.jednostki.length > 1
     ? 'Pulpit pojazdu · masz ich ' + STAN.jednostki.length
-    : 'Pulpit pojazdu';
+    : 'Pulpit pojazdu · ' + miesiacTeraz_();
 
   // D70 — odpiąć można tylko to, co kierowca sam sobie dodał.
   el('odepnijBtn').classList.toggle('ukryte', j.sposob !== 'dodane samodzielnie');
@@ -3718,8 +3816,11 @@ function otworzWpis(j, wpisDoEdycji){
 
   el('wpisTytul').textContent = wpisDoEdycji ? 'Popraw wpis' : 'Nowy wpis';
   // Marek: tytuł ma zawierać też rejestrację — kierowca musi widzieć na
-  // pierwszy rzut oka, do którego pojazdu wpisuje.
-  el('wpisPodtytul').textContent = j.tytul + ' · ' + j.podtytul;
+  // pierwszy rzut oka, do którego pojazdu wpisuje. W-26: zamiast szarej
+  // linijki tekstu ten sam chip co w „Moich wpisach" (E-59) — kolor
+  // i ikona typu rzucają się w oczy szybciej niż napis.
+  el('wpisPodtytul').className = 'wpisy-pojazd';
+  el('wpisPodtytul').innerHTML = chipPojazduHtml_(j);
   el('jednLicznika').textContent = '(' + j.jednostkaLicznika + ')';
   el('zapiszBtn').textContent = wpisDoEdycji ? 'Zapisz poprawkę' : 'Zapisz wpis';
   // F-22 (wzorzec floty, 01.08.2026): odpowiedni przycisk „Anuluj" wg trybu.
@@ -4265,7 +4366,8 @@ function otworzWpisy(j){
   if (STAN.gosc) { otworzWpisyGoscia_(); return; }   // E-20/E-21
   if (!j) { pokazEkran('ekranStart'); return; }
   STAN.aktywna = j;
-  el('wpisyPodsumowanieBtn').style.display = '';     // E-20: gość mógł schować
+  // W-26: przycisk „Podsumowanie" mieszka teraz na pulpicie (dPodsumowanie)
+  // — na tym ekranie nie ma już czego pokazywać ani chować.
   el('wpisyTytul').textContent = 'Moje wpisy';
   el('wpisyPodtytul').className = 'wpisy-pojazd';        // E-59
   el('wpisyPodtytul').innerHTML = chipPojazduHtml_(j);
@@ -4363,6 +4465,21 @@ function otworzPodsumowanie(){
   el('podsumowanieTytul').textContent = 'Podsumowanie — ' + nazwaMiesiaca_(dzisiajISO().slice(0, 7));
   el('podsumowaniePodtytul').textContent = j.tytul + ' · ' + j.podtytul;
   pokazEkran('ekranPodsumowanie');
+  // W-26: wejście jest teraz z PULPITU, a pulpit dociąga historię w tle —
+  // szybki klik mógł wyprzedzić odpowiedź i podsumowanie pokazałoby
+  // fałszywe „Brak wpisów". Gdy historii jeszcze nie ma, dociągamy ją
+  // tutaj; nieudane pobranie kończy się zwykłym rysowaniem z tego, co jest.
+  if (!STAN.wpisy) {
+    el('podsumowanieGlowne').innerHTML = '';
+    el('podsumowanieKafelki').innerHTML = '';
+    el('podsumowanieKategorieNaglowek').classList.add('ukryte');
+    el('podsumowaniePusto').classList.add('ukryte');
+    wolajAPI('historiaPojazdu', { idPojazdu: j.idPojazdu }).then(function(odp){
+      if (odp.ok) STAN.wpisy = odp.wpisy || [];
+      rysujPodsumowanie_();
+    }).catch(function(){ rysujPodsumowanie_(); });
+    return;
+  }
   rysujPodsumowanie_();
 }
 function rysujPodsumowanie_(){
@@ -4432,8 +4549,10 @@ function rysujPodsumowanie_(){
     });
   }
 }
-el('wpisyPodsumowanieBtn').onclick = otworzPodsumowanie;
-el('podsumowanieWstecz').onclick = function(){ pokazEkran('ekranWpisy'); };
+// W-26: wejście do podsumowania z pulpitu (bliźniaczo do floty:
+// dNowy / dPodsumowanie / dMiesiacBtn) — i powrót też na pulpit.
+el('dPodsumowanie').onclick = otworzPodsumowanie;
+el('podsumowanieWstecz').onclick = function(){ pokazEkran('ekranStart'); };
 // ========== E-07 KONIEC ==========
 
 function rysujWpisy(){
@@ -5104,7 +5223,8 @@ function otworzWpisyGoscia_(){
   el('wpisyTytul').textContent = 'Wpisy maszyny';
   el('wpisyPodtytul').className = 'wpisy-pojazd';        // E-59
   el('wpisyPodtytul').innerHTML = chipPojazduHtml_(STAN.aktywna);
-  el('wpisyPodsumowanieBtn').style.display = 'none';   // podsumowanie = nie dla gościa
+  // W-26: „Podsumowanie" mieszka na pulpicie, a gość pulpitu nie widzi —
+  // nie trzeba już niczego chować na tym ekranie.
   pokazEkran('ekranWpisy');
   rysujWpisyGoscia_();
   if (!navigator.onLine) { pokazPasekWpisow_(null); return; }
