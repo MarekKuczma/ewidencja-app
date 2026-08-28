@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v100';   // 28.08.2026: W-31 — ekran „Ustawienia" pod zębatką (zastępuje motywBtn+paletaBtn i wysuwany wybierak), tryb „jak w telefonie", osiem palet wspólnych z flotą (+ Pomarańcz, Błękit, Gamma, Heros)
+var WERSJA_CACHE = 'ewidencja-v102';   // 29.08.2026: W-31a+b — obwódka avatara Gammy i Herosa odzyskuje własny kolor w ciemnym motywie; stożek przepisany z LUSTRA na PĘTLĘ (znika kreska przechodząca przez awatar); wnętrze avatara palet animowanych bierze gradient poziomy zamiast dwukolorowego skośnego
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

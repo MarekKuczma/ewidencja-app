@@ -141,11 +141,19 @@
     /* Gradient wraca do koloru początkowego (A…D…A) — inaczej na zapętleniu
        animacji widać szew. Lekcja Z-95. */
     --gradient:linear-gradient(90deg,#14532d,#22c55e,#4ade80,#9333ea,#22c55e,#14532d);
-    --ikona-grad:linear-gradient(135deg,#14532d,#9333ea);
+    /* ⚠ POPRAWKA (Marek 28.08: „gradient w środku avataru nie działa,
+       wszystko działa tylko w Full RGB"). Animacja `plyn` przesuwa tło
+       POZIOMO, więc dwukolorowy gradient pod skosem 135° nie ma czego
+       pokazać — widać jedno pole, które ledwo dryfuje. Full RGB jako
+       jedyny miał tu gradient 90° z sześcioma barwami wracającymi do
+       startu i tylko on wyglądał na żywy. Palety animowane biorą więc
+       gradient nagłówka (już 90°, wielobarwny, zapętlony); przez
+       `var(--gradient)`, a nie kopię, żeby ciemny motyw szedł za nim sam. */
+    --ikona-grad:var(--gradient);
     --przycisk-cien:rgba(126,34,206,.38);
     --bg-akcentjasny:#f5f0ff; --tekst-akcentjasny:#7e22ce;
     --metryka-grad:linear-gradient(135deg,#f3fdf6 0%,#f7f2ff 100%);
-    --stozek:#4ade80,#22c55e,#9333ea,#22c55e,#4ade80;
+    --stozek:#4ade80,#22c55e,#16a34a,#14532d,#3b0764,#7e22ce,#9333ea,#c084fc,#e9d5ff,#bbf7d0,#86efac,#4ade80;
     --wskaznik-grad:linear-gradient(90deg,#166534,#16a34a,#9333ea,#16a34a,#166534);
     --glow-krycie:.42;
     --luk:#86efac 0deg,#4ade80 42deg,#9333ea 86deg;
@@ -162,11 +170,11 @@
     --akcent:#1d4ed8; --akcent-c:#1e3a8a;
     --gradient:linear-gradient(90deg,#7f1d1d,#dc2626,#f87171,#2563eb,#dc2626,#7f1d1d);
     --przycisk-grad:linear-gradient(90deg,#1e3a8a,#2563eb,#60a5fa,#b91c1c,#2563eb,#1e3a8a);
-    --ikona-grad:linear-gradient(135deg,#7f1d1d,#2563eb);
+    --ikona-grad:var(--gradient);   /* jw. — patrz komentarz przy Gammie */
     --przycisk-cien:rgba(29,78,216,.38);
     --bg-akcentjasny:#eff4ff; --tekst-akcentjasny:#1d4ed8;
     --metryka-grad:linear-gradient(135deg,#fff5f5 0%,#f0f5ff 100%);
-    --stozek:#f87171,#dc2626,#2563eb,#dc2626,#f87171;
+    --stozek:#f87171,#dc2626,#b91c1c,#7f1d1d,#1e3a8a,#2563eb,#3b82f6,#93c5fd,#dbeafe,#fecaca,#f87171;
     --wskaznik-grad:linear-gradient(90deg,#7f1d1d,#dc2626,#2563eb,#dc2626,#7f1d1d);
     --glow-krycie:.42;
     --luk:#fca5a5 0deg,#f87171 42deg,#2563eb 86deg;
@@ -258,6 +266,17 @@
     --metryka-grad:linear-gradient(135deg,#16281c 0%,#1e1a2b 100%);
     --gradient:linear-gradient(90deg,#0f3d21,#16a34a,#22c55e,#7e22ce,#16a34a,#0f3d21);
     --sz-baza:#223a2a;
+    /* ⚠ POPRAWKA (zgłoszenie Marka 28.08 wieczorem: „w ewidencji na awatarze
+       gamma i heros mają czarną ramkę zamiast dopasowanej do swojego koloru").
+       Blok `[data-motyw="ciemny"]` wyżej ustawia GRAFITOWY --stozek
+       i --wskaznik-grad (bo grafit jest tu paletą domyślną), a pierwsza wersja
+       tego bloku ich nie odzyskiwała — obwódka avatara ORAZ kreska w menu
+       robiły się szare. To dokładnie ta pułapka, którą sam opisałem przy
+       flocie (Z-91), i w którą wpadłem po drugiej stronie. Przy dokładaniu
+       kolejnej palety do ewidencji: przejść listę zmiennych bloku ciemnego
+       i odzyskać KAŻDĄ, nie tylko te widoczne na pierwszy rzut oka. */
+    --stozek:#4ade80,#22c55e,#16a34a,#14532d,#3b0764,#7e22ce,#9333ea,#c084fc,#e9d5ff,#bbf7d0,#86efac,#4ade80;
+    --wskaznik-grad:linear-gradient(90deg,#22c55e,#4ade80,#c084fc,#4ade80,#22c55e);
   }
   [data-motyw="ciemny"][data-paleta="heros"]{
     --tlo:#101223; --karta:#1b1d2e; --input-tlo:#252840; --input-brzeg:#343854;
@@ -268,6 +287,9 @@
     --gradient:linear-gradient(90deg,#6b1717,#b91c1c,#dc2626,#1d4ed8,#b91c1c,#6b1717);
     --przycisk-grad:linear-gradient(90deg,#1e3a8a,#1d4ed8,#3b82f6,#991b1b,#1d4ed8,#1e3a8a);
     --sz-baza:#2b2f45;
+    /* jw. — patrz komentarz przy gammie */
+    --stozek:#f87171,#dc2626,#b91c1c,#7f1d1d,#1e3a8a,#2563eb,#3b82f6,#93c5fd,#dbeafe,#fecaca,#f87171;
+    --wskaznik-grad:linear-gradient(90deg,#dc2626,#f87171,#93c5fd,#f87171,#dc2626);
   }
   /* Z-90/B2 — najważniejsza poprawka tej paczki, i to NIE jest kwestia gustu.
      `.przycisk-maly` bierze --akcent, `.przycisk-czerwony` bierze --blad.
@@ -1044,11 +1066,11 @@
     /* Pasek płynie w kółko, więc gradient musi wracać do koloru
        początkowego — inaczej na zapętleniu widać szew. */
     --gradient:linear-gradient(90deg,#24314A,#4D96FF,#79DFFF,#8A2BE2,#4D96FF,#24314A);
-    --ikona-grad:linear-gradient(135deg, #1A1F36, #4D96FF);
+    --ikona-grad:var(--gradient);   /* jw. — patrz komentarz przy Gammie */
     --przycisk-cien:rgba(138,43,226,.38);
     --bg-akcentjasny:#eef4ff; --tekst-akcentjasny:#1d63d8;
     --metryka-grad:linear-gradient(135deg, #f2f7ff 0%, #f0eeff 100%);
-    --stozek:#79DFFF,#4D96FF,#8A2BE2,#4D96FF,#79DFFF;
+    --stozek:#79DFFF,#4D96FF,#3B6FE0,#24314A,#4C1D95,#8A2BE2,#A855F7,#C4A2FF,#DBEAFE,#A5E9FF,#79DFFF;
     --luk:#79DFFF 0deg, #4D96FF 42deg, #8A2BE2 86deg;   /* Z-87 */
     --luk-glow:#8A2BE2;                                  /* Z-87 */
     --glow-krycie:.42;
