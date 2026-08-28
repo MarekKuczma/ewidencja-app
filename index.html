@@ -516,9 +516,14 @@
      JEDEN element jeżdżący pod zakładkami; widoczna kreska siedzi w środku
      (44%), więc przesunięcie to czyste `translateX(n * 100%)` — bez
      magicznych liczb. */
-  nav .wskaznik{position:absolute; bottom:3px; left:0; width:calc(100% / 3); height:3px;
+  nav .wskaznik{position:absolute; top:0; left:0; width:calc(100% / 3); height:3px;
     display:flex; justify-content:center; pointer-events:none;
     transition:transform .34s cubic-bezier(.4,1.3,.5,1), opacity .18s linear;}
+  /* W-29 (28.08.2026, pomysł Marka po zerknięciu w Asystenta Floty): kreska
+     przeniesiona z dołu paska (bottom:3px) na górę (top:0) — sam pasek
+     nawigacji zostaje na dole ekranu, zmienia się tylko strona wewnątrz
+     niego. Zaokrąglenie tylko od dołu (0 0 2px 2px zamiast 2px), żeby
+     wyglądała jak „zawieszona zakładka", a nie pigułka. */
   /* Z-96 (18.08.2026) — odpowiednik Z-95 we flocie: kreska pod aktywną
      zakładką płynie we wszystkich paletach. Zero nowych kolorów.
      ⚠ Dlaczego OSOBNA zmienna, a nie --gradient — DWA powody, oba zmierzone:
@@ -536,7 +541,7 @@
      ⚠ Każda paleta MUSI ustawić --wskaznik-grad u siebie: wartość z :root
      dziedziczy się wszędzie, więc `var(--wskaznik-grad, var(--gradient))`
      dałoby pozostałym paletom grafit z :root zamiast ich własnych barw. */
-  nav .wskaznik i{width:44%; height:100%; border-radius:2px;
+  nav .wskaznik i{width:44%; height:100%; border-radius:0 0 2px 2px;
     background:var(--wskaznik-grad); background-size:300% 100%;
     animation:plyn 6s linear infinite;}
   /* Ekran sukcesu nie należy do żadnej zakładki — kreska wtedy znika. */

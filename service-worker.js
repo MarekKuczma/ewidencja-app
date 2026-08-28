@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v97';   // 28.08.2026: W-26 — banery tytułów, chip w „Nowym wpisie", płyta powitania + pora dnia + obwódka avatara, Podsumowanie na pulpicie (bliźniaczo do floty), plakietka Beta-tester
+var WERSJA_CACHE = 'ewidencja-v98';   // 28.08.2026: W-29 — kreska aktywnej zakładki w dolnym menu przeniesiona na górę paska (wzorem Asystenta Floty)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
