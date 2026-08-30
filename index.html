@@ -101,12 +101,12 @@
      nadpisania palet — po tamtym bloku. */
 
   /* ---- Pomarańcz (z floty) ----
-     ⚠ Jedyna świadoma różnica wobec floty: --akcent to #c2410c, nie #f97316.
-     Pomarańcz floty ma na białej karcie 2,80:1 (próg 4,5:1) — działa u nich
-     od zawsze, ale nie ma powodu wnosić tej słabości do nowego kodu.
-     #c2410c daje 5,18:1, a nagłówek i gradient zostają identyczne. */
+     W-41 (Marek, 30.08.2026): --akcent wraca do #f97316 jak we flocie — kanon
+     rodziny (KANON-PALET.md) ma JEDNĄ wersję Pomarańczu i jest nią flota.
+     Świadoma decyzja mimo kontrastu 2,80:1 na białej karcie (#c2410c dawał
+     5,18:1) — NIE „poprawiać" tego ponownie. */
   [data-paleta="pomaranczowa"]{
-    --akcent:#c2410c; --akcent-c:#9a3412;
+    --akcent:#f97316; --akcent-c:#9a3412;
     --gradient:linear-gradient(135deg, #fbbf24 0%, #f97316 55%, #dc2626 100%);
     --ikona-grad:linear-gradient(135deg, #9a3412, #f97316);
     --przycisk-cien:rgba(234,88,12,.35);
@@ -243,7 +243,10 @@
        tle jaskrawy koniec robił z paska najjaśniejszy punkt ekranu — ta sama
        poprawka co Z-89 we flocie i Z-90 w burgundzie. */
     --gradient:linear-gradient(135deg, #d97706 0%, #ea580c 55%, #b91c1c 100%);
-    --akcent:#fb923c; --akcent-c:#fdba74;
+    /* W-41: --akcent kanonicznie #f97316 jak we flocie (tam ciemny dziedziczy
+       z :root; tu generalny blok ciemny niesie szarość grafitu, więc paleta
+       musi odzyskać kolor sama — patrz komentarz nad blokami ciemnymi). */
+    --akcent:#f97316; --akcent-c:#fdba74;
     --bg-akcentjasny:#432614; --tekst-akcentjasny:#fb923c;
     --metryka-grad:linear-gradient(135deg, #2c2115 0%, #2b1c1c 100%);
     --stozek:#f97316,#fb923c,#fbbf24,#fb923c,#f97316;
@@ -2554,14 +2557,14 @@ var PALETY = [
   { id:'burgund',  nazwa:'Burgund',  opis:'cieplejsza',    pasek:'#4c0519',
     probka:'linear-gradient(135deg,#4c0519,#9f1239 55%,#e11d48)' },
   // W-31: dwie przeniesione z floty.
-  { id:'pomaranczowa', nazwa:'Pomarańcz', opis:'energiczna', pasek:'#c2410c',
+  { id:'pomaranczowa', nazwa:'Pomarańcz', opis:'energiczna', pasek:'#f97316',
     probka:'linear-gradient(135deg,#fbbf24,#f97316 55%,#dc2626)' },
-  { id:'blekit',   nazwa:'Błękit',   opis:'spokojniejsza', pasek:'#1d4ed8',
+  { id:'blekit',   nazwa:'Błękit',   opis:'spokojniejsza', pasek:'#2563eb',
     probka:'linear-gradient(135deg,#2563eb,#3b82f6 50%,#38bdf8)' },
   // Z-96: „Aurora" przed „Full RGB" — spokojniejsza z dwóch pierwszych
   // specjalnych. `pasek` trafia do <meta name="theme-color">, więc bierzemy
   // najciemniejszy odcień nagłówka, tak jak przy pozostałych paletach.
-  { id:'aurora',   nazwa:'Aurora',   opis:'chłodna poświata', pasek:'#1A1F36',
+  { id:'aurora',   nazwa:'Aurora',   opis:'chłodna poświata', pasek:'#4D96FF',
     probka:'linear-gradient(90deg,#24314A,#4D96FF,#79DFFF,#8A2BE2)', specjalna:true },
   { id:'rgb',      nazwa:'Full RGB', opis:'pełne kolory',  pasek:'#a855f7',
     probka:'linear-gradient(90deg,#ff2d95,#a855f7,#22d3ee,#22c55e,#facc15)', specjalna:true },

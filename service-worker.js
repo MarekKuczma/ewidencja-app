@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v102';   // 29.08.2026: W-31a+b — obwódka avatara Gammy i Herosa odzyskuje własny kolor w ciemnym motywie; stożek przepisany z LUSTRA na PĘTLĘ (znika kreska przechodząca przez awatar); wnętrze avatara palet animowanych bierze gradient poziomy zamiast dwukolorowego skośnego
+var WERSJA_CACHE = 'ewidencja-v103';   // 30.08.2026: W-41 kanon palet — Pomarańcz --akcent wraca do #f97316 jak we flocie (jasny i ciemny), pasek Pomarańczu/Błękitu/Aurory wg kanonu (#f97316/#2563eb/#4D96FF)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
