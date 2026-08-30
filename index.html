@@ -1376,7 +1376,7 @@ var PALETY_APKA = {
   [data-paleta="aurora"] .avatar-pierscien{padding:2.5px; border-radius:50%;
     position:relative; isolation:isolate; flex:none;
     background:conic-gradient(from var(--kat), var(--stozek));
-    animation:obrot 4.5s linear infinite;}
+    animation:obrot 3.5s linear infinite;}  /* W-35: tempo floty (było 4,5 s) */
   [data-paleta="aurora"] .avatar-pierscien::after{content:''; position:absolute;
     inset:0; border-radius:50%;
     background:conic-gradient(from var(--kat), var(--stozek));
@@ -1978,8 +1978,12 @@ var PALETY_APKA = {
       w Kierowcach, czytana od API v46).
    ═══════════════════════════════════════════════════════════════════════ */
 /* .ekran-baner: WE WSPÓLNYM BLOKU KANONU (W-41) */
-.powitanie{gap:14px; border-radius:16px; background:var(--bg-akcentjasny);
-  padding:12px 14px; margin-bottom:18px;}
+/* W-35 (decyzja Marka 30.08.2026, wariant C): panel powitalny na neutralnej
+   karcie z obwódką zamiast jasnego akcentu — identycznie z flotą
+   (margines też zrównany 18px -> 16px). */
+.powitanie{gap:14px; border-radius:16px; background:var(--karta);
+  border:1.5px solid var(--linia);
+  padding:12px 14px; margin-bottom:16px;}
 #dashboardPojazdu #kartaWybranego{margin-bottom:4px;}
 #dashboardPojazdu .metryki{margin-bottom:16px;}
 
@@ -1991,23 +1995,23 @@ var PALETY_APKA = {
   border-radius:50%; background:conic-gradient(from var(--kat), var(--stozek));
   filter:blur(9px); opacity:var(--glow-krycie); z-index:-1;}
 
-/* Plakietka beta — 1:1 z flotą (oddech poświaty). Kolor pulsu z
-   --przycisk-cien (rgba akcentu danej palety) — ewidencja nie ma
-   flotowej zmiennej --beta-poswiata, a ta niesie tę samą informację.
-   W-30 (28.08.2026, zgłoszenie Marka): odznaka przeniesiona z linii
-   powitania (gdzie przy dłuższym „Dobry wieczór, Marek" zawsze się
-   zawijała — kolumna tekstu ma tylko ok. 240px, za mało na obie rzeczy
-   naraz) na dół avatara, wyśrodkowana, dół równo z dołem avatara.
-   Wymaga, żeby #ewBeta siedział w HTML wewnątrz .avatar-pierscien
-   (position:relative), nie w .p1 jak wcześniej. */
+/* Plakietka beta — 1:1 z flotą (W-35, decyzja Marka 30.08.2026):
+   kolor = DRUGI akcent palety (--bg-turkus/--tekst-turkus z kanonu,
+   wariant B), puls = --beta-poswiata (flotowy, wariant A), w Aurorze
+   i Full RGB oddycha szybciej (2,2 s). Historia W-30: odznaka siedzi
+   na dole avatara — #ewBeta MUSI być w HTML wewnątrz .avatar-pierscien
+   (position:relative), nie w .p1. */
 .plakietka-beta{position:absolute; left:50%; bottom:0;
   transform:translateX(-50%); margin:0; font-size:9px; padding:1.5px 5px;
   white-space:nowrap; width:max-content;
+  background:var(--bg-turkus); color:var(--tekst-turkus);
   animation:oddechBeta 2.8s ease-in-out infinite;}
 @keyframes oddechBeta{
   0%,100%{ box-shadow:0 0 0 0 rgba(0,0,0,0); }
-  50%    { box-shadow:0 0 9px 1px var(--przycisk-cien); }
+  50%    { box-shadow:0 0 9px 1px var(--beta-poswiata); }
 }
+[data-paleta="rgb"] .plakietka-beta,
+[data-paleta="aurora"] .plakietka-beta{animation:oddechBeta 2.2s ease-in-out infinite;}
 
 @media (prefers-reduced-motion: reduce){
   .avatar-pierscien, .plakietka-beta{ animation:none; }

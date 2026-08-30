@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v104';   // 30.08.2026: W-41 paczka wyglądu — wspólny blok kanonu palet (CSS 12 palet + silnik JS) identyczny co do znaku z Flotą i Asystentem; zero zmian wyglądu (macierz 100% zgodna)
+var WERSJA_CACHE = 'ewidencja-v105';   // 30.08.2026: W-35 panel powitalny — plakietka Beta w drugim akcencie z pulsem flotowym (szybszym w Aurorze/RGB), tło panelu na karcie z obwódką, pierścień Aurory 3,5 s — 1:1 z flotą
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
