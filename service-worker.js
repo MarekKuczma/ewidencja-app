@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v103';   // 30.08.2026: W-41 kanon palet — Pomarańcz --akcent wraca do #f97316 jak we flocie (jasny i ciemny), pasek Pomarańczu/Błękitu/Aurory wg kanonu (#f97316/#2563eb/#4D96FF)
+var WERSJA_CACHE = 'ewidencja-v104';   // 30.08.2026: W-41 paczka wyglądu — wspólny blok kanonu palet (CSS 12 palet + silnik JS) identyczny co do znaku z Flotą i Asystentem; zero zmian wyglądu (macierz 100% zgodna)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
