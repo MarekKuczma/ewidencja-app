@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v105';   // 30.08.2026: W-35 panel powitalny — plakietka Beta w drugim akcencie z pulsem flotowym (szybszym w Aurorze/RGB), tło panelu na karcie z obwódką, pierścień Aurory 3,5 s — 1:1 z flotą
+var WERSJA_CACHE = 'ewidencja-v106';   // 30.08.2026: W-36 hierarchia przycisków pulpitu — „Zamykam miesiąc" jedyną akcentowaną akcją (i przed „Podsumowaniem"), podgląd i nawigacja na lżejszym trzecim poziomie, „Odepnij" jako czerwony link
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

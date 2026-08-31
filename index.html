@@ -790,6 +790,26 @@ var PALETY_APKA = {
     border-radius:12px; padding:12px; min-height:48px; margin-top:10px;}
   .przycisk-maly{background:var(--karta); color:var(--akcent); border:1.5px solid var(--akcent);
     border-radius:10px; font-size:15px; font-weight:600; padding:8px 14px; min-height:40px;}
+  /* W-36 (30.08.2026, wariant C z makiety): TRZECI i CZWARTY poziom
+     przycisków. Powód: na pulpicie wszystko wyglądało jednakowo, więc
+     „Zamykam miesiąc" (nieodwracalne) nie różniło się od „Podsumowania"
+     (sam podgląd). Teraz waga wizualna odpowiada wadze akcji:
+       .przycisk        akcja główna       gradient palety
+       .przycisk-drugi  ważna akcja        obwódka akcentu
+       .przycisk-trzeci podgląd/nawigacja  obwódka szara, mniejszy
+       .przycisk-link   marginalna/groźna  sam tekst
+     ⚠ Klasy IDENTYCZNE w Ewidencji i we Flocie — zmieniasz tu, zmień i tam. */
+  .przycisk-trzeci{display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; background:var(--karta); color:var(--tekst);
+    border:1.5px solid var(--linia); font-family:inherit; font-size:15px;
+    font-weight:600; border-radius:12px; padding:11px; min-height:46px; margin-top:8px;}
+  .przycisk-trzeci:active{background:var(--bg-akcentjasny);}
+  .przycisk-link{display:flex; align-items:center; justify-content:center; gap:7px;
+    width:100%; background:none; border:0; font-family:inherit; font-size:13.5px;
+    font-weight:600; padding:11px; margin-top:6px; min-height:44px;
+    color:var(--szary);}
+  .przycisk-link.grozny{color:var(--blad);}
+
   .przycisk-czerwony{background:var(--karta); color:var(--blad); border:1.5px solid var(--blad);
     border-radius:10px; font-size:15px; font-weight:600; padding:8px 14px; min-height:40px;}
 
@@ -2185,8 +2205,11 @@ var PALETY_APKA = {
              bliźniaczo do floty (dNowy / dPodsumowanie / dMiesiacBtn).
              Ten sam ekranPodsumowanie co dotąd, tylko wejście i powrót
              idą przez pulpit. -->
-        <button class="przycisk-drugi" id="dPodsumowanie"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-chart"></use></svg> Podsumowanie miesiąca</button>
+        <!-- W-36: „Zamykam miesiąc" idzie PRZED „Podsumowanie" i zostaje
+             jedyną akcentowaną akcją tej sekcji — to ono coś zmienia
+             (nieodwracalnie), podsumowanie tylko pokazuje. -->
         <button class="przycisk-drugi" id="zamykamBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-check"></use></svg> Zamykam miesiąc</button>
+        <button class="przycisk-trzeci" id="dPodsumowanie"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-chart"></use></svg> Podsumowanie miesiąca</button>
 
         <!-- W-12 (07.08.2026) → W-20 (20.08.2026): rozwijane pudełko
              zastąpione oknem <dialog>, a to z kolei wysuwanym arkuszem —
@@ -2195,8 +2218,11 @@ var PALETY_APKA = {
              ujednolicony z flotą (decyzja Marka: kierowcy znają ten proces
              z floty, ma wyglądać i działać tak samo w obu appkach). -->
 
-        <button class="przycisk-drugi" id="zmienPojazdBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-swap"></use></svg> Zmień pojazd</button>
-        <button class="przycisk-drugi" id="odepnijBtn" style="border-color:var(--blad); color:var(--blad);"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-pin"></use></svg> Odepnij ten pojazd</button>
+        <!-- W-36: nawigacja = trzeci poziom; „Odepnij" schodzi do linku —
+             nadal czerwony (var(--blad), więc i w ciemnym motywie), ale nie
+             krzyczy na równi z akcjami, których kierowca używa codziennie. -->
+        <button class="przycisk-trzeci" id="zmienPojazdBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-swap"></use></svg> Zmień pojazd</button>
+        <button class="przycisk-link grozny" id="odepnijBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-pin"></use></svg> Odepnij ten pojazd</button>
       </div>
 
       <!-- Lista jednostek do wyboru -->
