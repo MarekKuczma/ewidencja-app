@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v109';  // 31.08.2026: W-42 komunikaty o liczniku napisane od nowa — kod schodzi spod treści do osobnej linijki („uwaga EW-004", „błąd FL-014"), liczby dostają twarde spacje i pogrubienie, daty idą po polsku, a każdy komunikat zaczyna się od „Zapisano." albo „Nie zapisano"
+var WERSJA_CACHE = 'ewidencja-v110';  // 31.08.2026: W-43 nagłówek zamkniętego miesiąca — strzałka dostaje podpis „szczegóły/zwiń" (jak przy wpisach), plakietka skrócona do „zamknięty", a po rozwinięciu dochodzi zdanie „możesz tylko przeglądać wpisy"
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
