@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v107';   // 30.08.2026: W-38 akcje „odepnij" znów wyglądają jak przyciski — duży na pulpicie dostaje neutralną ramkę z czerwonym tekstem, mała pinezka w liście pojazdów ramkę + czerwień i cel dotyku 44 px
+var WERSJA_CACHE = 'ewidencja-v108';  // 31.08.2026: W-39 ekran po „Zamykam miesiąc" — głównym przyciskiem jest teraz „Ekran główny", „Dodaj kolejny wpis" schodzi do drugiego rzędu, pod spodem wskazówka o ponownym zgłoszeniu
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

@@ -1104,6 +1104,11 @@ var PALETY_APKA = {
   /* W-07 — z floty: numer wpisu pod tekstem, i dwa przyciski obok siebie
      w drugim rzędzie ekranu sukcesu. */
   .sukces-id{text-align:center; color:var(--szary); font-size:15px; margin:0 0 8px;}
+  /* W-39 (31.08.2026): wskazówka pod przyciskami ekranu sukcesu. Pokazuje
+     się TYLKO po zgłoszeniu miesiąca — mówi, że to nie jest koniec świata
+     i spóźniony wpis nadal można dopisać. */
+  .sukces-wsk{text-align:center; color:var(--szary); font-size:12.5px;
+    line-height:1.45; margin:12px 4px 0;}
   .dwa{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
   .dwa .przycisk-drugi{margin-top:0;}
   .overlay-zapis{position:fixed; inset:0; background:rgba(15,17,21,.55);
@@ -2410,6 +2415,7 @@ var PALETY_APKA = {
         <button type="button" class="przycisk-drugi" id="sWpisy"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-clip"></use></svg> Moje wpisy</button>
         <button type="button" class="przycisk-drugi" id="sStart"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-home"></use></svg> Ekran główny</button>
       </div>
+      <div class="sukces-wsk ukryte" id="sWskazowka">Jeśli dojdzie coś jeszcze, dopisz to i zgłoś miesiąc ponownie.</div>
     </div>
   </section>
 
@@ -4801,6 +4807,9 @@ function pokazSukces(odp){
   }
 
   sukcesPoEdycji = !!STAN.edytowanyId;
+  sukcesPoZgloszeniu = false;                 // W-39: to zwykły zapis wpisu
+  el('sWskazowka').classList.add('ukryte');
+  el('sStart').innerHTML = ikonaHTML_('ic-home') + ' Ekran główny';
   // E-20: gość nie ma ekranu głównego — przycisk „Ekran główny" znika.
   el('sStart').style.display = STAN.gosc ? 'none' : '';
   el('sKolejny').innerHTML = sukcesPoEdycji ? ikonaHTML_('ic-clip') + ' Moje wpisy' : ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis'; // Z-82: innerHTML — wstawiamy element
@@ -4814,14 +4823,38 @@ function pokazSukces(odp){
    z floty — tamtejsza funkcja jest generyczna, tutejsza `pokazSukces(odp)`
    jest zbudowana wokół odpowiedzi na zapis, więc zamiast ją przerabiać
    (i ryzykować regresję w najczęstszej ścieżce appki) dokładamy wariant obok. */
+/* W-39 (31.08.2026, wariant B z makiety): TRZECI tryb ekranu sukcesu.
+   Po zgłoszeniu miesiąca zadanie jest DOMKNIĘTE, więc główny przycisk
+   prowadzi na ekran główny, a „Dodaj kolejny wpis" schodzi do drugiego
+   rzędu (nie znika — zgłoszenie miesiąca jest odwracalne, pulpit pokazuje
+   wtedy „Miesiąc zgłoszony — zgłoś ponownie"). Zgłoszenie Marka 31.08:
+   „głównym przyciskiem jest «Dodaj kolejny wpis», co chyba nie jest
+   w 100% logiczne". Klasy i identyfikatory bez zmian — zamieniamy tylko
+   role, żeby nie ruszać siatki `.dwa`. */
+var sukcesPoZgloszeniu = false;
 function pokazSukcesProsty_(tekst, podtekst){
   el('sTekst').textContent = tekst;
   el('sId').textContent = podtekst || '';
   el('sOstrzezenia').classList.add('ukryte');
   el('sOstrzezenia').innerHTML = '';
-  sukcesPoEdycji = false;   // przyciski w rolach jak po nowym wpisie
-  el('sKolejny').innerHTML = ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis';
+  sukcesPoEdycji = false;
+  sukcesPoZgloszeniu = true;
+  el('sKolejny').innerHTML = ikonaHTML_('ic-home') + ' Ekran główny';
   el('sWpisy').innerHTML = ikonaHTML_('ic-clip') + ' Moje wpisy';
+  el('sStart').innerHTML = ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis';
+  /* Gość nie ma ekranu głównego (E-20) i normalnie tu nie trafia —
+     „Zamykam miesiąc" stoi na pulpicie, którego gość nie widzi. Gdyby
+     jednak trafił, wracamy do starego układu, żeby nie został z martwym
+     przyciskiem. */
+  if (STAN.gosc){
+    sukcesPoZgloszeniu = false;
+    el('sKolejny').innerHTML = ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis';
+    el('sStart').innerHTML = ikonaHTML_('ic-home') + ' Ekran główny';
+    el('sStart').style.display = 'none';
+  } else {
+    el('sStart').style.display = '';
+  }
+  el('sWskazowka').classList.toggle('ukryte', !sukcesPoZgloszeniu);
   pokazEkran('ekranSukces');
 }
 
@@ -5590,14 +5623,19 @@ el('wpisAnulujEdycjeBtn').onclick = function(){
 // dodania kolejnego (częste przy kilku tankowaniach dziennie); po poprawce
 // naturalnie prowadzi z powrotem do listy, gdzie widać efekt.
 el('sKolejny').onclick = function(){
+  if (sukcesPoZgloszeniu) { pokazEkran('ekranStart'); return; }   // W-39
   if (sukcesPoEdycji) { otworzWpisy(STAN.aktywna); return; }
   otworzWpis(STAN.aktywna);
 };
 el('sWpisy').onclick = function(){
+  if (sukcesPoZgloszeniu) { otworzWpisy(STAN.aktywna); return; }  // W-39
   if (sukcesPoEdycji) { otworzWpis(STAN.aktywna); return; }
   otworzWpisy(STAN.aktywna);
 };
-el('sStart').onclick = function(){ pokazEkran('ekranStart'); };
+el('sStart').onclick = function(){
+  if (sukcesPoZgloszeniu) { otworzWpis(STAN.aktywna); return; }   // W-39
+  pokazEkran('ekranStart');
+};
 /* ===================== E-20/E-21: TRYB GOŚCIA (QR) — 20.08.2026 =====================
    Kierowca BEZ konta po zeskanowaniu naklejki maszyny. Zasady (komplet
    decyzji Marka z 20.08, opis w planie prac): PIN z Ustawień jako jedyna
