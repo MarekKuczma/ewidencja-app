@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v106';   // 30.08.2026: W-36 hierarchia przycisków pulpitu — „Zamykam miesiąc" jedyną akcentowaną akcją (i przed „Podsumowaniem"), podgląd i nawigacja na lżejszym trzecim poziomie, „Odepnij" jako czerwony link
+var WERSJA_CACHE = 'ewidencja-v107';   // 30.08.2026: W-38 akcje „odepnij" znów wyglądają jak przyciski — duży na pulpicie dostaje neutralną ramkę z czerwonym tekstem, mała pinezka w liście pojazdów ramkę + czerwień i cel dotyku 44 px
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

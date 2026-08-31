@@ -808,7 +808,13 @@ var PALETY_APKA = {
     width:100%; background:none; border:0; font-family:inherit; font-size:13.5px;
     font-weight:600; padding:11px; margin-top:6px; min-height:44px;
     color:var(--szary);}
-  .przycisk-link.grozny{color:var(--blad);}
+  /* W-38 (Marek, 30.08.2026): sam tekst zgubił informację „to przycisk"
+     („ikonka pinezki miała fajną ramkę a teraz jej nie ma"). Wariant D
+     z makiety: ramka NEUTRALNA jak przy „Zmień pojazd" (więc akcja nie
+     krzyczy), a czerwień zostaje na tekście i ikonie jako ostrzeżenie. */
+  .przycisk-link.grozny{color:var(--blad); background:var(--karta);
+    border:1.5px solid var(--linia); border-radius:12px;
+    font-size:15px; padding:11px; min-height:46px; margin-top:8px;}
 
   .przycisk-czerwony{background:var(--karta); color:var(--blad); border:1.5px solid var(--blad);
     border-radius:10px; font-size:15px; font-weight:600; padding:8px 14px; min-height:40px;}
@@ -1847,15 +1853,32 @@ var PALETY_APKA = {
 #listaJednostek .jedn.uwaga .linia2 { color: var(--tekst-blad); font-weight: 600; }
 #listaJednostek .jedn.uwaga::after { border-color: var(--tekst-blad); opacity: .9; }
 
-/* ── „odepnij": cichy, przy strzałce ──────────────────────────────── */
+/* ── „odepnij": pinezka przy strzałce ─────────────────────────────────
+   W-38 (Marek, 30.08.2026): była szara, wyblakła (krycie .45) i bez ramki
+   — „straciło to na informacji", nie było widać, że to akcja. Wariant B
+   z makiety, ten sam język co duży przycisk na pulpicie: RAMKA mówi
+   „to przycisk", CZERWIEŃ mówi „uważaj, nieodwracalne".
+   ⚠ Cel dotyku podniesiony 28 px → 44 px (zalecane minimum na telefonie);
+   sama ramka zostaje 34 px, więc wiersz wygląda tak samo, ale palec trafia. */
 #listaJednostek .jedn .przycisk-czerwony {
-  position: absolute; right: 34px; top: 50%; transform: translateY(-50%);
-  background: transparent; border-color: transparent; color: var(--szary);
-  padding: 6px; min-height: 0; height: auto; opacity: .45;
+  position: absolute; right: 31px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; padding: 0; min-height: 0;
+  background: none; border: 0; color: var(--blad); opacity: 1;
+  display: flex; align-items: center; justify-content: center;
 }
-#listaJednostek .jedn .przycisk-czerwony:hover,
-#listaJednostek .jedn .przycisk-czerwony:active { opacity: 1; color: var(--blad); }
-#listaJednostek .jedn .przycisk-czerwony svg { width: 16px; height: 16px; }
+/* Widoczna ramka to PSEUDOELEMENT — dzięki temu klikalne pole ma 44 px,
+   a rysowany kwadracik 34 px (inaczej wiersz musiałby urosnąć). */
+#listaJednostek .jedn .przycisk-czerwony::before {
+  content: ''; position: absolute; width: 34px; height: 34px;
+  border-radius: 10px; border: 1.5px solid var(--linia);
+  background: var(--karta); z-index: 0;
+}
+#listaJednostek .jedn .przycisk-czerwony:active::before {
+  border-color: var(--blad); background: var(--bg-blad);
+}
+#listaJednostek .jedn .przycisk-czerwony svg {
+  width: 16px; height: 16px; position: relative; z-index: 1;
+}
 
 /* ── pulpit: jedna płyta, ta sama ikona ───────────────────────────── */
 #dashboardPojazdu #kartaWybranego {
@@ -1883,7 +1906,9 @@ var PALETY_APKA = {
 
 /* ⚠ Wiersz z pinezką („odepnij") potrzebuje szerszego prawego marginesu —
    na renderze tekst „od 14 dni" wchodził pod pinezkę. Mierzone, nie na oko. */
-#listaJednostek .jedn:has(.przycisk-czerwony) { padding-right: 60px; }
+/* W-38: pinezka ma teraz 44 px pola dotyku — wiersz potrzebuje więcej
+   miejsca po prawej, żeby tekst pod nią nie wchodził. */
+#listaJednostek .jedn:has(.przycisk-czerwony) { padding-right: 84px; }
 
 
 /* ═══════════════════════════════════════════════════════════════════════
