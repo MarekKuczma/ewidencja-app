@@ -748,17 +748,23 @@ var PALETY_APKA = {
   /* E-16: plakietka „do poprawy" na wpisie, którego tankowanie kłóci się ze
      stanem porannym następnego dnia. Kolory błędu, bo to realnie liczba do
      naprawienia, a nie sugestia. */
+  /* W-42 (31.08.2026): kod komunikatu — mała szara linijka POD treścią.
+     Marek: „może warto żeby kierowca widział numer errora, jak zrobi screen
+     to ja będę wiedział". Nigdy przed zdaniem: to przypis, nie nagłówek. */
+  .kod-komunikatu{display:block; margin-top:7px; padding-top:6px;
+    border-top:1px solid currentColor; font-size:11.5px; font-weight:400;
+    opacity:.65; letter-spacing:.02em;}
   .wpis-poprawa{margin-top:8px; padding:8px 10px; border-radius:8px;
     background:var(--bg-blad); border:1px solid var(--blad); color:var(--tekst-blad);
     font-size:13px; line-height:1.35;}
-  .wpis-poprawa b{display:block; margin-bottom:2px;}
+  .wpis-poprawa > b:first-child{display:block; margin-bottom:2px;}
   /* E-24 (02.08.2026): ten sam wzorzec co .wpis-poprawa, ale OSTRZEŻENIE
      („sprawdź, czy to nie pomyłka"), nie pewny błąd — stąd pomarańczowa
      paleta „uwaga" (współdzielona z resztą appki), nie czerwona „błąd". */
   .wpis-uwaga{margin-top:8px; padding:8px 10px; border-radius:8px;
     background:var(--bg-uwaga); border:1px solid var(--brzeg-uwaga); color:var(--tekst-uwaga);
     font-size:13px; line-height:1.35;}
-  .wpis-uwaga b{display:block; margin-bottom:2px;}
+  .wpis-uwaga > b:first-child{display:block; margin-bottom:2px;}
   /* E-22 (02.08.2026): siatka checkboxów-chipów, wariant zaakceptowany przez
      Marka na mockupie. 2 kolumny — przy dłuższych nazwach kategorii
      (np. „Konserwacja ślizgów") tekst zawija się na dwie linie w chipie,
@@ -2621,6 +2627,13 @@ function animujWejscie_(idEkranu){
   void e.offsetWidth;
   e.classList.add('wchodzi');
 }
+/* W-42: ewidencja oddaje kod i treść osobno (odp.blad / odp.wiadomosc),
+   a flota jednym stringiem „E014: ...". Sklejamy do wspólnego kształtu, żeby
+   komunikatHTML_ było w obu appkach identyczne. */
+function zKodem_(odp){
+  if (!odp || !odp.wiadomosc) return '';
+  return (odp.blad ? odp.blad + ': ' : '') + odp.wiadomosc;
+}
 function komunikat(idEl, tekst, typ){
   var e = el(idEl);
   e.className = 'komunikat ' + (typ || 'ok');
@@ -3669,6 +3682,96 @@ function rysujBadgeTerminow_(){
    w obu appkach IDENTYCZNY i da się go przenosić bez poprawek. */
 function bezpiecznyTekstAK_(t){ return bezpiecznyTekst(String(t == null ? '' : t)); }
 
+/* Jedyna różnica między appkami w bloku niżej. */
+var KOMUNIKATY_APKA = { prefiks: 'EW' };
+/* ═══ KANON KOMUNIKATÓW RODZINY (W-42, 31.08.2026) ══════════════════════════
+   Jeden sposób pokazywania komunikatów z serwera w OBU appkach. Blok jest
+   IDENTYCZNY CO DO ZNAKU w ewidencji i we flocie — jedyna różnica siedzi
+   w `KOMUNIKATY_APKA` tuż wyżej (prefiks EW / FL).
+
+   Skąd się wziął (zgłoszenie Marka 31.08.2026): kierowca dostał komunikat
+   o liczniku, którego nie zrozumiał. Po przejrzeniu wszystkich jedenastu
+   tekstów wyszły cztery osobne problemy:
+     1. ewidencja wypisywała surowe „W004: …" — kod techniczny PRZED treścią;
+     2. nie było widać, CZY wpis się zapisał (ostrzeżenie po zapisie wyglądało
+        tak samo jak blokada);
+     3. liczby szły bez spacji i bez wyróżnienia („55236" zamiast 55 236 km);
+     4. we flocie najważniejsze liczby siedziały w [nawiasie kwadratowym].
+
+   Co robi ten blok:
+     - odcina kod od treści i pokazuje go OSOBNO, pod spodem, po ludzku
+       („uwaga EW-007", „błąd FL-014") — żeby kierowca mógł zrobić zdjęcie
+       ekranu, a Marek od razu wiedział, co i z której appki;
+     - grupuje cyfry twardą spacją i pogrubia liczby, daty oraz polecenia.
+
+   Pogrubienia liczymy TUTAJ, na już zescape'owanym tekście — serwer wysyła
+   czysty tekst, bez znaczników. Dzięki temu starsza (zacacheowana) wersja PWA
+   pokaże po prostu zwykłe zdanie, a nie gwiazdki czy inne śmieci. */
+
+var NBSP_KOMUNIKATU = String.fromCharCode(160);
+/* Znacznik schowka celowo zbudowany z '<' i '>': wejście jest JUŻ
+   zescape'owane, więc surowych nawiasów kątowych nie ma tam prawa być. */
+var SCHOWEK_KOMUNIKATU = /<@(\d+)@>/g;
+var CYFRY_KOMUNIKATU = /\b(\d[\d\s]*\d|\d)\s?(km|mth|L)\b/g;
+var DATY_KOMUNIKATU = /\b(\d{2}\.\d{2}(?:\.\d{4})?)\b/g;
+var KOD_KOMUNIKATU = /^\s*([EW])(\d{3})\s*:\s*/;
+/* Polecenia pogrubiamy Z LISTY, nie regexem po czasownikach: lista jest krótka
+   (sami piszemy te teksty), a gdy któreś zdanie się zmieni, najgorsze co się
+   stanie to brak pogrubienia — nigdy rozjechany HTML. */
+var POLECENIA_KOMUNIKATU = [
+  'popraw wpis w „Moje wpisy”',
+  'sprawdź wpis w „Moje wpisy”',
+  'sprawdź i popraw odpowiednie wpisy',
+  'popraw ten wpis albo poprzedni',
+  'Popraw liczbę i zapisz jeszcze raz.',
+  'Popraw jedną z tych liczb.'
+];
+
+function rozbijKomunikat_(s){
+  var t = String(s == null ? '' : s);
+  var m = t.match(KOD_KOMUNIKATU);
+  return m ? { waga: m[1], numer: m[2], tekst: t.slice(m[0].length) }
+           : { waga: '', numer: '', tekst: t };
+}
+/* 'W','007' -> 'uwaga EW-007'. Litera niesie wagę: W = zapisane, E = nie. */
+function etykietaKodu_(waga, numer){
+  if (!numer) return '';
+  return (waga === 'W' ? 'uwaga ' : 'błąd ') + KOMUNIKATY_APKA.prefiks + '-' + numer;
+}
+/* 55236 -> 55 236, twardą spacją: liczba nie ma się łamać na końcu linii. */
+function grupujCyfry_(cyfry){
+  var s = String(cyfry).replace(/\s/g, '');
+  return s.length < 4 ? s : s.replace(/\B(?=(\d{3})+$)/g, NBSP_KOMUNIKATU);
+}
+/* Wejście MUSI być już zescape'owane. Gotowe kawałki <b> chowamy pod znacznik,
+   żeby kolejne podmiany nie weszły w środek wstawionego HTML-a (inaczej „2026"
+   z daty dostałoby spację jako osobna liczba). */
+function wyroznijLiczby_(bezpieczny){
+  var schowek = [];
+  function schowaj(html){ schowek.push(html); return '<@' + (schowek.length - 1) + '@>'; }
+  var t = String(bezpieczny == null ? '' : bezpieczny);
+  t = t.replace(DATY_KOMUNIKATU, function(_, d){ return schowaj('<b>' + d + '</b>'); });
+  t = t.replace(CYFRY_KOMUNIKATU, function(_, n, j){
+    return schowaj('<b>' + grupujCyfry_(n) + NBSP_KOMUNIKATU + j + '</b>');
+  });
+  t = t.replace(/^(Nie zapisano|Zapisano\.)/, function(w){ return schowaj('<b>' + w + '</b>'); });
+  for (var i = 0; i < POLECENIA_KOMUNIKATU.length; i++){
+    var p = POLECENIA_KOMUNIKATU[i], k = t.indexOf(p);
+    if (k >= 0) t = t.slice(0, k) + schowaj('<b>' + p + '</b>') + t.slice(k + p.length);
+  }
+  return t.replace(SCHOWEK_KOMUNIKATU, function(_, i){ return schowek[Number(i)]; });
+}
+/* Cały komunikat gotowy do innerHTML: treść + (jeśli był kod) szara linijka.
+   `opcje.bezKodu` — dla tekstów, które nie przyszły po żadnej akcji (plakietka
+   „Do poprawy" przy wpisie): wpis jest na ekranie, nie ma czego zgłaszać. */
+function komunikatHTML_(surowy, opcje){
+  var r = rozbijKomunikat_(surowy);
+  var html = wyroznijLiczby_(bezpiecznyTekstAK_(r.tekst));
+  var kod = (opcje && opcje.bezKodu) ? '' : etykietaKodu_(r.waga, r.numer);
+  return html + (kod ? '<span class="kod-komunikatu">' + kod + '</span>' : '');
+}
+/* KONIEC WSPÓLNEGO BLOKU KOMUNIKATÓW */
+
 function pokazArkuszKom_(o){
   var a = el('arkuszKom');
   a.className = 'arkusz-kom ' + (o.typ || 'uwaga');
@@ -4672,7 +4775,7 @@ el('zapiszBtn').onclick = function(){
     payload.idWpisu = STAN.edytowanyId;
     wolajAPI('edytujWpis', payload).then(function(odp){
       schowajOverlay();
-      if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
+      if (!odp.ok) { komunikat('wpisKomunikat', komunikatHTML_(zKodem_(odp) || 'Nie udało się zapisać.'), 'blad'); return; }
       pokazSukces(odp);
       odswiezStart();   // przy poprawce stan jednostki może się zmienić dowolnie
       // Z-80: poprawka nie idzie przez `zastosujStanPo_`, więc cache historii
@@ -4699,7 +4802,7 @@ el('zapiszBtn').onclick = function(){
 
   wolajAPI('nowyWpis', payload).then(function(odp){
     schowajOverlay();
-    if (!odp.ok) { komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad'); return; }
+    if (!odp.ok) { komunikat('wpisKomunikat', komunikatHTML_(zKodem_(odp) || 'Nie udało się zapisać.'), 'blad'); return; }
     // D81: nie wołamy `status` po zapisie — serwer oddał już nowy stan
     // jednostki. Trzy żądania jedno po drugim to było kilka sekund czekania.
     zastosujStanPo_(odp.stanPo);
@@ -4799,8 +4902,13 @@ function pokazSukces(odp){
   var so = el('sOstrzezenia');
   if (odp.ostrzezenia && odp.ostrzezenia.length) {
     so.classList.remove('ukryte');
-    so.innerHTML = '<b>Zwróć uwagę:</b><ul><li>' +
-      odp.ostrzezenia.map(bezpiecznyTekst).join('</li><li>') + '</li></ul>';
+    /* W-42: każde ostrzeżenie przez komunikatHTML_ — kod schodzi pod treść,
+       liczby dostają twarde spacje i pogrubienie. Nagłówek „Zwróć uwagę"
+       zniknął: nowe teksty zaczynają się od „Zapisano.", więc mówiły to
+       samo dwa razy, a przy okazji brzmiało to jak nagana. */
+    so.innerHTML = '<ul><li>' +
+      odp.ostrzezenia.map(function(o){ return komunikatHTML_(o); }).join('</li><li>') +
+      '</li></ul>';
   } else {
     so.classList.add('ukryte');
     so.innerHTML = '';
@@ -5256,7 +5364,7 @@ function rysujWpisy(){
           // plakietka znika sama, gdy wpis zostanie poprawiony.
           (w.doPoprawy
             ? '<div class="wpis-poprawa"><b>' + ikonaHTML_('ic-warn') + ' Do poprawy</b>' +
-              bezpiecznyTekst(w.doPoprawy) + '</div>'
+              komunikatHTML_(w.doPoprawy, { bezKodu: true }) + '</div>'
             : '') +
           // E-24 (02.08.2026): cofnięty licznik względem poprzedniego wpisu —
           // ostrzeżenie („sprawdź, czy to nie pomyłka"), nie pewny błąd jak
@@ -5265,7 +5373,7 @@ function rysujWpisy(){
           // teraz też widoczny kierowcy — nie tylko w arkuszu.
           (w.cofniety
             ? '<div class="wpis-uwaga"><b>' + ikonaHTML_('ic-warn') + ' Wymaga uwagi</b>' +
-              bezpiecznyTekst(w.cofniety) + '</div>'
+              komunikatHTML_(w.cofniety, { bezKodu: true }) + '</div>'
             : '') +
           // E-20/E-21: autor + osoba z „Jeździł ktoś inny?" (doklejona przez
           // „ + ", jak na wydruku); wpis gościa (autor „Aplikacja") pokazuje
@@ -5816,7 +5924,7 @@ function zapiszGoscia_(payload, imieGoscia){
     if (!odp.ok) {
       if (odp.blad === 'E008' && odp.istniejacy) { pokazKolizjeGoscia_(odp.istniejacy); return; }
       if (odp.blad === 'E030' || odp.blad === 'E031' || odp.blad === 'E032') { obsluzBladGoscia_(odp); return; }
-      komunikat('wpisKomunikat', bezpiecznyTekst(odp.wiadomosc || 'Nie udało się zapisać.'), 'blad');
+      komunikat('wpisKomunikat', komunikatHTML_(zKodem_(odp) || 'Nie udało się zapisać.'), 'blad');
       el('wpisKomunikat').scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }

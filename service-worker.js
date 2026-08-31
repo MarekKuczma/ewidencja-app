@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v108';  // 31.08.2026: W-39 ekran po „Zamykam miesiąc" — głównym przyciskiem jest teraz „Ekran główny", „Dodaj kolejny wpis" schodzi do drugiego rzędu, pod spodem wskazówka o ponownym zgłoszeniu
+var WERSJA_CACHE = 'ewidencja-v109';  // 31.08.2026: W-42 komunikaty o liczniku napisane od nowa — kod schodzi spod treści do osobnej linijki („uwaga EW-004", „błąd FL-014"), liczby dostają twarde spacje i pogrubienie, daty idą po polsku, a każdy komunikat zaczyna się od „Zapisano." albo „Nie zapisano"
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
