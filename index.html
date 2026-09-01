@@ -1450,6 +1450,101 @@ var PALETY_APKA = {
     50%    { box-shadow:0 0 0 5px rgba(217,48,37,.26), 0 0 22px rgba(217,48,37,.55); }
   }
 
+
+  /* ═══ WYBIERAK RODZINY (Z-8b, 01.09.2026) ═══════════════════════════════
+     Pełnoekranowy panel wyboru zamiast systemowego bębenka. Wariant W1
+     wybrany przez Marka — ten sam ruch, który Asystent ma od Z-8 (30.08).
+
+     Po co: bębenek nie pozwala szukać, ucina długie nazwy i nie ma drugiej
+     linijki, więc „Develon DX170 (1)" i „(2)" wyglądają identycznie — VIN-u
+     nie ma gdzie pokazać. Marek 01.09: „ja bym chciał zrobić wszystkie
+     dropdown które mamy w ewidencji, bo psuje to spójność aplikacji" —
+     świadomie ponad moim argumentem, że przy krótkiej liście bębenek
+     wystarczy. Spójność wygrywa z rozmiarem listy.
+
+     ⚠ Wybór miesiąca w „Zamykam miesiąc" (1–3 pozycje w wysuwanym arkuszu)
+     ZOSTAJE systemowy — decyzja Marka. Pełny ekran nad arkuszem to bałagan
+     warstw, a spójność znaczy „to samo dla tego samego RODZAJU wyboru".
+
+     Blok pisany tak, żeby dał się przenieść do Floty i Asystenta co do znaku. */
+  .ukryty-select{position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;}
+  .pole-wyb{width:100%; display:flex; align-items:center; gap:11px;
+    border:1px solid var(--input-brzeg); background:var(--input-tlo); color:var(--tekst);
+    border-radius:12px; padding:11px 12px; font:inherit; font-size:15px;
+    text-align:left; cursor:pointer; min-height:54px;}
+  .pole-wyb .ik{width:34px; height:34px; border-radius:9px; flex:none; display:flex;
+    align-items:center; justify-content:center; background:var(--bg-akcentjasny);}
+  .pole-wyb .ik .ikona{width:19px; height:19px; stroke:var(--tekst-akcentjasny);}
+  .pole-wyb .txt{min-width:0; flex:1;}
+  .pole-wyb .txt .a{font-weight:600; line-height:1.25; overflow-wrap:anywhere;}
+  .pole-wyb .txt .b{font-size:11.5px; color:var(--szary); margin-top:3px; display:block;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pole-wyb .txt .b.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px;}
+  .pole-wyb .strz{color:var(--szary); flex:none; font-size:13px;}
+  .pole-wyb.pusty .a{color:var(--podpowiedz); font-weight:500;}
+  /* Błąd walidacji maluje `.pole-blad` na pudełku pola. Reguły bazowe celują
+     w input/select/textarea — dokładamy przycisk, zamiast przepisywać pięć
+     selektorów w trzech miejscach pliku. */
+  .pole-blad .pole-wyb{border-color:var(--blad);
+    box-shadow:0 0 0 3px rgba(217,48,37,.14), 0 0 12px rgba(217,48,37,.30);}
+  .pole-blad-puls .pole-wyb{animation:pulsBledu .9s ease-in-out 2;}
+  @media (prefers-reduced-motion: reduce){ .pole-blad-puls .pole-wyb{animation:none;} }
+
+  /* panel na całym ekranie — nad dolną nawigacją, stąd wysoki z-index */
+  .wyb{position:fixed; inset:0; background:var(--tlo); z-index:64; display:none;
+    flex-direction:column;}
+  .wyb.on{display:flex;}
+  .wyb .wyb-top{padding:11px 12px; border-bottom:1px solid var(--linia);
+    background:var(--karta); display:flex; flex-direction:column; gap:9px;
+    padding-top:calc(11px + env(safe-area-inset-top));}
+  .wyb .wyb-rz{display:flex; gap:8px; align-items:center;}
+  .wyb .wyb-rz h2{margin:0; font-size:16px; font-weight:700; flex:1; min-width:0;}
+  .wyb input[type=search]{flex:1; border:1px solid var(--linia);
+    background:var(--input-tlo); color:var(--tekst); border-radius:10px;
+    padding:11px 12px; font:inherit; font-size:16px; min-width:0;}
+  .wyb .wyb-zamknij{border:0; background:none; color:var(--akcent); font:inherit;
+    font-weight:700; font-size:14px; cursor:pointer; padding:10px 4px; min-height:44px;}
+  /* min-width:0 jest KONIECZNE: bez tego pasek chipów (szerszy niż ekran)
+     rozpycha całą kolumnę i „Anuluj" ucieka poza prawą krawędź. */
+  .wyb .wyb-chipy{display:flex; gap:6px; overflow-x:auto; padding:2px 0;
+    scrollbar-width:none; min-width:0; max-width:100%;}
+  .wyb .wyb-chipy::-webkit-scrollbar{display:none;}
+  .wyb .wyb-chip{white-space:nowrap; min-height:34px; padding:7px 12px; font-size:11.5px;
+    border-radius:999px; border:1px solid var(--linia); color:var(--szary);
+    background:transparent; display:flex; align-items:center; font:inherit;
+    font-size:11.5px; cursor:pointer;}
+  .wyb .wyb-chip.on{background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);
+    border-color:transparent; font-weight:700;}
+  .wyb .wyb-lista{flex:1; overflow-y:auto;
+    padding:4px 12px calc(12px + env(safe-area-inset-bottom));}
+  .wyb .wyb-grupa{font-size:10.5px; text-transform:uppercase; letter-spacing:.7px;
+    color:var(--szary); font-weight:700; margin:14px 2px 5px;}
+  .wyb .wyb-grupa:first-child{margin-top:6px;}
+  .wyb .wyb-nic{color:var(--szary); font-size:13px; text-align:center; padding:26px 10px;}
+  /* wiersz: kolor rodzaju jako kreska z lewej, model/VIN do prawej.
+     Paleta rodzajów ta sama co w Panelu Floty, Spisie i na QR (v93). */
+  .crow{display:flex; align-items:baseline; gap:9px; padding:11px 4px 11px 11px;
+    border-top:1px solid var(--linia); cursor:pointer; position:relative; width:100%;
+    text-align:left; font:inherit; color:inherit; background:none; border-left:0;
+    border-right:0; border-bottom:0; min-height:48px;}
+  .crow:first-of-type{border-top:0;}
+  .crow::before{content:''; position:absolute; left:0; top:11px; bottom:11px; width:3px;
+    border-radius:2px; background:#636E72;}
+  /* lista bez rodzajów (budowy) — kreska nic by nie znaczyła, więc jej nie ma */
+  .crow.k-inne::before{display:none;}
+  .crow.k-kop::before{background:#6AB04C}   .crow.k-osob::before{background:#F0932B}
+  .crow.k-dost::before{background:#0984E3}  .crow.k-hds::before{background:#9B59B6}
+  .crow.k-bud::before{background:#3FA9B4}   .crow.k-inne::before{background:#636E72}
+  .crow .kl{font-weight:600; font-size:15px; min-width:0; overflow-wrap:anywhere;}
+  .crow .model{font-size:11.5px; color:var(--szary); margin-left:auto; text-align:right;
+    max-width:50%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .crow .model.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px;}
+  .crow .ptak{margin-left:auto; color:var(--akcent); font-weight:800; font-size:15px;
+    flex:none;}
+  .crow .model + .ptak{margin-left:8px;}
+  .crow:focus-visible{outline:2px solid var(--akcent-moc); outline-offset:-2px;}
+
   @media (prefers-reduced-motion: reduce){
     .przycisk-glow, .przycisk-glow::after, .pasek-glow, .badge-glow,   /* E-35 */
     .pole-blad-puls input, .pole-blad-puls select, .pole-blad-puls textarea,
@@ -2578,6 +2673,9 @@ var PALETY_APKA = {
 <!-- E-35 (19.08.2026): wysuwany arkusz komunikatu (alarm terminów /
      jednorazowe żółte przypomnienie). Świadomie BEZ zamykania kliknięciem
      w tło — kierowca ma kliknąć przycisk. Wypełniany przez pokazArkuszKom_. -->
+<!-- Z-8b: JEDEN panel obsługuje wszystkie wybieraki w appce — treść buduje
+     `otworzWybierak_` z zawartości schowanego <select>. -->
+<div class="wyb" id="wybierak" role="dialog" aria-modal="true" aria-label="Wybierz z listy"></div>
 <div class="zaslona zaslona-kom" id="zaslonaKom"></div>
 <div class="arkusz-kom" id="arkuszKom" role="alertdialog" aria-modal="true"></div>
 <script>
@@ -4177,6 +4275,7 @@ function rysujSlowniki(dodatkowa){
       return '<option value="' + bezpiecznyTekst(b) + '">' + bezpiecznyTekst(b) + '</option>';
     }).join('');
   if (wybrana) el('poleBudowa').value = wybrana;
+  odswiezPoleWyb_('poleBudowa');   // Z-8b — `change` nie leci przy zmianie z kodu
 }
 
 /**
@@ -4661,6 +4760,7 @@ function otworzWpis(j, wpisDoEdycji){
     el('poleLicznik').value = wpisDoEdycji.licznik || '';
     rysujSlowniki(wpisDoEdycji.budowa || '');
     el('poleBudowa').value = wpisDoEdycji.budowa || '';
+    odswiezPoleWyb_('poleBudowa');   // Z-8b
     rysujSerwisKategorie_(wpisDoEdycji.serwisKategoria || '');
     el('poleUwagi').value = wpisDoEdycji.uwagi || '';
     rozbijTankowanie(wpisDoEdycji.tankowanie);
@@ -4670,6 +4770,7 @@ function otworzWpis(j, wpisDoEdycji){
     el('poleLicznik').value = '';
     rysujSlowniki(j.ostatniaBudowa || '');   // D12 — podpowiedź ostatniej budowy
     el('poleBudowa').value = j.ostatniaBudowa || '';
+    odswiezPoleWyb_('poleBudowa');   // Z-8b
     rysujSerwisKategorie_('');
     el('poleUwagi').value = '';
     odswiezPodpowiedzLicznika();
@@ -5668,6 +5769,7 @@ el('dodajJednostkeBtn').onclick = function(){
   el('dodajJednostkeBtn').classList.add('ukryte');
   var sel = el('wyborNowej');
   sel.innerHTML = '<option value="">— ładowanie… —</option>';
+  odswiezPoleWyb_('wyborNowej');   // Z-8b — wracamy do „Wybierz z listy"
   // E-34 (19.08.2026): pasek zamiast zasłony — patrz pokazPasekDodawania_.
   pokazPasekDodawania_(true);
 
@@ -5695,13 +5797,20 @@ el('dodajJednostkeBtn').onclick = function(){
             // że ewidencja miała „·" — niespójny styl). Maszyny (koparki)
             // dostają pusty podtytul z etykietaDropdownu_ — bez warunku
             // wychodziło „Hidromek (1) — " z samotną kreską na końcu.
-            return '<option value="' + bezpiecznyTekst(p.idPojazdu) + '">' +
+            // Z-8b: `data-tytul`/`data-podtytul` — wybierak pokazuje nazwę
+            // i VIN w osobnych liniach, więc nie może rozcinać tekstu po „ — ”
+            // (nazwa maszyny sama może zawierać myślnik).
+            return '<option value="' + bezpiecznyTekst(p.idPojazdu) + '"' +
+              ' data-tytul="' + bezpiecznyTekst(p.tytul) + '"' +
+              ' data-podtytul="' + bezpiecznyTekst(p.podtytul || '') + '">' +
               bezpiecznyTekst(p.tytul) + (p.podtytul ? ' — ' + bezpiecznyTekst(p.podtytul) : '') + '</option>';
           }).join('') + '</optgroup>';
       }).join('');
+    odswiezPoleWyb_('wyborNowej');   // Z-8b — lista właśnie się przebudowała
   }).catch(function(){
     pokazPasekDodawania_(false);
     sel.innerHTML = '<option value="">— brak połączenia —</option>';
+    odswiezPoleWyb_('wyborNowej');   // Z-8b
   });
 };
 el('anulujDodanieBtn').onclick = function(){
@@ -5734,6 +5843,219 @@ function wyczyscBladWyboru_(){
   el('bladWyborNowej').textContent = '';
 }
 el('wyborNowej').addEventListener('change', wyczyscBladWyboru_);
+
+/* ═══ WYBIERAK RODZINY (Z-8b, 01.09.2026) ═══════════════════════════════
+   Interfejs do natywnego <select>, który ZOSTAJE w DOM-ie i dalej trzyma
+   wartość. Wybierak nic nie zapisuje sam: ustawia `select.value` i woła
+   `change`, więc walidacja, zapis, edycja i budowanie list zostają
+   NIETKNIĘTE. To jest cały pomysł na bezpieczeństwo tej zmiany.
+
+   Skąd dane: prosto z `<option>` i `<optgroup>` schowanego selecta. Nie ma
+   drugiego źródła prawdy, którego trzeba by pilnować. */
+
+/* Ile pozycji musi być, żeby pokazać wyszukiwarkę. Przy budowach (do 15,
+   sprawdzone z Markiem 01.09) pole szukania byłoby szumem; przy ~46
+   maszynach jest głównym powodem, dla którego to robimy. */
+var PROG_SZUKANIA_WYB = 12;
+
+/* Kolor kreski z lewej. Nazwy grup biorą się z kolumny `Typ` w arkuszu —
+   dopasowujemy luźno, bo to tekst wpisywany ręcznie. */
+function kodRodzajuWyb_(typ){
+  var t = String(typ || '').toLowerCase();
+  if (t.indexOf('kopark') !== -1) return 'kop';
+  if (t.indexOf('osobow') !== -1) return 'osob';
+  if (t.indexOf('dostaw') !== -1 || t.indexOf('bus') !== -1) return 'dost';
+  if (t.indexOf('hds') !== -1) return 'hds';
+  if (t.indexOf('budowl') !== -1 || t.indexOf('sprzęt') !== -1) return 'bud';
+  return 'inne';
+}
+
+var WYB = null;   /* {select, tytul, ikona, przypnijBiezaca, fraza, kategoria} */
+
+function pozycjeWybieraka_(sel){
+  var poz = [];
+  Array.prototype.forEach.call(sel.querySelectorAll('option'), function(o){
+    if (!o.value) return;                       /* „— wybierz —" pomijamy */
+    var grupa = o.parentNode && o.parentNode.tagName === 'OPTGROUP'
+      ? o.parentNode.label : '';
+    poz.push({ v: o.value, t: o.getAttribute('data-tytul') || o.textContent,
+               pod: o.getAttribute('data-podtytul') || '', grupa: grupa });
+  });
+  return poz;
+}
+
+function otworzWybierak_(sel, o){
+  o = o || {};
+  WYB = { select: sel, tytul: o.tytul || 'Wybierz', ikona: o.ikona || 'ic-clip',
+          przypnijBiezaca: !!o.przypnijBiezaca, fraza: '', kategoria: '' };
+  rysujWybierak_();
+  el('wybierak').classList.add('on');
+  /* Telefonowy WSTECZ ma zamykać panel, a nie wychodzić z aplikacji.
+     ⚠ To JEDYNE miejsce, w którym ewidencja dotyka historii przeglądarki —
+     przed Z-8b nie robiła tego ani razu. Wpis jest zdejmowany przy każdym
+     zamknięciu, więc nie zostaje po nas śmieć w historii. */
+  history.pushState({ wybierak: 1 }, '');
+  setTimeout(function(){ var i = el('wybSzukaj'); if (i) i.focus(); }, 60);
+}
+
+function zamknijWybierak_(zHistorii){
+  if (!WYB) return;
+  WYB = null;
+  el('wybierak').classList.remove('on');
+  el('wybierak').innerHTML = '';
+  if (!zHistorii && history.state && history.state.wybierak) history.back();
+}
+window.addEventListener('popstate', function(){
+  if (WYB) zamknijWybierak_(true);
+});
+
+function rysujWybierak_(){
+  var poz = pozycjeWybieraka_(WYB.select);
+  var grupy = [];
+  poz.forEach(function(p){ if (p.grupa && grupy.indexOf(p.grupa) === -1) grupy.push(p.grupa); });
+  var szukaj = poz.length > PROG_SZUKANIA_WYB;
+
+  var gora = szukaj
+    ? '<input type="search" id="wybSzukaj" autocomplete="off" ' +
+      'placeholder="szukaj: nazwa, rejestracja, VIN…" aria-label="Szukaj">'
+    : '<h2>' + bezpiecznyTekst(WYB.tytul) + '</h2>';
+
+  el('wybierak').innerHTML =
+    '<div class="wyb-top"><div class="wyb-rz">' + gora +
+      '<button type="button" class="wyb-zamknij" id="wybAnuluj">Anuluj</button></div>' +
+      (grupy.length > 1 ? '<div class="wyb-chipy" id="wybChipy"></div>' : '') +
+    '</div>' +
+    '<div class="wyb-lista" id="wybLista" role="listbox" aria-label="' +
+      bezpiecznyTekst(WYB.tytul) + '"></div>';
+
+  el('wybAnuluj').onclick = function(){ zamknijWybierak_(); };
+  var inp = el('wybSzukaj');
+  if (inp){ inp.value = WYB.fraza; inp.oninput = function(){ WYB.fraza = inp.value; rysujWybListe_(); }; }
+  if (grupy.length > 1) rysujWybChipy_(grupy);
+  rysujWybListe_();
+}
+
+function rysujWybChipy_(grupy){
+  var h = '<button type="button" class="wyb-chip' + (WYB.kategoria === '' ? ' on' : '') +
+          '" data-kat="">Wszystkie</button>';
+  grupy.forEach(function(g){
+    h += '<button type="button" class="wyb-chip' + (WYB.kategoria === g ? ' on' : '') +
+         '" data-kat="' + bezpiecznyTekst(g) + '">' + bezpiecznyTekst(g) + '</button>';
+  });
+  var box = el('wybChipy');
+  box.innerHTML = h;
+  box.onclick = function(e){
+    var b = e.target.closest('.wyb-chip'); if (!b) return;
+    WYB.kategoria = b.getAttribute('data-kat');
+    rysujWybChipy_(grupy); rysujWybListe_();
+  };
+}
+
+function pasujeWyb_(p){
+  if (WYB.kategoria && p.grupa !== WYB.kategoria) return false;
+  var q = String(WYB.fraza || '').trim().toLowerCase().replace(/\s+/g, '');
+  if (!q) return true;
+  return (p.t + ' ' + p.pod + ' ' + p.grupa).toLowerCase().replace(/\s+/g, '').indexOf(q) !== -1;
+}
+
+function wierszWyb_(p, wybrany){
+  var vin = /^[A-Z0-9]{12,}$/.test(String(p.pod).replace(/\s/g, ''));
+  return '<button type="button" class="crow k-' + kodRodzajuWyb_(p.grupa) +
+    '" role="option" aria-selected="' + (wybrany ? 'true' : 'false') +
+    '" data-v="' + bezpiecznyTekst(p.v) + '">' +
+    '<span class="kl">' + bezpiecznyTekst(p.t) + '</span>' +
+    (p.pod ? '<span class="model' + (vin ? ' vin' : '') + '">' + bezpiecznyTekst(p.pod) + '</span>' : '') +
+    (wybrany ? '<span class="ptak" aria-hidden="true">✓</span>' : '') +
+    '</button>';
+}
+
+function rysujWybListe_(){
+  var poz = pozycjeWybieraka_(WYB.select).filter(pasujeWyb_);
+  var box = el('wybLista');
+  if (!poz.length){
+    box.innerHTML = '<div class="wyb-nic">Nic nie pasuje do „' +
+      bezpiecznyTekst(WYB.fraza) + '”.</div>';
+    return;
+  }
+  var biezaca = WYB.select.value, h = '';
+  /* Budowa: ostatnio wybrana idzie na górę — kierowca jeździ tygodniami na tę
+     samą. ⚠ Pokazuje się DWA RAZY (u góry i w „Wszystkie") — dokładnie tak,
+     jak robi to dziś flota w „Często wybierane". Świadomie, nie przypadkiem. */
+  if (WYB.przypnijBiezaca && biezaca && !WYB.fraza && !WYB.kategoria){
+    var b = poz.filter(function(p){ return p.v === biezaca; })[0];
+    if (b){
+      h += '<div class="wyb-grupa">Ostatnio wybierana</div>' + wierszWyb_(b, true);
+      h += '<div class="wyb-grupa">Wszystkie</div>';
+    }
+  }
+  var ostatnia = null;
+  poz.forEach(function(p){
+    if (p.grupa && p.grupa !== ostatnia){
+      ostatnia = p.grupa;
+      h += '<div class="wyb-grupa">' + bezpiecznyTekst(p.grupa) + '</div>';
+    }
+    h += wierszWyb_(p, p.v === biezaca);
+  });
+  box.innerHTML = h;
+  box.onclick = function(e){
+    var b = e.target.closest('.crow'); if (!b) return;
+    var sel = WYB.select;
+    sel.value = b.getAttribute('data-v');
+    /* `change` NIE leci samo przy zmianie z kodu — a na nim wiszą istniejące
+       handlery (np. czyszczenie błędu przy „Dodaj auto lub koparkę"). */
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    odswiezPoleWyb_(sel.id);
+    zamknijWybierak_();
+  };
+}
+
+/* Przepisuje wybraną wartość na przycisk. Wołane po KAŻDEJ zmianie selecta —
+   także tej z kodu (edycja wpisu, podpowiedź ostatniej budowy), bo wtedy
+   przeglądarka nie wysyła `change`. */
+var POLA_WYB = {};   /* idSelecta -> {przycisk, ikona, pusty} */
+function odswiezPoleWyb_(idSel){
+  var cfg = POLA_WYB[idSel]; if (!cfg) return;
+  var sel = el(idSel), btn = el(cfg.przycisk);
+  if (!sel || !btn) return;
+  var o = sel.options[sel.selectedIndex];
+  var maWartosc = !!(sel.value && o);
+  var tytul = maWartosc ? (o.getAttribute('data-tytul') || o.textContent) : cfg.pusty;
+  var pod = maWartosc ? (o.getAttribute('data-podtytul') || '') : '';
+  var vin = /^[A-Z0-9]{12,}$/.test(String(pod).replace(/\s/g, ''));
+  btn.className = 'pole-wyb' + (maWartosc ? '' : ' pusty');
+  btn.innerHTML =
+    '<span class="ik">' + ikonaHTML_(cfg.ikona) + '</span>' +
+    '<span class="txt"><span class="a">' + bezpiecznyTekst(tytul) + '</span>' +
+    (pod ? '<span class="b' + (vin ? ' vin' : '') + '">' + bezpiecznyTekst(pod) + '</span>' : '') +
+    '</span><span class="strz" aria-hidden="true">▸</span>';
+}
+
+function podepnijPoleWyb_(idSel, cfg){
+  POLA_WYB[idSel] = cfg;
+  var sel = el(idSel);
+  sel.classList.add('ukryty-select');
+  sel.setAttribute('tabindex', '-1');
+  sel.setAttribute('aria-hidden', 'true');
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = cfg.przycisk;
+  btn.className = 'pole-wyb pusty';
+  btn.setAttribute('aria-haspopup', 'listbox');
+  sel.parentNode.insertBefore(btn, sel.nextSibling);
+  btn.addEventListener('click', function(){
+    otworzWybierak_(sel, { tytul: cfg.tytul, ikona: cfg.ikona,
+                           przypnijBiezaca: cfg.przypnijBiezaca });
+  });
+  sel.addEventListener('change', function(){ odswiezPoleWyb_(idSel); });
+  odswiezPoleWyb_(idSel);
+}
+
+podepnijPoleWyb_('poleBudowa', { przycisk: 'poleBudowaPrzycisk', tytul: 'Budowa',
+  ikona: 'ic-site', pusty: 'Wybierz budowę', przypnijBiezaca: true });
+podepnijPoleWyb_('wyborNowej', { przycisk: 'wyborNowejPrzycisk',
+  tytul: 'Dodaj auto lub koparkę', ikona: 'ic-car', pusty: 'Wybierz z listy' });
+/* KONIEC WSPÓLNEGO BLOKU WYBIERAKA */
+
 
 el('potwierdzDodanieBtn').onclick = function(){
   var id = el('wyborNowej').value;

@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v115';  // 01.09.2026: W-49 — nagłówek: tytuł „Ewidencja Maszyny/Pojazdu" wg wybranej jednostki + linijka „Rinkon • <osoba>" (W-44 w tej samej paczce: odstęp przy plakietce 9 → 12 px)
+var WERSJA_CACHE = 'ewidencja-v116';  // 01.09.2026: Z-8b — wybierak na pełnym ekranie zamiast systemowego bębenka: „Budowa" i „Dodaj auto lub koparkę". Natywny <select> zostaje schowany jako źródło wartości.
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
