@@ -1476,6 +1476,33 @@ var PALETY_APKA = {
   .pole-wyb .ik{width:34px; height:34px; border-radius:9px; flex:none; display:flex;
     align-items:center; justify-content:center; background:var(--bg-akcentjasny);}
   .pole-wyb .ik .ikona{width:19px; height:19px; stroke:var(--tekst-akcentjasny);}
+  /* Ikona wg rodzaju wybranej pozycji — kafelek i kreska w kolorze rodziny
+     (v93), dokładnie jak `.ic.k-*` w Asystencie. */
+  .pole-wyb .ik.ik-rodzaj svg{width:19px; height:19px; fill:none;}
+  .pole-wyb .ik-rodzaj.k-kop{background:rgba(106,176,76,.16)}
+  .pole-wyb .ik-rodzaj.k-kop svg{stroke:#6AB04C}
+  .pole-wyb .ik-rodzaj.k-osob{background:rgba(240,147,43,.16)}
+  .pole-wyb .ik-rodzaj.k-osob svg{stroke:#F0932B}
+  .pole-wyb .ik-rodzaj.k-ciez{background:rgba(9,132,227,.14)}
+  .pole-wyb .ik-rodzaj.k-ciez svg{stroke:#0984E3}
+  .pole-wyb .ik-rodzaj.k-hds{background:rgba(155,89,182,.16)}
+  .pole-wyb .ik-rodzaj.k-hds svg{stroke:#9B59B6}
+  .pole-wyb .ik-rodzaj.k-przycz{background:rgba(253,121,168,.16)}
+  .pole-wyb .ik-rodzaj.k-przycz svg{stroke:#FD79A8}
+  .pole-wyb .ik-rodzaj.k-bud{background:rgba(126,214,223,.20)}
+  .pole-wyb .ik-rodzaj.k-bud svg{stroke:#3FA9B4}
+  /* „Inne" i „Tankowanie łączone" — kafelek w tym samym żółtym, co kreska
+     na liście (#ffd32a). W jasnym motywie sama kreska ikony idzie ciemniejszym
+     bursztynem, bo #ffd32a na jasnym tle jest nieczytelne; to ta sama sztuczka,
+     co przy turkusie sprzętu budowlanego. */
+  .pole-wyb .ik-rodzaj.k-mix{background:rgba(255,211,42,.22)}
+  .pole-wyb .ik-rodzaj.k-mix svg{stroke:#8a6100}
+  [data-motyw="ciemny"] .pole-wyb .ik-rodzaj.k-mix svg{stroke:#ffd32a}
+  .pole-wyb .ik-rodzaj.k-inne{background:rgba(99,110,114,.16)}
+  .pole-wyb .ik-rodzaj.k-inne svg{stroke:#636E72}
+  [data-motyw="ciemny"] .pole-wyb .ik-rodzaj.k-inne svg{stroke:#9aa3a8}
+  /* Ciemny motyw: turkus rozjaśniony, tak samo jak w Asystencie. */
+  [data-motyw="ciemny"] .pole-wyb .ik-rodzaj.k-bud svg{stroke:#7ED6DF}
   .pole-wyb .txt{min-width:0; flex:1;}
   .pole-wyb .txt .a{font-weight:600; line-height:1.25; overflow-wrap:anywhere;}
   .pole-wyb .txt .b{font-size:11.5px; color:var(--szary); margin-top:3px; display:block;
@@ -1535,11 +1562,18 @@ var PALETY_APKA = {
   .crow:first-of-type{border-top:0;}
   .crow::before{content:''; position:absolute; left:0; top:11px; bottom:11px; width:3px;
     border-radius:2px; background:#636E72;}
-  /* lista bez rodzajów (budowy) — kreska nic by nie znaczyła, więc jej nie ma */
-  .crow.k-inne::before{display:none;}
-  .crow.k-kop::before{background:#6AB04C}   .crow.k-osob::before{background:#F0932B}
-  .crow.k-dost::before{background:#0984E3}  .crow.k-hds::before{background:#9B59B6}
-  .crow.k-bud::before{background:#3FA9B4}   .crow.k-inne::before{background:#636E72}
+  /* Kolory rodzajów = paleta rodziny v93, ta sama co w Spisie Floty (formatowanie
+     warunkowe), w Panelu Floty i na kodach QR naklejek. Kopie tych samych
+     wartości siedzą w Asystencie — zmieniasz tu, zmieniasz i tam. */
+  .crow.k-kop::before{background:#6AB04C}    .crow.k-osob::before{background:#F0932B}
+  .crow.k-ciez::before{background:#0984E3}   .crow.k-hds::before{background:#9B59B6}
+  .crow.k-przycz::before{background:#FD79A8} .crow.k-bud::before{background:#3FA9B4}
+  .crow.k-quad::before, .crow.k-inne::before{background:#636E72}
+  /* „Inne" i „Tankowanie łączone" — nie są rodzajem pojazdu, tylko wyborem
+     szczególnym. Żółty wybrany przez Marka 01.09. */
+  .crow.k-mix::before{background:#ffd32a}
+  /* Lista bez rodzajów (budowy) — kreska nic by nie znaczyła, więc jej nie ma. */
+  .crow.k-brak::before{display:none;}
   .crow .kl{font-weight:600; font-size:15px; min-width:0; overflow-wrap:anywhere;}
   .crow .model{font-size:11.5px; color:var(--szary); margin-left:auto; text-align:right;
     max-width:50%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -2875,6 +2909,11 @@ var IKONY = {
   koparka: '<path d="M3 18h10"/><circle cx="5" cy="18" r="1.6"/><circle cx="11" cy="18" r="1.6"/><path d="M4 15h8v-4H6l-2 4z"/><path d="M12 12l4-6 4 2-3 5"/><path d="M20 8l1 4-3 1"/>',
   hds: '<path d="M3 13l2-6h6l2 6"/><path d="M3 13h18v5h-2"/><path d="M7 18H5v-5"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M13 7l6-3"/><path d="M19 4v5"/><path d="M19 9l-1.5 1.5"/>',
   przyczepa: '<rect x="2" y="8" width="15" height="7" rx="1"/><path d="M17 12h5"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="12" cy="17.5" r="1.8"/>',
+  /* Sprzęt budowlany — wybór Marka 01.09 (wariant B: zagęszczarka, „sprzęt,
+     który u nich naprawdę pracuje"). Rodzina nie miała dla tej kategorii
+     kształtu; ⚠ ten sam rysunek dopisać w „Panel Floty.html" (rodzajIcon),
+     bo tam jest źródło tego zestawu. */
+  zageszczarka: '<path d="M4 19.5h16"/><rect x="6" y="15.5" width="12" height="4" rx="1"/><path d="M9.5 15.5v-3.2A1.3 1.3 0 0 1 10.8 11h2.4a1.3 1.3 0 0 1 1.3 1.3v3.2"/><path d="M12 11V7"/><path d="M9 5.6h6"/>',
   inne: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'
 };
 // Z-82: markup ikony konturowej ze sprite'u (patrz początek <body>).
@@ -5806,6 +5845,7 @@ el('dodajJednostkeBtn').onclick = function(){
             // (nazwa maszyny sama może zawierać myślnik).
             return '<option value="' + bezpiecznyTekst(p.idPojazdu) + '"' +
               ' data-tytul="' + bezpiecznyTekst(p.tytul) + '"' +
+              ' data-rodzaj="' + kodRodzajuWyb_(typ) + '"' +
               ' data-podtytul="' + bezpiecznyTekst(p.podtytul || '') + '">' +
               bezpiecznyTekst(p.tytul) + (p.podtytul ? ' — ' + bezpiecznyTekst(p.podtytul) : '') + '</option>';
           }).join('') + '</optgroup>';
@@ -5867,16 +5907,50 @@ el('wyborNowej').addEventListener('change', wyczyscBladWyboru_);
    głównym powodem, dla którego w ogóle to robimy. */
 var PROG_SZUKANIA_WYB = 15;
 
-/* Kolor kreski z lewej. Nazwy grup biorą się z kolumny `Typ` w arkuszu —
-   dopasowujemy luźno, bo to tekst wpisywany ręcznie. */
+/* Kolor kreski z lewej. Przepisane 1:1 z `kodRodzaju` w Asystencie (v93), bo
+   tam siedzi KOMPLET rodziny — łącznie z ciężarowymi i przyczepami, których
+   moja pierwsza wersja nie znała (zgłoszenie Marka 01.09: „samochody ciężarowe
+   nie mają ich w ogóle"). Dopasowanie luźne, bo `Typ` to tekst z arkusza.
+
+   ⚠ Dostawcze i busy dzielą kolor z ciężarowymi (#0984E3) — tak jest
+   w Spisie Floty i w Panelu, więc appka nie wymyśla własnego podziału.
+   Pusty tekst daje 'brak' = wiersz BEZ kreski (listy bez rodzajów, np. budowy). */
 function kodRodzajuWyb_(typ){
-  var t = String(typ || '').toLowerCase();
-  if (t.indexOf('kopark') !== -1) return 'kop';
-  if (t.indexOf('osobow') !== -1) return 'osob';
-  if (t.indexOf('dostaw') !== -1 || t.indexOf('bus') !== -1) return 'dost';
-  if (t.indexOf('hds') !== -1) return 'hds';
-  if (t.indexOf('budowl') !== -1 || t.indexOf('sprzęt') !== -1) return 'bud';
+  var r = String(typ || '').trim().toLowerCase();
+  if (!r) return 'brak';
+  /* „Sprzęt drobny" MUSI tu być. Rodzina ma DWA słowniki rodzajów i nazywają
+     one to samo inaczej — sprawdzone w arkuszach 01.09, nie z pamięci:
+       Spis Floty / Panel   → „Sprzęt budowlany", „sam. ciężarowy", „sam. osobowy"
+       Sprzęt (flota)       → „Sprzęt drobny", „Samochód ciężarowy", „Koparka"
+       Sprzęt (ewidencja)   → „Samochód dostawczy / bus", „Koparko-ładowarka"
+     Agregat, Pompa, Skoczek i Stihl siedzą pod „Sprzęt drobny" — po przepisaniu
+     mapowania z Asystenta (który zna tylko słownik Spisu) wpadły w szary
+     fallback i straciły ikonę. Zgłoszenie Marka 01.09. */
+  if (r.indexOf('sprzęt') !== -1 || r.indexOf('sprzet') !== -1 ||
+      r.indexOf('budowl') !== -1) return 'bud';
+  if (r.indexOf('przyczepa') !== -1 || r.indexOf('naczepa') !== -1) return 'przycz';
+  if (r.indexOf('kopark') !== -1 || r.indexOf('ładowarka') !== -1) return 'kop';
+  if (r.indexOf('hds') !== -1 || r.indexOf('dźwig') !== -1) return 'hds';
+  if (r.indexOf('ciężarow') !== -1 || r.indexOf('dostaw') !== -1 ||
+      r.indexOf('bus') !== -1) return 'ciez';
+  if (r.indexOf('osobow') !== -1) return 'osob';
+  if (r.indexOf('quad') !== -1 || r.indexOf('ciągnik') !== -1) return 'quad';
   return 'inne';
+}
+
+/* Ikona pola wg rodzaju. Kształty biorą się z rodzinnego zestawu `IKONY`
+   (1:1 z „Panel Floty.html", rodzajIcon v51) — NIE ze sprite'u, bo sprite'y
+   appek się różnią. Pusty wynik = pole zostaje przy swojej stałej ikonie:
+   tak jest dla sprzętu budowlanego, quada, „Innego" i „Tankowania łączonego",
+   bo rodzina nie ma dla nich kształtu, a `inne` (kółko z promieniami) Marek
+   odrzucił przy Z-9b jako „słońce". */
+function ikonaRodzajuWyb_(kod){
+  var k = kod === 'kop' ? 'koparka' : kod === 'ciez' ? 'bus' : kod === 'osob' ? 'auto'
+        : kod === 'przycz' ? 'przyczepa' : kod === 'hds' ? 'hds'
+        : kod === 'bud' ? 'zageszczarka' : '';
+  if (!k || typeof IKONY === 'undefined' || !IKONY[k]) return '';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IKONY[k] + '</svg>';
 }
 
 var WYB = null;   /* {select, tytul, ikona, przypnijBiezaca, fraza, kategoria} */
@@ -5887,8 +5961,12 @@ function pozycjeWybieraka_(sel){
     if (!o.value) return;                       /* „— wybierz —" pomijamy */
     var grupa = o.parentNode && o.parentNode.tagName === 'OPTGROUP'
       ? o.parentNode.label : '';
+    /* `data-rodzaj` jest WAŻNIEJSZE od nazwy grupy: grupa bywa czymś innym niż
+       rodzaj (flota ma „Często wybierane" na górze) i wtedy zgadywanie z grupy
+       dawało wiersze bez kreski — zgłoszenie Marka 01.09. */
     poz.push({ v: o.value, t: o.getAttribute('data-tytul') || o.textContent,
-               pod: o.getAttribute('data-podtytul') || '', grupa: grupa });
+               pod: o.getAttribute('data-podtytul') || '',
+               rodzaj: o.getAttribute('data-rodzaj') || '', grupa: grupa });
   });
   return poz;
 }
@@ -5972,7 +6050,7 @@ function pasujeWyb_(p){
 
 function wierszWyb_(p, wybrany){
   var vin = /^[A-Z0-9]{12,}$/.test(String(p.pod).replace(/\s/g, ''));
-  return '<button type="button" class="crow k-' + kodRodzajuWyb_(p.grupa) +
+  return '<button type="button" class="crow k-' + (p.rodzaj || kodRodzajuWyb_(p.grupa)) +
     '" role="option" aria-selected="' + (wybrany ? 'true' : 'false') +
     '" data-v="' + bezpiecznyTekst(p.v) + '">' +
     '<span class="kl">' + bezpiecznyTekst(p.t) + '</span>' +
@@ -6034,9 +6112,24 @@ function odswiezPoleWyb_(idSel){
   var tytul = maWartosc ? (o.getAttribute('data-tytul') || o.textContent) : cfg.pusty;
   var pod = maWartosc ? (o.getAttribute('data-podtytul') || '') : '';
   var vin = /^[A-Z0-9]{12,}$/.test(String(pod).replace(/\s/g, ''));
+  /* Ikona idzie za wyborem: koparka pokazuje koparkę, osobowe auto, ciężarowe
+     i dostawcze busa. Prośba Marka 01.09 — „w asystencie tak się robi". */
+  var rodzaj = maWartosc ? (o.getAttribute('data-rodzaj') || '') : '';
+  var ikRodzaju = rodzaj ? ikonaRodzajuWyb_(rodzaj) : '';
+  /* Kafelek bierze kolor z RODZAJU, nie z tego, skąd wzięła się ikona.
+     Inaczej „Inne" i „Tankowanie łączone" (ikony ze sprite'u) siedziały na
+     pomarańczowym tle akcentu zamiast na swoim żółtym — zgłoszenie Marka. */
+  var kafelek = (rodzaj && rodzaj !== 'brak') ? ' ik-rodzaj k-' + rodzaj : '';
+  /* Drugie źródło ikony: sama WARTOŚĆ, gdy pole nie wybiera pojazdu.
+     Tak działa „Co kupiono" — paliwo, zakup, autostrada mają swoje ikony
+     w appce od dawna (lista wpisów, podsumowanie), więc pole bierze te same.
+     Kolejność: rodzaj pojazdu → ikona wg wartości → stała ikona pola. */
+  var idWartosci = (!ikRodzaju && maWartosc && cfg.ikonaWartosci)
+    ? (cfg.ikonaWartosci(sel.value, o) || '') : '';
   btn.className = 'pole-wyb' + (maWartosc ? '' : ' pusty');
   btn.innerHTML =
-    '<span class="ik">' + ikonaHTML_(cfg.ikona) + '</span>' +
+    '<span class="ik' + kafelek + '">' +
+    (ikRodzaju || ikonaHTML_(idWartosci || cfg.ikona)) + '</span>' +
     '<span class="txt"><span class="a">' + bezpiecznyTekst(tytul) + '</span>' +
     (pod ? '<span class="b' + (vin ? ' vin' : '') + '">' + bezpiecznyTekst(pod) + '</span>' : '') +
     '</span><span class="strz" aria-hidden="true">▸</span>';
