@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v113';  // 31.08.2026: W-43c korekta optyczna — plakietka i strzałka podniesione o 2 px, bo wersaliki nazwy miesiąca nie mają ogonków i ich środek masy siedzi wyżej niż etykiet
+var WERSJA_CACHE = 'ewidencja-v115';  // 01.09.2026: W-49 — nagłówek: tytuł „Ewidencja Maszyny/Pojazdu" wg wybranej jednostki + linijka „Rinkon • <osoba>" (W-44 w tej samej paczce: odstęp przy plakietce 9 → 12 px)
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

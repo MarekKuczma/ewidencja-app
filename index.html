@@ -991,7 +991,15 @@ var PALETY_APKA = {
      miesiąca bez ani jednego piksela odstępu (i tak było jeszcze przed W-43,
      tylko nikt tego nie nazwał). `row-gap` osobno, bo przy zawinięciu na
      wąskim telefonie pigułki inaczej stykają się pionowo. */
-  .wpisy-naglowek-miesiac{flex-wrap:wrap; row-gap:6px; column-gap:9px;}
+  /* W-44 (01.09.2026): 9 → 12 px. Marek: „lekko za blisko jest". Wybrane
+     z porównania 9/11/12/13 px na prawdziwym nagłówku.
+     ⚠ Cena: nagłówek to jedna linia dopiero wtedy, gdy zmieści nazwę miesiąca
+     + plakietkę + podpis strzałki. „SIERPIEŃ 2026" potrzebuje 317 px przy
+     9 px odstępu i 323 px przy 12 — czyli na wąskim telefonie łamie się
+     o ~6 px wcześniej niż dotąd. Łamanie samo w sobie NIE jest nowe (dzieje
+     się już przy 360 px, a „PAŹDZIERNIK 2026" łamie się nawet przy 390 px) —
+     osobne zadanie W-45. */
+  .wpisy-naglowek-miesiac{flex-wrap:wrap; row-gap:6px; column-gap:12px;}
   /* ⚠ Nagłówek miesiąca ma `text-transform:uppercase`, więc bez tego resetu
      plakietka i podpis strzałki krzyczały WERSALIKAMI („SZCZEGÓŁY ▾") —
      inaczej niż ta sama strzałka przy wpisie i wbrew zasadzie Z6 z W-42.
@@ -2176,7 +2184,7 @@ var PALETY_APKA = {
 <header>
   <img src="./ikona-192.png" alt="Rinkon">
   <div class="naglowek-tekst">
-    <h1>Ewidencja Floty Rinkon</h1>
+    <h1 id="naglowekTytul">Ewidencja Rinkon</h1>
     <div class="kto" id="naglowekKto"></div>
   </div>
   <!-- W-31 (28.08.2026): jedna zębatka ZAMIAST dwóch ikon (słońce/księżyc
@@ -2656,6 +2664,7 @@ function pokazEkran(nazwa){
   el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy');
   ustawWskaznikNawigacji_();   // Z-86
   animujWejscie_(nazwa);       // Z-86
+  ustawTytulNaglowka_();       // W-49
   window.scrollTo(0, 0);
 }
 /* Z-86: wskaźnik czyta klasę `aktywna` zamiast dostawać indeks — jedno
@@ -3488,7 +3497,7 @@ function pokazZPamieci(){
   // E-37: komunikat Marka NIE idzie z cache (jak popupy E-35) — patrz
   // sprawdzKomunikatMarka_; pasek W-05 usunięty, więc nie ma czego rysować.
   rysujBadgeTerminow_();   // E-35 — sam badge; popupy dopiero po świeżych danych
-  el('naglowekKto').textContent = cache.imie || '';
+  el('naglowekKto').textContent = liniaFirmy_(cache.imie);   // W-49
   el('avatar').textContent = inicjaly(cache.imie);
   // Z-87: gdy w pamięci nie ma imienia, ZOSTAWIAMY szkielet z HTML-a zamiast
   // czyścić kafelek do pustego miejsca — imię i tak zaraz dojdzie z serwera.
@@ -3762,6 +3771,45 @@ var KOMUNIKATY_APKA = { prefiks: 'EW' };
    Pogrubienia liczymy TUTAJ, na już zescape'owanym tekście — serwer wysyła
    czysty tekst, bez znaczników. Dzięki temu starsza (zacacheowana) wersja PWA
    pokaże po prostu zwykłe zdanie, a nie gwiazdki czy inne śmieci. */
+
+/* ═══ NAGŁÓWEK RODZINY (W-49, 01.09.2026) ═════════════════════════
+   Druga linijka nagłówka w trzech appkach: „Rinkon • <osoba>". Blok jest
+   IDENTYCZNY CO DO ZNAKU w ewidencji, flocie i asystencie.
+
+   Skąd się wziął (uwaga przekazana Markowi 01.09.2026): po samych tytułach
+   nie było widać, czym która appka jest — „Ewidencja Floty Rinkon"
+   i „Rozliczenie Floty Rinkon" różnią się jednym słowem w Środku, a oko czyta
+   początek. Osoba ZOSTAJE tam, gdzie była — to jedyne miejsce poza pulpitem,
+   gdzie kierowca widzi, na czyim koncie wpisuje, a wpisy przypisuje się po
+   kodzie. Przed nią staje firma.
+
+   Bez osoby (przed zalogowaniem, u gościa z QR) zostaje samo „Rinkon" — żeby
+   nie wisiał samotny separator. */
+function liniaFirmy_(osoba){
+  var o = String(osoba == null ? '' : osoba).trim();
+  return o ? 'Rinkon \u2022 ' + o : 'Rinkon';
+}
+/* KONIEC WSPÓLNEGO BLOKU NAGŁÓWKA */
+
+/* W-49: tytuł mówi, co jest w środku — „Maszyny" dla koparek i koparko-ładowarek,
+   „Pojazdu" dla aut i HDS (decyzja Marka 01.09.2026). Sprawdzone na danych:
+   9 koparek + 6 koparko-ładowarek = 15 maszyn, 16 dostawczych + 15 osobowych
+   + 2 HDS = 33 pojazdy, ZERO przypadków spornych. Wzorzec `kopark` jest ten sam,
+   którym backend liczy dni od konserwacji koparki.
+   ⚠ Gdyby doszły maszyny niejezdzące (walec, zagęszczarka), wpadną do
+   „Pojazdu" i regułę trzeba będzie poszerzyć.
+   ⚠ BEZ wybranej jednostki — ekran wyboru pojazdu, „brak kodu", PIN gościa
+   przed podaniem PIN-u — MUSI zostać nazwa ogólna: przed uwierzytelnieniem
+   nie zdradzamy floty (E-20/E-21). */
+var TYTUL_OGOLNY = 'Ewidencja Rinkon';
+function tytulJednostki_(j){
+  if (!j || !j.typ) return TYTUL_OGOLNY;
+  return /kopark/i.test(String(j.typ)) ? 'Ewidencja Maszyny' : 'Ewidencja Pojazdu';
+}
+function ustawTytulNaglowka_(){
+  var e = el('naglowekTytul');
+  if (e) e.textContent = tytulJednostki_(STAN.aktywna);
+}
 
 var NBSP_KOMUNIKATU = String.fromCharCode(160);
 /* Znacznik schowka celowo zbudowany z '<' i '>': wejście jest JUŻ
@@ -4088,7 +4136,7 @@ function odswiezStart(){
         etykietaLicznika: STAN.etykietaLicznika, momentLicznika: STAN.momentLicznika
       }));
     } catch(e){ /* pełny localStorage — trudno, cache jest opcjonalny */ }
-    el('naglowekKto').textContent = odp.imie;
+    el('naglowekKto').textContent = liniaFirmy_(odp.imie);   // W-49
     el('avatar').textContent = inicjaly(odp.imie);
     // W zakładce Kierowcy imiona są zapisane jako „Nazwisko Imię", więc
     // imię to OSTATNI człon — tak samo jak w aplikacji floty.
@@ -4173,6 +4221,7 @@ function pokazWyborPojazdu(){
   // a `zastosujStanPo_` aktualizowało nowy obiekt, podczas gdy ekran czytał
   // stary.
   STAN.aktywna = null;
+  ustawTytulNaglowka_();   // W-49 — wracamy do nazwy ogólnej
   el('dashboardPojazdu').classList.add('ukryte');
   el('wyborPojazdu').classList.remove('ukryte');
   el('powitanieData').textContent = STAN.jednostki.length
@@ -4182,6 +4231,8 @@ function pokazWyborPojazdu(){
 
 function wybierzPojazd(j, zPamieci){
   STAN.aktywna = j;
+  ustawTytulNaglowka_();   // W-49 — pulpit jest dzieckiem ekranStart, więc
+                           // `pokazEkran` tu nie przechodzi
   localStorage.setItem(KLUCZ_POJAZD, j.idPojazdu);
   el('wyborPojazdu').classList.add('ukryte');
   el('dashboardPojazdu').classList.remove('ukryte');
