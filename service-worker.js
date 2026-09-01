@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v117';  // 01.09.2026: Z-8b poprawka Marka — wyszukiwarka w wybieraku dopiero POWYŻEJ 15 pozycji (było 12), żeby pełna lista budów szła bez pola szukania.
+var WERSJA_CACHE = 'ewidencja-v118';  // 01.09.2026: Z-8b domknięcie — tytuł stoi NAD wyszukiwarką (nie zamiast niej) i „Anuluj” w kolorze czytelnym we wszystkich 16 kombinacjach palety i motywu (na jasnym Pomarańczu było 2,80:1). Blok wybieraka identyczny co do znaku z flotą.
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

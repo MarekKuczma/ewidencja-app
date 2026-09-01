@@ -1503,7 +1503,11 @@ var PALETY_APKA = {
   .wyb input[type=search]{flex:1; border:1px solid var(--linia);
     background:var(--input-tlo); color:var(--tekst); border-radius:10px;
     padding:11px 12px; font:inherit; font-size:16px; min-width:0;}
-  .wyb .wyb-zamknij{border:0; background:none; color:var(--akcent); font:inherit;
+  /* ⚠ NIE `--akcent`: na jasnym Pomarańczu daje 2,80:1, a na jasnym RGB
+     1,67:1 — nieczytelne. `--tekst-akcentjasny` to ten sam kolor rodziny
+     doważony do czytania i we WSZYSTKICH 16 kombinacjach palety i motywu
+     wychodzi co najmniej 4,78:1. Test to mierzy. */
+  .wyb .wyb-zamknij{border:0; background:none; color:var(--tekst-akcentjasny); font:inherit;
     font-weight:700; font-size:14px; cursor:pointer; padding:10px 4px; min-height:44px;}
   /* min-width:0 jest KONIECZNE: bez tego pasek chipów (szerszy niż ekran)
      rozpycha całą kolumnę i „Anuluj" ucieka poza prawą krawędź. */
@@ -1540,7 +1544,7 @@ var PALETY_APKA = {
   .crow .model{font-size:11.5px; color:var(--szary); margin-left:auto; text-align:right;
     max-width:50%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .crow .model.vin{font-family:ui-monospace,Consolas,monospace; font-size:10.5px;}
-  .crow .ptak{margin-left:auto; color:var(--akcent); font-weight:800; font-size:15px;
+  .crow .ptak{margin-left:auto; color:var(--tekst-akcentjasny); font-weight:800; font-size:15px;
     flex:none;}
   .crow .model + .ptak{margin-left:8px;}
   .crow:focus-visible{outline:2px solid var(--akcent-moc); outline-offset:-2px;}
@@ -5920,14 +5924,17 @@ function rysujWybierak_(){
   poz.forEach(function(p){ if (p.grupa && grupy.indexOf(p.grupa) === -1) grupy.push(p.grupa); });
   var szukaj = poz.length > PROG_SZUKANIA_WYB;
 
-  var gora = szukaj
-    ? '<input type="search" id="wybSzukaj" autocomplete="off" ' +
-      'placeholder="szukaj: nazwa, rejestracja, VIN…" aria-label="Szukaj">'
-    : '<h2>' + bezpiecznyTekst(WYB.tytul) + '</h2>';
-
+  /* Tytuł stoi NA GÓRZE ZAWSZE, także gdy jest wyszukiwarka — inaczej przy
+     długiej liście widać sam prostokąt do szukania i nie wiadomo, co się
+     wybiera. We flocie to warunek konieczny: „Tankowanie łączone" ma kilka
+     takich samych pól pod sobą i tytuł jest jedynym znakiem, do którego
+     wiersza się wróci („Sprzęt 2 z 3"). Szukanie idzie osobną linijką niżej. */
   el('wybierak').innerHTML =
-    '<div class="wyb-top"><div class="wyb-rz">' + gora +
+    '<div class="wyb-top"><div class="wyb-rz">' +
+      '<h2>' + bezpiecznyTekst(WYB.tytul) + '</h2>' +
       '<button type="button" class="wyb-zamknij" id="wybAnuluj">Anuluj</button></div>' +
+      (szukaj ? '<input type="search" id="wybSzukaj" autocomplete="off" ' +
+        'placeholder="szukaj: nazwa, rejestracja, VIN…" aria-label="Szukaj">' : '') +
       (grupy.length > 1 ? '<div class="wyb-chipy" id="wybChipy"></div>' : '') +
     '</div>' +
     '<div class="wyb-lista" id="wybLista" role="listbox" aria-label="' +
@@ -6054,12 +6061,12 @@ function podepnijPoleWyb_(idSel, cfg){
   sel.addEventListener('change', function(){ odswiezPoleWyb_(idSel); });
   odswiezPoleWyb_(idSel);
 }
+/* KONIEC WSPÓLNEGO BLOKU WYBIERAKA — dalej podpięcia TEJ aplikacji */
 
 podepnijPoleWyb_('poleBudowa', { przycisk: 'poleBudowaPrzycisk', tytul: 'Budowa',
   ikona: 'ic-site', pusty: 'Wybierz budowę', przypnijBiezaca: true });
 podepnijPoleWyb_('wyborNowej', { przycisk: 'wyborNowejPrzycisk',
   tytul: 'Dodaj auto lub koparkę', ikona: 'ic-car', pusty: 'Wybierz z listy' });
-/* KONIEC WSPÓLNEGO BLOKU WYBIERAKA */
 
 
 el('potwierdzDodanieBtn').onclick = function(){
