@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v116';  // 01.09.2026: Z-8b — wybierak na pełnym ekranie zamiast systemowego bębenka: „Budowa" i „Dodaj auto lub koparkę". Natywny <select> zostaje schowany jako źródło wartości.
+var WERSJA_CACHE = 'ewidencja-v117';  // 01.09.2026: Z-8b poprawka Marka — wyszukiwarka w wybieraku dopiero POWYŻEJ 15 pozycji (było 12), żeby pełna lista budów szła bez pola szukania.
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

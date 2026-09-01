@@ -5853,10 +5853,15 @@ el('wyborNowej').addEventListener('change', wyczyscBladWyboru_);
    Skąd dane: prosto z `<option>` i `<optgroup>` schowanego selecta. Nie ma
    drugiego źródła prawdy, którego trzeba by pilnować. */
 
-/* Ile pozycji musi być, żeby pokazać wyszukiwarkę. Przy budowach (do 15,
-   sprawdzone z Markiem 01.09) pole szukania byłoby szumem; przy ~46
-   maszynach jest głównym powodem, dla którego to robimy. */
-var PROG_SZUKANIA_WYB = 12;
+/* Ile pozycji musi być, żeby pokazać wyszukiwarkę — szukanie włącza się
+   dopiero POWYŻEJ tej liczby.
+
+   15, nie 12 — poprawka Marka z 01.09 wieczorem. Ustaliliśmy wcześniej, że
+   budów jest DO 15 i mają iść bez szukania, po czym wstawiłem próg 12, przez
+   co przy pełnej liście budów pole szukania jednak wyskakiwało. Ta sama
+   zasada obejmuje „Co kupiono" we Flocie. Przy ~46 maszynach szukanie jest
+   głównym powodem, dla którego w ogóle to robimy. */
+var PROG_SZUKANIA_WYB = 15;
 
 /* Kolor kreski z lewej. Nazwy grup biorą się z kolumny `Typ` w arkuszu —
    dopasowujemy luźno, bo to tekst wpisywany ręcznie. */
