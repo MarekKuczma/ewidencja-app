@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v122';  // 01.09.2026: poprawka rozpoznawania rodzajów („Sprzęt drobny” z arkusza floty) i kafelek ikony w kolorze rodzaju, nie akcentu. W ewidencji bez zmiany wyglądu — wspólny blok.
+var WERSJA_CACHE = 'ewidencja-v123';  // 02.09.2026: W-46/W-47 — pulpit mówi, co już zgłoszone („Masz zgłoszone: lipiec i sierpień”), a w ewidencji także KTO zgłosił i czy maszyna ma opiekuna. Wymaga API v47.
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy

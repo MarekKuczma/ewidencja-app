@@ -856,6 +856,23 @@ var PALETY_APKA = {
   .komunikat.blad{display:block; background:var(--bg-blad); border:1px solid var(--blad); color:var(--tekst-blad);}
   .komunikat.uwaga{display:block; background:var(--bg-uwaga); border:1px solid var(--brzeg-uwaga); color:var(--tekst-uwaga);}
   .komunikat ul{margin:6px 0 0; padding-left:20px;}
+  /* ── W-46 (02.09.2026): „co już zgłoszone" na pulpicie maszyny ──
+     Plakietka: wariant B z makiety (ramka + ślad tła) — Marek 02.09:
+     „wybieram B, prostsza wersja pasuje". Kolory WYŁĄCZNIE z tokenów
+     palety, nie wpisane z ręki: to te same, których używa `.komunikat.ok`,
+     więc kontrast jest już policzony we wszystkich 16 kombinacjach palety
+     i motywu (lekcja z „Anuluj" 2,80:1, Z-8b 01.09).
+     JEDNA plakietka na oba stany — decyzja Marka: „zgłosiłem ja" kontra
+     „zamknął Marek" niesie TEKST, nie kolor. */
+  .plakietka-mies{display:inline-block; font-size:12.5px; font-weight:700;
+    padding:3px 10px; border-radius:999px; margin:0 0 8px;
+    background:var(--bg-ok); border:1px solid var(--ok); color:var(--tekst-ok);}
+  .karta-zgl{border-radius:12px; padding:14px; margin:12px 0;
+    background:var(--karta); border:1px solid var(--linia);}
+  .karta-zgl .zgl-tyt{font-weight:700; font-size:16px; margin:0 0 4px;}
+  .karta-zgl .zgl-pod{font-size:14px; color:var(--szary); margin:0;}
+  .karta-zgl .zgl-pod b{color:var(--tekst); font-weight:650;}
+  .karta-zgl .zgl-pod + .zgl-pod{margin-top:6px;}
   /* Metryki dashboardu pojazdu */
   .metryki{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
   .metryka{background:var(--metryka-grad); border-radius:10px; padding:12px;}
@@ -2427,6 +2444,8 @@ var PALETY_APKA = {
              gdy TA maszyna ma wpisy w zamkniętym już kalendarzowo miesiącu,
              którego nikt jeszcze nie zgłosił. -->
         <div class="komunikat" id="banerDeklaracji"></div>
+        <!-- W-46: „masz zgłoszone…" — rysuje rysujDeklaracje_ -->
+        <div class="karta-zgl" id="kartaZgloszone" style="display:none"></div>
 
         <!-- Z-81: opakowanie .przycisk-glow = obracająca się obwódka;
              przycisk w środku bez zmian (id, handler). -->
@@ -4440,6 +4459,54 @@ function nazwaMiesiaca_(m){
   return (MIESIACE_PL[nr - 1] || m) + ' ' + m.substring(0, 4);
 }
 
+/* W-46 (02.09.2026): „lipiec i sierpień 2026" zamiast „lipiec 2026, sierpień 2026".
+   Marek prosił wprost o taki zapis przy dwóch miesiącach. */
+function listaMiesiecyTekst_(nazwy){
+  if (nazwy.length <= 1) return nazwy[0] || '';
+  return nazwy.slice(0, -1).join(', ') + ' i ' + nazwy[nazwy.length - 1];
+}
+
+/* W-46/W-47 (02.09.2026): karta „co na tej maszynie już zgłoszone".
+   ⚠ W ewidencji deklaracja idzie za MASZYNĄ, nie za osobą — więc patrzący
+   nie musi być tym, kto zgłosił. Stąd dwa różne zdania: „Masz zgłoszone…"
+   tylko wtedy, gdy wszystkie zgłoszenia są jego; inaczej z nazwiskiem.
+   ⚠ Wszystkie napisy NEUTRALNE PŁCIOWO (Marek 02.09: „mamy i kobiety,
+   i mężczyzn"). W polskim zdradza płeć czas przeszły, więc nie ma tu ani
+   jednego „zamknąłeś/zgłosiłeś" — tylko czas teraźniejszy i rzeczowniki. */
+function rysujZgloszone_(j){
+  var karta = el('kartaZgloszone');
+  var zgl = j.zgloszoneMiesiace || [];
+  if (!zgl.length){ karta.style.display = 'none'; karta.innerHTML = ''; return; }
+
+  var moje = String(STAN.imie || '').trim();
+  var wszystkieMoje = zgl.every(function(z){
+    return !z.kto || String(z.kto).trim() === moje;
+  });
+  var nazwy = zgl.map(function(z){ return nazwaMiesiaca_(z.miesiac); });
+  var tytul = wszystkieMoje
+    ? 'Masz zgłoszone: ' + listaMiesiecyTekst_(nazwy)
+    : 'Zgłoszone na tej maszynie: ' + listaMiesiecyTekst_(nazwy);
+
+  var h = '<span class="plakietka-mies">\u2713 zgłoszone</span>' +
+          '<p class="zgl-tyt">' + bezpiecznyTekst(tytul) + '</p>';
+
+  /* Kto i kiedy — tylko przy cudzych zgłoszeniach. Przy swoich byłoby to
+     powtarzanie użytkownikowi jego własnego nazwiska. */
+  if (!wszystkieMoje){
+    zgl.forEach(function(z){
+      if (!z.kto || String(z.kto).trim() === moje) return;
+      h += '<p class="zgl-pod">' + bezpiecznyTekst(nazwaMiesiaca_(z.miesiac)) +
+           ' \u2014 <b>' + bezpiecznyTekst(z.kto) + '</b>' +
+           (z.kiedy ? ', ' + bezpiecznyTekst(z.kiedy) : '') + '</p>';
+    });
+  }
+  h += '<p class="zgl-pod">Jeśli trzeba coś poprawić albo dopisać — zrób to, ' +
+       'a potem zgłoś miesiąc ponownie.</p>' +
+       '<p class="zgl-pod">Znikną stąd, gdy Marek je zamknie i zarchiwizuje.</p>';
+  karta.innerHTML = h;
+  karta.style.display = 'block';
+}
+
 function rysujDeklaracje_(j){
   var zalegle = j.zalegleMiesiace || [];
   var baner = el('banerDeklaracji');
@@ -4449,9 +4516,23 @@ function rysujDeklaracje_(j){
   // zgłaszać, a codzienny baner „zgłoś" szybko stałby się tłem.
   if (zalegle.length){
     baner.className = 'komunikat uwaga';
+    /* W-47 (02.09.2026): przy kilku operatorach jednej maszyny trzeba
+       powiedzieć, CZYJE to zadanie — ale nie blokować nikogo. Reguła
+       MIĘKKA (decyzja Marka 02.09): zamyka ktokolwiek, appka kieruje.
+       ⚠ Cztery maszyny nie mają opiekuna w ogóle (02.09: P070, P002, P093,
+       P031) i tak zostaje — dlatego pusty `kierowcaGlowny` ma własne
+       zdanie, a nie brak zdania. */
+    var opiekun = String(j.kierowcaGlowny || '').trim();
+    var oOpiekunie = '';
+    if (!opiekun){
+      oOpiekunie = '<br>Ta maszyna nie ma stałego opiekuna — miesiąc zgłasza ten, ' +
+                   'kto skończył na niej pracę jako ostatni.';
+    } else if (opiekun !== String(STAN.imie || '').trim()){
+      oOpiekunie = '<br>Opiekun tej maszyny: <b>' + bezpiecznyTekst(opiekun) + '</b>.';
+    }
     baner.innerHTML = '<b>Skończył się ' + bezpiecznyTekst(nazwaMiesiaca_(zalegle[0])) + '</b><br>' +
       'Ta maszyna ma wpisy za tamten miesiąc. Jeśli to już wszystkie — ' +
-      'kliknij „Zamykam miesiąc".';
+      'kliknij „Zamykam miesiąc".' + oOpiekunie;
   } else {
     baner.className = 'komunikat';
     baner.innerHTML = '';
@@ -4462,6 +4543,8 @@ function rysujDeklaracje_(j){
   el('zamykamBtn').innerHTML = ikonaHTML_('ic-check') + ((!zalegle.length && j.biezacyZadeklarowany)
     ? ' Miesiąc zgłoszony — zgłoś ponownie'
     : ' Zamykam miesiąc');   // Z-82: innerHTML — wstawiamy element
+
+  rysujZgloszone_(j);   // W-46: karta „co już zgłoszone"
 }
 
 /* W-12 (07.08.2026): cały przebieg przeniesiony 1:1 z floty (decyzja Marka —
