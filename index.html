@@ -810,6 +810,12 @@ var PALETY_APKA = {
     border:1.5px solid var(--linia); font-family:inherit; font-size:15px;
     font-weight:600; border-radius:12px; padding:11px; min-height:46px; margin-top:8px;}
   .przycisk-trzeci:active{background:var(--bg-akcentjasny);}
+  /* W-52 (Marek, 03.09.2026): karta „masz zgłoszone" ma być na co dzień JEDNĄ
+     linijką — plakietka + tytuł + „rozwiń". Reszta tekstu dopiero po dotknięciu.
+     Trzeci poziom hierarchii rodziny (W-36): sam tekst w akcencie, bez ramki. */
+  .zgl-wiecej{display:inline-flex; align-items:center; min-height:44px; padding:0 2px;
+    background:none; border:0; font-family:inherit; font-size:13px; font-weight:700;
+    color:var(--akcent); cursor:pointer;}
   .przycisk-link{display:flex; align-items:center; justify-content:center; gap:7px;
     width:100%; background:none; border:0; font-family:inherit; font-size:13.5px;
     font-weight:600; padding:11px; margin-top:6px; min-height:44px;
@@ -4473,10 +4479,24 @@ function listaMiesiecyTekst_(nazwy){
    ⚠ Wszystkie napisy NEUTRALNE PŁCIOWO (Marek 02.09: „mamy i kobiety,
    i mężczyzn"). W polskim zdradza płeć czas przeszły, więc nie ma tu ani
    jednego „zamknąłeś/zgłosiłeś" — tylko czas teraźniejszy i rzeczowniki. */
+/* W-52 (03.09.2026): karta jest ZWINIĘTA, dopóki ktoś jej nie rozwinie.
+   Stan trzymamy w zmiennej, a nie w klasie na elemencie — każde odświeżenie
+   danych przerysowuje kartę od zera i klasa by przepadła (ta sama pułapka
+   co przy pasku „odśwież" w Asystencie). */
+var ZGL_ROZWINIETE = false;
+var ZGL_OSTATNIE = null;
+function przelaczZgloszone_(){
+  ZGL_ROZWINIETE = !ZGL_ROZWINIETE;
+  rysujZgloszone_(ZGL_OSTATNIE || {});
+}
 function rysujZgloszone_(j){
   var karta = el('kartaZgloszone');
-  var zgl = j.zgloszoneMiesiace || [];
-  if (!zgl.length){ karta.style.display = 'none'; karta.innerHTML = ''; return; }
+  if (!karta) return;
+  ZGL_OSTATNIE = j;
+  var zgl = (j && j.zgloszoneMiesiace) || [];
+  if (!zgl.length){
+    karta.style.display = 'none'; karta.innerHTML = ''; ZGL_ROZWINIETE = false; return;
+  }
 
   var moje = String(STAN.imie || '').trim();
   var wszystkieMoje = zgl.every(function(z){
@@ -4484,29 +4504,36 @@ function rysujZgloszone_(j){
   });
   var nazwy = zgl.map(function(z){ return nazwaMiesiaca_(z.miesiac); });
   var tytul = wszystkieMoje
-    ? 'Masz zgłoszone: ' + listaMiesiecyTekst_(nazwy)
+    ? (nazwy.length === 1 ? 'Masz zgłoszony ' : 'Masz zgłoszone: ') + listaMiesiecyTekst_(nazwy)
     : 'Zgłoszone na tej maszynie: ' + listaMiesiecyTekst_(nazwy);
 
+  /* Plakietka zostaje NA ZWINIĘTEJ linijce (decyzja Marka 03.09) — po niej
+     poznaje się stan jednym rzutem oka, bez rozwijania. */
   var h = '<span class="plakietka-mies">\u2713 zgłoszone</span>' +
           '<p class="zgl-tyt">' + bezpiecznyTekst(tytul) + '</p>';
 
-  /* Kto i kiedy — tylko przy cudzych zgłoszeniach. Przy swoich byłoby to
-     powtarzanie użytkownikowi jego własnego nazwiska. */
-  if (!wszystkieMoje){
-    zgl.forEach(function(z){
-      if (!z.kto || String(z.kto).trim() === moje) return;
-      h += '<p class="zgl-pod">' + bezpiecznyTekst(nazwaMiesiaca_(z.miesiac)) +
-           ' \u2014 <b>' + bezpiecznyTekst(z.kto) + '</b>' +
-           (z.kiedy ? ', ' + bezpiecznyTekst(z.kiedy) : '') + '</p>';
-    });
+  if (ZGL_ROZWINIETE){
+    /* Kto i kiedy — tylko przy cudzych zgłoszeniach. Przy swoich byłoby to
+       powtarzanie użytkownikowi jego własnego nazwiska. */
+    if (!wszystkieMoje){
+      zgl.forEach(function(z){
+        if (!z.kto || String(z.kto).trim() === moje) return;
+        h += '<p class="zgl-pod">' + bezpiecznyTekst(nazwaMiesiaca_(z.miesiac)) +
+             ' \u2014 <b>' + bezpiecznyTekst(z.kto) + '</b>' +
+             (z.kiedy ? ', ' + bezpiecznyTekst(z.kiedy) : '') + '</p>';
+      });
+    }
+    h += '<p class="zgl-pod">Jeśli trzeba coś poprawić albo dopisać — zrób to, ' +
+         'a potem zgłoś miesiąc ponownie.</p>' +
+         '<p class="zgl-pod">Komunikat zniknie, gdy Marek zarchiwizuje miesiąc.</p>';
   }
-  h += '<p class="zgl-pod">Jeśli trzeba coś poprawić albo dopisać — zrób to, ' +
-       'a potem zgłoś miesiąc ponownie.</p>' +
-       '<p class="zgl-pod">Znikną stąd, gdy Marek je zamknie i zarchiwizuje.</p>';
+  h += '<button type="button" class="zgl-wiecej" id="zglWiecej">' +
+       (ZGL_ROZWINIETE ? 'zwiń' : 'rozwiń') + '</button>';
+
   karta.innerHTML = h;
+  var b = el('zglWiecej'); if (b) b.onclick = przelaczZgloszone_;
   karta.style.display = 'block';
 }
-
 function rysujDeklaracje_(j){
   var zalegle = j.zalegleMiesiace || [];
   var baner = el('banerDeklaracji');
