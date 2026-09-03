@@ -14,7 +14,7 @@
  * do podbicia WERSJA_CACHE, bez prób odświeżenia w międzyczasie.
  */
 
-var WERSJA_CACHE = 'ewidencja-v124';  // 03.09.2026: W-52 — karta „masz zgłoszone" zwinięta do jednej linijki (plakietka + tytuł + „rozwiń"), pełny tekst dopiero po dotknięciu, na końcu „Komunikat zniknie, gdy Marek zarchiwizuje miesiąc".  // 02.09.2026: W-46/W-47 — pulpit mówi, co już zgłoszone („Masz zgłoszone: lipiec i sierpień”), a w ewidencji także KTO zgłosił i czy maszyna ma opiekuna. Wymaga API v47.
+var WERSJA_CACHE = 'ewidencja-v125';  // 03.09.2026 W-52b: zielona ramka + zielony ptaszek zamiast pastylki; rozwijanie pigulka 'szczegoly' jak przy wpisach.  // 03.09.2026: W-52 — karta „masz zgłoszone" zwinięta do jednej linijki (plakietka + tytuł + „rozwiń"), pełny tekst dopiero po dotknięciu, na końcu „Komunikat zniknie, gdy Marek zarchiwizuje miesiąc".  // 02.09.2026: W-46/W-47 — pulpit mówi, co już zgłoszone („Masz zgłoszone: lipiec i sierpień”), a w ewidencji także KTO zgłosił i czy maszyna ma opiekuna. Wymaga API v47.
 
 // Przekaźnik kodu kierowcy między kartą Safari a zainstalowaną ikonką
 // (D69, patrz też index.html — NAZWA_RELAY_KODU). NIE kasować przy
