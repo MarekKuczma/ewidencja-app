@@ -819,8 +819,9 @@ var PALETY_APKA = {
      ⚠ Pigułka ma 22 px, więc klikalny jest owijający ją .zgl-cel (44 px):
      wygląd bez zmian, trafienie kciukiem pewne. */
   [data-motyw="ciemny"] .karta-zgl{border-color:#86efac;}
+  /* W-53: .zgl-linia to teraz DRUGA linijka (stan + pigułka), nie pierwsza. */
   .zgl-linia{display:flex; align-items:center; justify-content:space-between; gap:10px;}
-  .karta-zgl .zgl-linia .zgl-tyt{margin:0;}
+  .karta-zgl .zgl-linia .zgl-stan{margin:0;}
   .zgl-ptaszek{color:#16a34a; font-weight:900; margin-right:7px;}
   [data-motyw="ciemny"] .zgl-ptaszek{color:#86efac;}
   .zgl-cel{display:inline-flex; align-items:center; min-height:44px; flex:none;
@@ -890,7 +891,21 @@ var PALETY_APKA = {
      blok stoi PO bloku W-52b i skrót `border:` kasował samo `border-color`. */
   .karta-zgl{border-radius:12px; padding:14px; margin:12px 0;
     background:var(--karta); border:1.5px solid #16a34a;}
-  .karta-zgl .zgl-tyt{font-weight:700; font-size:16px; margin:0 0 4px;}
+  /* W-53 (04.09.2026, Marek: „nie podoba mi się zawijanie"). Sama czcionka
+     tego nie załatwiała: na tytuł zostaje tu ~168 px (karta jest węższa niż
+     we flocie, bo siedzi w pulpicie maszyny), a całe zdanie przy 15 px
+     potrzebuje ~300 px. Dlatego zdanie jest ROZBITE NA DWIE ŚWIADOME LINIE
+     (wariant 2 z makiety, wybór Marka 04.09) — bliźniaczo z flotą. */
+  .karta-zgl .zgl-tyt{font-weight:700; font-size:15px; margin:0 0 2px;}
+  /* 13 px — jak każdy podpis w appkach. ⚠ ZMIERZONE 04.09: we FLOCIE druga
+     linijka mieści się obok pigułki (potrzeba 181 px, jest 200), w EWIDENCJI
+     nie (jest 168, bo karta siedzi w pulpicie maszyny i jest o 32 px węższa)
+     — tam szary tekst łamie się na dwa krótkie wiersze i tak ma zostać.
+     Zejście do 12.5 px NIE pomaga (potrzeba wtedy 174 px), a zmniejszanie
+     do 12 px albo skracanie pigułki do samej strzałki kosztowałoby więcej,
+     niż jest warte: łamie się PODPIS, nie tytuł, a to właśnie łamanie
+     tytułu było zgłoszeniem Marka. */
+  .karta-zgl .zgl-stan{font-weight:600; font-size:13px; color:var(--szary); margin:0;}
   .karta-zgl .zgl-pod{font-size:14px; color:var(--szary); margin:0;}
   .karta-zgl .zgl-pod b{color:var(--tekst); font-weight:650;}
   .karta-zgl .zgl-pod + .zgl-pod{margin-top:6px;}
@@ -2652,6 +2667,9 @@ var PALETY_APKA = {
       <div class="sukces-tekst" id="sTekst">Zapisano</div>
       <div class="sukces-id" id="sId"></div>
       <div class="komunikat uwaga ukryte" id="sOstrzezenia"></div>
+      <!-- W-53 (04.09.2026): pokazuje się TYLKO wtedy, gdy ten wpis właśnie
+           cofnął zgłoszenie miesiąca. Treść wstawia pokazSukces. -->
+      <div class="komunikat uwaga ukryte" id="sCofniete"></div>
       <button type="button" class="przycisk" id="sKolejny"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Dodaj kolejny wpis</button>
       <div class="dwa">
         <button type="button" class="przycisk-drugi" id="sWpisy"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-clip"></use></svg> Moje wpisy</button>
@@ -4487,6 +4505,20 @@ function listaMiesiecyTekst_(nazwy){
   return nazwy.slice(0, -1).join(', ') + ' i ' + nazwy[nazwy.length - 1];
 }
 
+/* W-53 (04.09.2026): bez powtarzanego roku — „lipiec i sierpień 2026"
+   zamiast „lipiec 2026 i sierpień 2026". Przy miesiącach z RÓŻNYCH lat
+   każdy zatrzymuje swój rok, bo inaczej napis kłamie. Bliźniaczo z flotą. */
+function miesiaceZwiezle_(nazwy){
+  if (nazwy.length <= 1) return nazwy[0] || '';
+  var lata = nazwy.map(function(n){ return n.slice(-4); });
+  var jedenRok = lata.every(function(r){ return r === lata[0]; });
+  var czesci = jedenRok
+    ? nazwy.map(function(n, i){ return i === nazwy.length - 1 ? n : n.slice(0, -5); })
+    : nazwy;
+  return listaMiesiecyTekst_(czesci);
+}
+function zWielkiej_(t){ return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
+
 /* W-46/W-47 (02.09.2026): karta „co na tej maszynie już zgłoszone".
    ⚠ W ewidencji deklaracja idzie za MASZYNĄ, nie za osobą — więc patrzący
    nie musi być tym, kto zgłosił. Stąd dwa różne zdania: „Masz zgłoszone…"
@@ -4518,14 +4550,25 @@ function rysujZgloszone_(j){
     return !z.kto || String(z.kto).trim() === moje;
   });
   var nazwy = zgl.map(function(z){ return nazwaMiesiaca_(z.miesiac); });
-  var tytul = wszystkieMoje
-    ? (nazwy.length === 1 ? 'Masz zgłoszony ' : 'Masz zgłoszone: ') + listaMiesiecyTekst_(nazwy)
-    : 'Zgłoszone na tej maszynie: ' + listaMiesiecyTekst_(nazwy);
+  /* W-53 (04.09.2026) — UJEDNOLICENIE SŁÓW z przyciskiem „Zamykam miesiąc".
+     Marek: „może informacja powinna być w stylu «XXX zgłoszony jako
+     zamknięty»". Zdanie niesie oba czasowniki: co ktoś zrobił (zgłosił)
+     i co to znaczy (miesiąc zamknięty).
+     ⚠ Dwa warianty zostają, bo w ewidencji deklaracja idzie za MASZYNĄ:
+     przy cudzym zgłoszeniu nie wolno napisać „zgłoszony" bez wskazania,
+     że to nie patrzący — nazwisko i godzina są w rozwinięciu.
+     ⚠ Nadal NEUTRALNIE PŁCIOWO: „zgłoszony/zamknięty" opisuje MIESIĄC. */
+  var miesiac = zWielkiej_(miesiaceZwiezle_(nazwy));
+  var jeden = nazwy.length === 1;
+  var stan = wszystkieMoje
+    ? (jeden ? 'zgłoszony jako zamknięty' : 'zgłoszone jako zamknięte')
+    : (jeden ? 'zamknięty na tej maszynie' : 'zamknięte na tej maszynie');
 
   /* Plakietka zostaje NA ZWINIĘTEJ linijce (decyzja Marka 03.09) — po niej
      poznaje się stan jednym rzutem oka, bez rozwijania. */
-  var h = '<div class="zgl-linia"><p class="zgl-tyt">' +
-          '<span class="zgl-ptaszek">\u2713</span>' + bezpiecznyTekst(tytul) + '</p>' +
+  var h = '<p class="zgl-tyt"><span class="zgl-ptaszek">\u2713</span>' +
+          bezpiecznyTekst(miesiac) + '</p>' +
+          '<div class="zgl-linia"><p class="zgl-stan">' + bezpiecznyTekst(stan) + '</p>' +
           '<button type="button" class="zgl-cel" id="zglWiecej"><span class="zgl-pigulka">' +
           (ZGL_ROZWINIETE ? 'zwiń \u25b4' : 'szczegóły \u25be') + '</span></button></div>';
 
@@ -4540,8 +4583,12 @@ function rysujZgloszone_(j){
              (z.kiedy ? ', ' + bezpiecznyTekst(z.kiedy) : '') + '</p>';
       });
     }
-    h += '<p class="zgl-pod">Jeśli trzeba coś poprawić albo dopisać — zrób to, ' +
-         'a potem zgłoś miesiąc ponownie.</p>' +
+    /* W-53: mówimy wprost, CO SIĘ STANIE — zgłoszenie cofa się samo
+       (API.gs, cofnijDeklaracje_ przy nowym wpisie), a dotąd brzmiało to
+       jak prośba. ⚠ Tylko o dopisaniu: poprawka istniejącego wpisu
+       deklaracji NIE cofa i tak jest celowo od E-08. */
+    h += '<p class="zgl-pod">Jeśli dopiszesz coś w tym miesiącu, zgłoszenie ' +
+         'się cofnie — kliknij wtedy „Zamykam miesiąc" jeszcze raz.</p>' +
          '<p class="zgl-pod">Komunikat zniknie, gdy Marek zarchiwizuje miesiąc.</p>';
   }
   karta.innerHTML = h;
@@ -4631,9 +4678,13 @@ function otworzDialogMiesiaca(){
     // `#wyborMiesiaca` żyjącego w HTML-u między otwarciami.
     pokazArkuszKom_({
       typ: 'zgloszenie', ikona: 'ic-cal', tytul: 'Zamykam miesiąc',
+      /* W-53 (04.09.2026): dialog mówi też, co się stanie PÓŹNIEJ — bez tego
+         zdania kierowca dowiadywał się o cofnięciu dopiero z karty na
+         pulpicie albo wcale. Bliźniaczo z flotą. */
       wstep: 'Dajesz znać Markowi, że to koniec wpisów dla <b>' +
-        bezpiecznyTekst(j.tytul) + '</b> w tym miesiącu. W razie wątpliwości ' +
-        'skontaktuj się z nim.',
+        bezpiecznyTekst(j.tytul) + '</b> w tym miesiącu. Jeśli potem coś ' +
+        'dopiszesz, zgłoszenie się cofnie i trzeba będzie kliknąć jeszcze ' +
+        'raz. W razie wątpliwości skontaktuj się z Markiem.',
       pole: { etykieta: 'Który miesiąc masz skończony?', ikona: 'ic-cal', opcje: opcjeMiesiecy },
       dwa: { zostaw: 'Jeszcze nie', akcja: 'Zgłaszam', stozek: '', poAkcji: zglosMiesiac_ }
     });
@@ -5174,6 +5225,7 @@ el('zapiszBtn').onclick = function(){
     return;
   }
 
+  ZGL_COFNIETY = czyCofnieZgloszenie_(payload);   // W-53 — przed zapisem!
   wolajAPI('nowyWpis', payload).then(function(odp){
     schowajOverlay();
     if (!odp.ok) { komunikat('wpisKomunikat', komunikatHTML_(zKodem_(odp) || 'Nie udało się zapisać.'), 'blad'); return; }
@@ -5212,9 +5264,17 @@ function zastosujStanPo_(stanPo){
     // starszego backendu, stąd sprawdzenie `undefined`).
     if (stanPo.zalegleMiesiace !== undefined) j.zalegleMiesiace = stanPo.zalegleMiesiace;
     if (stanPo.biezacyZadeklarowany !== undefined) j.biezacyZadeklarowany = stanPo.biezacyZadeklarowany;
+    // W-54 (04.09.2026): karta „zgłoszony jako zamknięty" też musi zejść.
+    // API v48 dokłada to pole; starszy backend go nie przyśle i wtedy karta
+    // zostaje, jak było — appka nie zgaduje za serwer.
+    if (stanPo.zgloszoneMiesiace !== undefined) j.zgloszoneMiesiace = stanPo.zgloszoneMiesiace;
   });
-  // Pulpit pokazuje właśnie tę maszynę — przerysuj baner i etykietę przycisku.
-  if (STAN.aktywna && STAN.aktywna.idPojazdu === stanPo.idPojazdu) rysujDeklaracje_(STAN.aktywna);
+  // Pulpit pokazuje właśnie tę maszynę — przerysuj baner, kartę i etykietę.
+  if (STAN.aktywna && STAN.aktywna.idPojazdu === stanPo.idPojazdu) {
+    if (stanPo.zgloszoneMiesiace !== undefined) STAN.aktywna.zgloszoneMiesiace = stanPo.zgloszoneMiesiace;
+    rysujDeklaracje_(STAN.aktywna);
+    rysujZgloszone_(STAN.aktywna);   // W-54
+  }
   try {
     var c = JSON.parse(localStorage.getItem(KLUCZ_CACHE) || 'null');
     if (c) { c.jednostki = STAN.jednostki; localStorage.setItem(KLUCZ_CACHE, JSON.stringify(c)); }
@@ -5263,6 +5323,26 @@ function odswiezCacheHistorii_(idPojazdu){
 // ramka „Zwróć uwagę" zostaje pusta, informacja o braku sieci leci do
 // podpisu, tak jak we flocie — nie duplikujemy tej samej wiadomości w dwóch
 // miejscach ekranu.
+/* W-53 (04.09.2026): czy TEN wpis cofnie zgłoszenie miesiąca. Liczone PRZED
+   wysyłką, bo `zastosujStanPo_` odświeża listę zanim zobaczy ją `pokazSukces`.
+   ⚠ W ewidencji deklaracja idzie za MASZYNĄ, więc sprawdzamy wszystkie
+   zgłoszenia tej jednostki, także cudze — cofnie się każde z nich. */
+var ZGL_COFNIETY = null;
+function czyCofnieZgloszenie_(payload){
+  var mies = String((payload && payload.data) || '').substring(0, 7);
+  if (!mies) return null;
+  var id = String(payload.idPojazdu || '').trim(), trafiona = null;
+  (STAN.jednostki || []).forEach(function(j){
+    if (String(j.idPojazdu).trim() === id) trafiona = j;
+  });
+  if (!trafiona) return null;
+  var zgl = trafiona.zgloszoneMiesiace || [];
+  for (var i = 0; i < zgl.length; i++){
+    if (zgl[i] && zgl[i].miesiac === mies) return nazwaMiesiaca_(mies);
+  }
+  return null;
+}
+
 var sukcesPoEdycji = false;
 function pokazSukces(odp){
   if (odp.offline) {
@@ -5287,6 +5367,20 @@ function pokazSukces(odp){
     so.classList.add('ukryte');
     so.innerHTML = '';
   }
+
+  /* W-53: o cofnięciu mówimy tam, gdzie kierowca właśnie patrzy — nie
+     dopiero po powrocie na pulpit. Tylko przy NOWYM wpisie wysłanym na
+     serwer: offline nic jeszcze nie poszło, a poprawka deklaracji nie cofa. */
+  var sc = el('sCofniete');
+  if (sc) {
+    if (!odp.offline && !STAN.edytowanyId && ZGL_COFNIETY) {
+      sc.textContent = zWielkiej_(ZGL_COFNIETY) + ' był zgłoszony jako ' +
+        'zamknięty — po tym wpisie zgłoszenie się cofnęło. Kliknij ' +
+        '„Zamykam miesiąc" jeszcze raz, gdy skończysz.';
+      sc.classList.remove('ukryte');
+    } else { sc.classList.add('ukryte'); sc.textContent = ''; }
+  }
+  ZGL_COFNIETY = null;
 
   sukcesPoEdycji = !!STAN.edytowanyId;
   sukcesPoZgloszeniu = false;                 // W-39: to zwykły zapis wpisu
@@ -5315,6 +5409,8 @@ function pokazSukces(odp){
    role, żeby nie ruszać siatki `.dwa`. */
 var sukcesPoZgloszeniu = false;
 function pokazSukcesProsty_(tekst, podtekst){
+  var scP = el('sCofniete');
+  if (scP) { scP.classList.add('ukryte'); scP.textContent = ''; }
   el('sTekst').textContent = tekst;
   el('sId').textContent = podtekst || '';
   el('sOstrzezenia').classList.add('ukryte');
