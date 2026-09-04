@@ -4583,12 +4583,13 @@ function rysujZgloszone_(j){
              (z.kiedy ? ', ' + bezpiecznyTekst(z.kiedy) : '') + '</p>';
       });
     }
-    /* W-53: mówimy wprost, CO SIĘ STANIE — zgłoszenie cofa się samo
-       (API.gs, cofnijDeklaracje_ przy nowym wpisie), a dotąd brzmiało to
-       jak prośba. ⚠ Tylko o dopisaniu: poprawka istniejącego wpisu
-       deklaracji NIE cofa i tak jest celowo od E-08. */
-    h += '<p class="zgl-pod">Jeśli dopiszesz coś w tym miesiącu, zgłoszenie ' +
-         'się cofnie — kliknij wtedy „Zamykam miesiąc" jeszcze raz.</p>' +
+    /* W-53: mówimy wprost, CO SIĘ STANIE — zgłoszenie cofa się samo.
+       W-55 (04.09): wraca „albo poprawisz", bo od API v49 poprawka
+       i anulowanie też cofają deklarację. Do v48 zdanie było krótsze
+       właśnie dlatego, że kod tego nie robił. */
+    h += '<p class="zgl-pod">Jeśli coś dopiszesz albo poprawisz w tym ' +
+         'miesiącu, zgłoszenie się cofnie — kliknij wtedy „Zamykam miesiąc" ' +
+         'jeszcze raz.</p>' +
          '<p class="zgl-pod">Komunikat zniknie, gdy Marek zarchiwizuje miesiąc.</p>';
   }
   karta.innerHTML = h;
@@ -4683,8 +4684,8 @@ function otworzDialogMiesiaca(){
          pulpicie albo wcale. Bliźniaczo z flotą. */
       wstep: 'Dajesz znać Markowi, że to koniec wpisów dla <b>' +
         bezpiecznyTekst(j.tytul) + '</b> w tym miesiącu. Jeśli potem coś ' +
-        'dopiszesz, zgłoszenie się cofnie i trzeba będzie kliknąć jeszcze ' +
-        'raz. W razie wątpliwości skontaktuj się z Markiem.',
+        'dopiszesz albo poprawisz, zgłoszenie się cofnie i trzeba będzie ' +
+        'kliknąć jeszcze raz. W razie wątpliwości skontaktuj się z Markiem.',
       pole: { etykieta: 'Który miesiąc masz skończony?', ikona: 'ic-cal', opcje: opcjeMiesiecy },
       dwa: { zostaw: 'Jeszcze nie', akcja: 'Zgłaszam', stozek: '', poAkcji: zglosMiesiac_ }
     });
@@ -5202,6 +5203,11 @@ el('zapiszBtn').onclick = function(){
       schowajOverlay();
       if (!odp.ok) { komunikat('wpisKomunikat', komunikatHTML_(zKodem_(odp) || 'Nie udało się zapisać.'), 'blad'); return; }
       pokazSukces(odp);
+      /* W-55 (04.09.2026): poprawka cofa teraz deklarację (API v49), a stan
+         wraca w odpowiedzi — stosujemy go od razu, żeby karta „zgłoszony jako
+         zamknięty" nie została z nieprawdą do czasu, aż `odswiezStart` wróci.
+         Starszy backend `stanPo` nie przyśle i wtedy zostaje samo odświeżenie. */
+      if (odp.stanPo) zastosujStanPo_(odp.stanPo);
       odswiezStart();   // przy poprawce stan jednostki może się zmienić dowolnie
       // Z-80: poprawka nie idzie przez `zastosujStanPo_`, więc cache historii
       // trzeba odświeżyć tutaj — inaczej lista pokazywałaby wersję sprzed
@@ -5933,6 +5939,9 @@ function rysujWpisy(){
           wolajAPI('anulujWpis', { idWpisu: w.idWpisu }).then(function(o){
             schowajOverlay();
             if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się usunąć wpisu.'), 'ic-warn'); return; }
+            /* W-55: anulowanie też cofa deklarację (API v49) — stan wraca
+               w odpowiedzi, więc pulpit poprawia się od razu. */
+            if (o.stanPo) zastosujStanPo_(o.stanPo);
             otworzWpisy(STAN.aktywna);
             odswiezStart();
           }).catch(function(){
