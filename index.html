@@ -2446,6 +2446,14 @@ var PALETY_APKA = {
    z tego, czego na liście NIE MA i dlaczego. Bez niej pominięcie byłoby
    schowaniem, a tego Marek nie chciał od pierwszego dnia. */
 .tank-reczne{font-size:13px; color:var(--szary); line-height:1.4; margin:14px 2px 0;}
+/* W-71: pozycja „wpisane ręcznie, ale z literówką". Nie jest przyciskiem
+   wyboru — nie ma tu czego zaznaczać, jest jedna rzecz do zrobienia. */
+/* ⚠ Układ PIONOWY, nie obok siebie — złapane na podglądzie 16.09: przy guziku
+   z boku zostawało tak mało miejsca, że „43,68 L" łamało się na „43,68" i „L",
+   a wpisana wartość szła po jednym słowie w linijce. Na telefonie 390 px nie
+   ma miejsca na dwie kolumny, gdy jedna z nich to przycisk z liczbą. */
+.tank-poz.poprawka{cursor:default; flex-direction:column; align-items:stretch; gap:8px;}
+.tank-poz.poprawka .przycisk-maly{align-self:flex-start;}
 .tank-reczne b{color:var(--tekst); font-weight:650;}
 .tank-pas .przycisk{margin-top:0;}
 .tank-pas .info{font-size:12.5px; color:var(--szary); text-align:center; margin-top:8px;}
@@ -6132,6 +6140,23 @@ function rysujImport_(){
                     : 'brak wpisu na ten dzień<br>dodaj wpis i wróć')) + '</span></div>' +
       '<div class="td-tresc">';
     wd.forEach(function(p){
+      /* W-71: tankowanie wpisane ręcznie, ale z literówką — NIE ptaszek „dopisz",
+         tylko guzik „Popraw". Dopisanie zrobiłoby z jednego tankowania dwa. */
+      if (p.doPoprawki) {
+        h += '<div class="tank-poz poprawka">' +
+          '<span class="tp-tresc">' +
+            '<span class="tp-1"><span class="tp-litry">' + bezpiecznyTekst(p.litry) + ' L</span>' +
+              (p.licznik !== '' && p.licznik != null
+                ? '<span class="tp-licz">Licznik: <b>' + bezpiecznyTekst(p.licznik) + '</b></span>' : '') +
+            '</span>' +
+            '<span class="tp-2">masz wpisane: <b>' + bezpiecznyTekst(p.poprawka) + '</b></span>' +
+            '<span class="tp-nr">' + bezpiecznyTekst(p.nr) + '</span>' +
+          '</span>' +
+          '<button type="button" class="przycisk-maly" data-popraw="' + bezpiecznyTekst(p.wpis) +
+            '" data-nr="' + bezpiecznyTekst(p.nr) + '">Popraw na ' +
+            bezpiecznyTekst(p.litry) + ' L</button></div>';
+        return;
+      }
       var czynna = p.mozna && p.wpis;
       h += '<button type="button" class="tank-poz' + (czynna ? '' : ' nieczynna') +
         (TANK.wybrane[p.nr] ? ' wybrana' : '') + '"' +
@@ -6146,6 +6171,10 @@ function rysujImport_(){
              często kto inny niż autor wpisu (zmierzone: 4 z 35 dni). */
           (p.kierowca ? '<span class="tp-2">tankował: ' + bezpiecznyTekst(p.kierowca) + '</span>' : '') +
           (p.budowa ? '<span class="tp-2">' + bezpiecznyTekst(p.budowa) + '</span>' : '') +
+          /* W-71: literówka we WPISIE, którego nie mogę poprawić (cudzy, zamknięty) —
+             mówimy o niej, chociaż guzika nie ma. */
+          (p.poprawka && !p.doPoprawki
+            ? '<span class="tp-2">masz wpisane: <b>' + bezpiecznyTekst(p.poprawka) + '</b></span>' : '') +
           (czynna ? '' : '<span class="tp-powod">' +
              bezpiecznyTekst(p.wpis ? p.powod : 'na ten dzień nie ma jeszcze wpisu') + '</span>') +
           '<span class="tp-nr">' + bezpiecznyTekst(p.nr) + '</span>' +
@@ -6159,6 +6188,14 @@ function rysujImport_(){
     h += '<p class="tank-reczne">' + zdanieORecznych_(reczne) + '</p>';
   }
   el('listaImportu').innerHTML = h;
+  /* W-71: guzik „Popraw" idzie tą samą drogą co „Weź z Floty" z 13d —
+     podmienia JEDEN kawałek tekstu i dostawia znacznik `T-…`. */
+  el('listaImportu').querySelectorAll('[data-popraw]').forEach(function(bt){
+    bt.onclick = function(ev){
+      ev.stopPropagation();
+      aktualizujTankowanie_(bt.dataset.popraw, bt.dataset.nr);
+    };
+  });
 
   var ileWybranych = TANK.pozycje.filter(function(p){ return TANK.wybrane[p.nr]; }).length;
   el('pasImportu').innerHTML = dni.length
