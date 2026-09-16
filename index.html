@@ -2446,6 +2446,13 @@ var PALETY_APKA = {
    z tego, czego na liście NIE MA i dlaczego. Bez niej pominięcie byłoby
    schowaniem, a tego Marek nie chciał od pierwszego dnia. */
 .tank-reczne{font-size:13px; color:var(--szary); line-height:1.4; margin:14px 2px 0;}
+/* W-72: „nic nie czeka" w „Moich wpisach". Spokojna linijka, nie karta —
+   ma uspokoić, a nie prosić o uwagę. */
+.tank-cisza{display:flex; gap:7px; align-items:flex-start; margin:0 2px 12px;
+  font-size:13px; line-height:1.4; color:var(--szary);}
+.tank-cisza .ikona{width:15px; height:15px; flex:0 0 auto; margin-top:1px; color:#16a34a;}
+[data-motyw="ciemny"] .tank-cisza .ikona{color:#86efac;}
+.tank-cisza b{color:var(--tekst); font-weight:650;}
 /* W-71: pozycja „wpisane ręcznie, ale z literówką". Nie jest przyciskiem
    wyboru — nie ma tu czego zaznaczać, jest jedna rzecz do zrobienia. */
 /* ⚠ Układ PIONOWY, nie obok siebie — złapane na podglądzie 16.09: przy guziku
@@ -5888,6 +5895,13 @@ function tankowaniaWMiesiacu_(miesiac){
    czasownik i inny szyk, więc osobne zdanie zamiast sklejania kawałków. */
 /* W-70: ile tankowań pominęliśmy, bo wyglądają na wpisane ręcznie. Mówimy to
    wprost — pominięcie bez słowa jest tym samym, co schowanie. */
+/* „Nic nie czeka" powiedziane tak, żeby było widać, że appka SPRAWDZIŁA. */
+function zdanieOCiszy_(n){
+  return n === 1
+    ? 'Tankowania z Floty: nic nie czeka \u2014 <b>1</b> jest już wpisane w Twoich wpisach.'
+    : 'Tankowania z Floty: nic nie czeka \u2014 <b>' + n + '</b> są już wpisane w Twoich wpisach.';
+}
+
 function zdanieORecznych_(n){
   if (n === 1) return 'Pominęliśmy <b>1</b> tankowanie — wygląda na wpisane ręcznie w Twoim wpisie.';
   var ost = n % 10, dwa = n % 100;
@@ -6052,7 +6066,22 @@ function rysujKarteTankowan_(){
      nie liczymy ich na karcie. Gdyby liczyły się, karta krzyczałaby o 74
      tankowaniach z lipca i sierpnia, które dawno są w arkuszu. */
   var ile = TANK.pozycje.filter(function(p){ return !p.recznie; }).length;
-  if (!ile) { cel.innerHTML = ''; return; }
+  var reczne = TANK.pozycje.filter(function(p){ return p.recznie; }).length;
+  if (!ile) {
+    /* ⚠ CISZA, KTÓRA WYGLĄDA JAK AWARIA (16.09, zgłoszenie Marka po próbie Anety:
+       „lista moje wpisy się odświeżała ale nie pokazało jej do zaimportowania
+       tankowania"). Wynik był POPRAWNY — tankowanie było już wpisane ręcznie,
+       więc nie miało czego czekać. Ale brak karty wygląda tak samo jak brak
+       połączenia, więc człowiek nie wie, czy appka zadziałała, czy się zepsuła.
+       Jedna spokojna linijka zamienia „nic się nie stało" w „sprawdziłem, jest
+       w porządku". Pokazujemy ją TYLKO wtedy, gdy naprawdę coś rozpoznaliśmy —
+       przy zerowym wyniku byłaby szumem na każdym ekranie. */
+    cel.innerHTML = reczne
+      ? '<p class="tank-cisza">' + ikonaHTML_('ic-check') + '<span>' +
+        zdanieOCiszy_(reczne) + '</span></p>'
+      : '';
+    return;
+  }
   cel.innerHTML =
     '<div class="karta-tank">' +
       '<div class="kt-tyt">' + ikonaHTML_('ic-check') + 'Tankowania z Floty czekają</div>' +
