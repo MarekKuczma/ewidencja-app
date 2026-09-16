@@ -2461,6 +2461,10 @@ var PALETY_APKA = {
    ma miejsca na dwie kolumny, gdy jedna z nich to przycisk z liczbą. */
 .tank-poz.poprawka{cursor:default; flex-direction:column; align-items:stretch; gap:8px;}
 .tank-poz.poprawka .przycisk-maly{align-self:flex-start;}
+/* Reakcja na dotknięcie. Na telefonie nie ma „hover", więc jedyne, co daje
+   poczucie trafienia w przycisk, to `:active` i stan po kliknięciu. */
+.przycisk-maly:active{transform:scale(.97);}
+.przycisk-maly:disabled{opacity:.65; cursor:default; transform:none;}
 .tank-reczne b{color:var(--tekst); font-weight:650;}
 .tank-pas .przycisk{margin-top:0;}
 .tank-pas .info{font-size:12.5px; color:var(--szary); text-align:center; margin-top:8px;}
@@ -6222,7 +6226,7 @@ function rysujImport_(){
   el('listaImportu').querySelectorAll('[data-popraw]').forEach(function(bt){
     bt.onclick = function(ev){
       ev.stopPropagation();
-      aktualizujTankowanie_(bt.dataset.popraw, bt.dataset.nr);
+      aktualizujTankowanie_(bt.dataset.popraw, bt.dataset.nr, bt);
     };
   });
 
@@ -6323,20 +6327,32 @@ function rozjazdHtml_(idWpisu){
   return h + '</div>';
 }
 
-function aktualizujTankowanie_(idWpisu, nr){
+/* ⚠ GUZIK MA POWIEDZIEĆ, ŻE ZOSTAŁ NACIŚNIĘTY (16.09, zgłoszenie Marka:
+   „przy wybieraniu popraw nie widać zmiany stanu «zaznaczone lub nie»").
+   Pozycje z ptaszkiem zmieniają wygląd od razu, a ten guzik wyglądał tak samo
+   przed kliknięciem i po nim — więc człowiek nie wie, czy trafił w przycisk,
+   czy nie. Efekt uboczny: klika drugi raz. Dlatego guzik od razu blokuje się
+   i mówi, co robi, a po udanej poprawce mówi, że się udało — dopiero potem
+   pozycja znika przy odświeżeniu listy. */
+function aktualizujTankowanie_(idWpisu, nr, guzik){
+  var etykieta = guzik ? guzik.textContent : '';
+  if (guzik){ guzik.disabled = true; guzik.textContent = 'Poprawiam…'; }
   pokazOverlay('Biorę z Floty…');
   wolajAPI('aktualizujTankowanie', { idWpisu: idWpisu, nr: nr }).then(function(d){
     schowajOverlay();
     if (!d || !d.ok){
+      if (guzik){ guzik.disabled = false; guzik.textContent = etykieta; }
       pokazInfo_('Nie udało się', (d && d.blad) || 'Spróbuj jeszcze raz.', 'ic-warn');
       return;
     }
+    if (guzik) guzik.textContent = '\u2713 Poprawione';
     if (d.stanPo) zastosujStanPo_(d.stanPo);
     if (STAN.aktywna){
       odswiezHistorie_(STAN.aktywna).then(function(){ pobierzTankowania_(STAN.aktywna.idPojazdu, true); });
     }
   }).catch(function(){
     schowajOverlay();
+    if (guzik){ guzik.disabled = false; guzik.textContent = etykieta; }
     pokazInfo_('Brak połączenia', 'Tej poprawki nie da się zrobić bez internetu.', 'ic-warn');
   });
 }
@@ -6731,7 +6747,7 @@ function rysujWpisy(){
       /* ⚠ `stopPropagation`: guzik siedzi wewnątrz `.wpis-tresc`, które rozwija
          i zwija wpis. Bez tego kliknięcie robiłoby dwie rzeczy naraz. */
       ev.stopPropagation();
-      aktualizujTankowanie_(b.dataset.aktualizuj, b.dataset.nr);
+      aktualizujTankowanie_(b.dataset.aktualizuj, b.dataset.nr, b);
     };
   });
   el('listaWpisow').querySelectorAll('.wpis').forEach(function(e){
