@@ -5236,6 +5236,27 @@ function otworzWpis(j, wpisDoEdycji){
     odswiezPodpowiedzLicznika();
   }
   dodajWierszTankowania();
+
+  /* ═══ W-75 (16.09.2026) — DLACZEGO FORMULARZ POTRZEBUJE HISTORII ═══
+     Zgłoszenie Marka z telefonu Anety: „jak chce zrobić nowy wpis, pokazuje, że
+     ostatni znany to 10.09, gdzie dziś jest 16.09 i wpis jest zrobiony;
+     po odświeżeniu pokazuje 16.09, ale zmieniając na «moje wpisy» i wracając —
+     znów 10.09".
+     ⚠ To NIE była nieaktualna dana, tylko DWA RÓŻNE ZDANIA w tym samym miejscu:
+     bez historii leciał wariant „Ostatni znany stan (z pulpitu)", a z historią —
+     „ostatni wpis PRZED wybranym dniem", czyli poprawnie 10.09, bo dzisiejszy
+     wpis jest z definicji pomijany. Człowiek widział raz jedną liczbę, raz drugą
+     i słusznie uznał, że appka się gubi.
+     Lekarstwo jest w danych, nie w napisie: formularz bierze historię z pamięci
+     OD RAZU i odświeża ją w tle, więc zdanie przestaje skakać. */
+  if (!STAN.wpisy || !STAN.wpisy.length) {
+    var zPamieci = wpisyCache_(j.idPojazdu);
+    if (zPamieci && zPamieci.length) STAN.wpisy = zPamieci;
+  }
+  if (!wpisDoEdycji && navigator.onLine) {
+    odswiezHistorie_(j).then(function(){ odswiezPodpowiedzLicznika(); });
+  }
+
   /* W-68 etap 3: formularz otwiera się ZAWSZE bez wstawienia — poprzednie
      dotyczyło innego dnia albo innej maszyny. */
   zerujWstawienie_();
@@ -5273,17 +5294,34 @@ function odswiezPodpowiedzLicznika(){
   });
 
   if (data && wpisy.length) {
+    /* ⚠ W-75: NAJPIERW mówimy, czy na WYBRANY dzień wpis już jest. To jedyna
+       informacja, która zmienia to, co człowiek zaraz zrobi — bez niej wypełnia
+       cały formularz i dopiero „Zapisz" mówi mu, że tak się nie da (E008).
+       Dotyczy tylko NOWEGO wpisu; przy poprawianiu ten sam wiersz jest już
+       odsiany wyżej. */
+    var naTen = null;
+    wpisy.forEach(function(w){ if (w.data === data) naTen = w; });
+    if (naTen && !STAN.edytowanyId) {
+      e.textContent = 'Na ' + dataPL_(data) + ' wpis już jest — ' + naTen.idWpisu +
+        (naTen.kierowca ? ' (' + naTen.kierowca + ')' : '') +
+        '. Otwórz „Moje wpisy" i użyj „Popraw".';
+      return;
+    }
+
     var przed = null;
     wpisy.forEach(function(w){
       if (w.data >= data) return;
       if (!przed || w.data > przed.data) przed = w;
     });
     if (przed) {
-      e.textContent = 'Poprzedni dzień z wpisem: ' + dataPL_(przed.data) + ' — ' +
-        formatLicznik_(przed.licznik) + ' ' + j.jednostkaLicznika;
+      /* ⚠ Zdanie NAZYWA dzień, względem którego liczy. „Poprzedni dzień z wpisem:
+         10.09" przy dacie 16.09 czytało się jak „appka nie widzi dzisiejszego
+         wpisu" (Marek, 16.09) — a to jest poprawna odpowiedź na inne pytanie. */
+      e.textContent = 'Ostatni wpis przed ' + dataPL_(data) + ': ' + dataPL_(przed.data) +
+        ' — ' + formatLicznik_(przed.licznik) + ' ' + j.jednostkaLicznika;
       return;
     }
-    e.textContent = 'Brak wcześniejszego wpisu przed ' + data + '.';
+    e.textContent = 'Przed ' + dataPL_(data) + ' nie ma wcześniejszego wpisu.';
     return;
   }
 
