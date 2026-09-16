@@ -2442,6 +2442,11 @@ var PALETY_APKA = {
   font-size:13px; font-weight:700; color:var(--akcent); text-decoration:underline;
   text-underline-offset:3px; flex:none;}
 .tank-pas{border-top:1px solid var(--linia); padding:14px 0 2px; margin-top:6px;}
+/* W-70: linijka o pominiętych. Cicha — to nie jest ostrzeżenie, tylko rachunek
+   z tego, czego na liście NIE MA i dlaczego. Bez niej pominięcie byłoby
+   schowaniem, a tego Marek nie chciał od pierwszego dnia. */
+.tank-reczne{font-size:13px; color:var(--szary); line-height:1.4; margin:14px 2px 0;}
+.tank-reczne b{color:var(--tekst); font-weight:650;}
 .tank-pas .przycisk{margin-top:0;}
 .tank-pas .info{font-size:12.5px; color:var(--szary); text-align:center; margin-top:8px;}
 </style>
@@ -4621,14 +4626,21 @@ function wybierzPojazd(j, zPamieci){
     el('mWpisy').textContent = STAN.wpisy.filter(function(w){
       return !w.anulowany && w.data.slice(0, 7) === m;
     }).length;
-  }).catch(function(){ el('mWpisy').textContent = '—'; });
+  }).catch(function(){ el('mWpisy').textContent = '—'; }).then(function(){
+    /* W-68 pkt 15 — czerwona linijka w karcie „zgłoszony jako zamknięty" mieszka
+       na pulpicie MASZYNY, więc listę tankowań trzeba mieć już tutaj.
+       ⚠ Decyzja Marka, powtórzona dwa razy (14.09 i 16.09): „nie przypominamy
+       na wyborze pojazdów, tylko już w pojeździe". Ta funkcja rysuje pulpit
+       JEDNEJ maszyny — ekran wyboru pojazdu jej nie woła.
 
-  /* W-68 pkt 15 — czerwona linijka w karcie „zgłoszony jako zamknięty" mieszka
-     na pulpicie MASZYNY, więc listę tankowań trzeba mieć już tutaj.
-     ⚠ Decyzja Marka, powtórzona dwa razy (14.09 i 16.09): „nie przypominamy
-     na wyborze pojazdów, tylko już w pojeździe". Ta funkcja rysuje pulpit
-     JEDNEJ maszyny — ekran wyboru pojazdu jej nie woła. */
-  pobierzTankowania_(j.idPojazdu, false);
+       ⚠ PO, NIE RÓWNOLEGLE (poprawka 16.09, zgłoszenie Marka: „długo mi się
+       przeładowywała aplikacja… raz pokazało poza siecią"). Apps Script wykonuje
+       żądania JEDNEGO człowieka po kolei, nie naraz, a to zapytanie otwiera drugi
+       arkusz — ten sam, który 14.09 przekroczył limit czasu. Puszczone równolegle
+       ustawiało się w kolejce przed odpowiedzią, na którą czeka ekran, i całość
+       wyglądała jak brak zasięgu. Teraz startuje dopiero, gdy pulpit ma swoje dane. */
+    pobierzTankowania_(j.idPojazdu, false);
+  });
 }
 
 /* ---------- E-08 (02.08.2026): „Zamykam miesiąc" ----------
@@ -5860,12 +5872,21 @@ function tankowaniaWMiesiacu_(miesiac){
   var aktywna = STAN.aktywna ? String(STAN.aktywna.idPojazdu) : '';
   if (!aktywna || String(TANK.idPojazdu || '') !== aktywna) return 0;
   return TANK.pozycje.filter(function(p){
-    return String(p.data || '').slice(0, 7) === miesiac;
+    return !p.recznie && String(p.data || '').slice(0, 7) === miesiac;   // W-70
   }).length;
 }
 
 /* Polska odmiana — ten sam problem co w `zdanieOTankowaniach_`, ale inny
    czasownik i inny szyk, więc osobne zdanie zamiast sklejania kawałków. */
+/* W-70: ile tankowań pominęliśmy, bo wyglądają na wpisane ręcznie. Mówimy to
+   wprost — pominięcie bez słowa jest tym samym, co schowanie. */
+function zdanieORecznych_(n){
+  if (n === 1) return 'Pominęliśmy <b>1</b> tankowanie — wygląda na wpisane ręcznie w Twoim wpisie.';
+  var ost = n % 10, dwa = n % 100;
+  var rzecz = (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14)) ? 'tankowania' : 'tankowań';
+  return 'Pominęliśmy <b>' + n + '</b> ' + rzecz + ' — wyglądają na wpisane ręcznie w Twoich wpisach.';
+}
+
 function zdanieOCzekajacych_(n){
   if (n === 1) return 'czeka jeszcze <b>1</b> tankowanie tej maszyny.';
   var ost = n % 10, dwa = n % 100;
@@ -5902,7 +5923,7 @@ function zerujWstawienie_(){
 function pozycjeFlotyNaDzien_(data){
   if (!data || !STAN.aktywna) return [];
   if (String(TANK.idPojazdu || '') !== String(STAN.aktywna.idPojazdu)) return [];
-  return TANK.pozycje.filter(function(p){ return p.data === data && !p.wpis; });
+  return TANK.pozycje.filter(function(p){ return p.data === data && !p.wpis && !p.recznie; });
 }
 
 function maOpcjeSelect_(sel, wartosc){
@@ -6019,7 +6040,10 @@ function cofnijWstawienie_(cicho){
 function rysujKarteTankowan_(){
   var cel = el('kartaTankowan');
   if (!cel) return;
-  var ile = TANK.pozycje.length;
+  /* W-70: tankowania rozpoznane jako WPISANE RĘCZNIE nie są „do zrobienia" —
+     nie liczymy ich na karcie. Gdyby liczyły się, karta krzyczałaby o 74
+     tankowaniach z lipca i sierpnia, które dawno są w arkuszu. */
+  var ile = TANK.pozycje.filter(function(p){ return !p.recznie; }).length;
   if (!ile) { cel.innerHTML = ''; return; }
   cel.innerHTML =
     '<div class="karta-tank">' +
@@ -6062,11 +6086,21 @@ function otworzImport_(){
    i mogę go poprawić, pomarańczowa = wpisu nie ma albo nie jest mój.
    Kształt niesie informację, zanim kierowca cokolwiek przeczyta. */
 function rysujImport_(){
+  /* W-70: dzień, w którym WSZYSTKIE tankowania wyglądają na wpisane ręcznie,
+     nie trafia na listę — inaczej ekran zapełniłby się kilkudziesięcioma
+     wyszarzonymi pozycjami z lipca i sierpnia, a te do zrobienia utonęłyby
+     między nimi. Nie znikają bez śladu: na dole jest o nich linijka. */
+  var reczne = TANK.pozycje.filter(function(p){ return p.recznie; }).length;
+  var widoczne = TANK.pozycje.filter(function(p){
+    if (!p.recznie) return true;
+    return TANK.pozycje.some(function(q){ return q.data === p.data && !q.recznie; });
+  });
+
   var dni = [];
-  TANK.pozycje.forEach(function(p){ if (dni.indexOf(p.data) < 0) dni.push(p.data); });
+  widoczne.forEach(function(p){ if (dni.indexOf(p.data) < 0) dni.push(p.data); });
   dni.sort();
 
-  var doDopisania = TANK.pozycje.filter(function(p){ return p.mozna && p.wpis; });
+  var doDopisania = widoczne.filter(function(p){ return p.mozna && p.wpis; });
   var h = '';
 
   /* Pasek „zaznacz wszystkie" — tylko gdy jest co zaznaczać hurtem. Przy trzech
@@ -6079,15 +6113,21 @@ function rysujImport_(){
   }
 
   dni.forEach(function(d){
-    var wd = TANK.pozycje.filter(function(p){ return p.data === d; });
-    var pierwsza = wd[0];
-    var maWpis = !!pierwsza.wpis;
-    var mozna = maWpis && pierwsza.mozna;
+    var wd = widoczne.filter(function(p){ return p.data === d; });
+    /* ⚠ O kolorze ramki i zdaniu na pasku decyduje to, czy TEGO DNIA jest
+       cokolwiek do zrobienia — nie pierwsza pozycja z brzegu. Od W-70 jeden
+       dzień potrafi mieć obok siebie tankowanie wpisane ręcznie (szare)
+       i takie, które czeka; pasek mówił wtedy „nie możesz tu dopisać" nad
+       pozycją z ptaszkiem (złapane na podglądzie 16.09). */
+    var czynne = wd.filter(function(p){ return p.mozna && p.wpis; });
+    var zWpisem = wd.filter(function(p){ return !!p.wpis; });
+    var mozna = czynne.length > 0;
+    var maWpis = zWpisem.length > 0;
     h += '<div class="tank-dzien ' + (mozna ? 'ok' : 'brak') + '">' +
       '<div class="td-pas"><span class="td-data">' + dataPL_(d) +
         '<span class="td-dow">' + dzienTygodnia_(d) + '</span></span>' +
         '<span class="td-co">' + (mozna
-          ? 'dopisze się do wpisu<br>' + bezpiecznyTekst(pierwsza.wpis)
+          ? 'dopisze się do wpisu<br>' + bezpiecznyTekst(czynne[0].wpis)
           : (maWpis ? 'nie możesz tu dopisać'
                     : 'brak wpisu na ten dzień<br>dodaj wpis i wróć')) + '</span></div>' +
       '<div class="td-tresc">';
@@ -6115,6 +6155,9 @@ function rysujImport_(){
   });
 
   if (!dni.length) h = '<div class="srodek">Nie ma nic do dopisania.</div>';
+  if (reczne) {
+    h += '<p class="tank-reczne">' + zdanieORecznych_(reczne) + '</p>';
+  }
   el('listaImportu').innerHTML = h;
 
   var ileWybranych = TANK.pozycje.filter(function(p){ return TANK.wybrane[p.nr]; }).length;
@@ -6300,12 +6343,16 @@ function otworzWpisy(j){
      Gdyby padło, karty po prostu nie będzie; lista wpisów rysuje się tak
      samo jak dotąd. */
   el('kartaTankowan').innerHTML = '';
-  /* pkt 14, poprawka 2: licznikowi na karcie wolno być sprzed minuty — to tylko
-     zachęta do kliknięcia. Świeżość dobiera `otworzImport_`, tuż przed listą. */
-  pobierzTankowania_(j.idPojazdu, false);
 
   pokazPasekWpisow_('ladowanie');
   odswiezHistorie_(j).then(function(wynik){
+    /* W-68: karta „tankowania czekają" — osobne, nieblokujące zapytanie.
+       ⚠ PO liście wpisów, nie równolegle (poprawka 16.09 — patrz `wybierzPojazd`):
+       Apps Script robi żądania jednego człowieka po kolei, a to otwiera drugi
+       arkusz i potrafi kazać czekać na siebie temu, na co patrzy kierowca.
+       pkt 14, poprawka 2: licznikowi na karcie wolno być sprzed minuty — świeżość
+       dobiera `otworzImport_`, tuż przed samą listą. */
+    pobierzTankowania_(j.idPojazdu, false);
     pokazPasekWpisow_(null);
     // Mamy cache — nie kasujemy go komunikatem błędu; kierowca woli widzieć
     // swoje wpisy niż czerwony napis.
