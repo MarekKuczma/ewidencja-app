@@ -765,6 +765,33 @@ var PALETY_APKA = {
     background:var(--bg-uwaga); border:1px solid var(--brzeg-uwaga); color:var(--tekst-uwaga);
     font-size:13px; line-height:1.35;}
   .wpis-uwaga > b:first-child{display:block; margin-bottom:2px;}
+  /* W-68 pkt 15 (16.09.2026, POMYSŁ MARKA, lepszy od obu moich): czerwona
+     linijka W KARCIE „zgłoszony jako zamknięty". To jedyne miejsce w appce,
+     gdzie trafia się w człowieka, który MYŚLI, ŻE SKOŃCZYŁ — i dlatego zdanie
+     kończy się „zgłoś miesiąc ponownie": import jest poprawką, a poprawka od
+     W-55 cofa deklarację, więc kierowca i tak musi kliknąć drugi raz.
+     ⚠ Czerwień bierzemy ISTNIEJĄCĄ (wzorzec .wpis-poprawa z E-16). Kontrast
+     jest już policzony we wszystkich paletach i obu motywach; nowy czerwony
+     z ręki znaczyłby liczenie tego od nowa. Linijka jest NA ZWINIĘTEJ karcie —
+     schowana za „szczegóły" nie dotarłaby do nikogo. */
+  .karta-zgl .zgl-tank{margin:8px 0 0; padding:8px 10px; border-radius:8px;
+    background:var(--bg-blad); border:1px solid var(--blad); color:var(--tekst-blad);
+    font-size:13px; line-height:1.35; display:flex; gap:6px; align-items:flex-start;}
+  .karta-zgl .zgl-tank .ikona{flex:0 0 auto; width:16px; height:16px; margin-top:1px;}
+  .karta-zgl .zgl-tank b{color:inherit; font-weight:750;}
+  /* W-68 pkt 13d: „we Flocie jest dziś inaczej". SZARA, nie czerwona — to nie
+     jest błąd kierowcy ani awaria, tylko dwie wersje tej samej liczby. Czerwień
+     w tym miejscu znaczyłaby „zrobiłeś źle", a zwykle nie zrobił: ktoś poprawił
+     pomyłkę we Flocie. Widoczna BEZ rozwijania wpisu — tak samo jak E-16,
+     bo jako jedyna (poza nią) prosi człowieka o decyzję. */
+  .wpis-tank{margin-top:8px; padding:8px 10px; border-radius:8px;
+    background:var(--tlo); border:1px solid var(--linia);
+    font-size:13px; line-height:1.4; color:var(--szary);}
+  .wpis-tank > b:first-child{display:block; margin-bottom:3px; color:var(--tekst);}
+  .wpis-tank .wt-para{display:block;}
+  .wpis-tank .wt-para b{color:var(--tekst); font-weight:650;}
+  .wpis-tank .wt-nr{display:block; font-size:11.5px; opacity:.7; letter-spacing:.02em;}
+  .wpis-tank .przycisk-maly{margin-top:6px;}
   /* E-22 (02.08.2026): siatka checkboxów-chipów, wariant zaakceptowany przez
      Marka na mockupie. 2 kolumny — przy dłuższych nazwach kategorii
      (np. „Konserwacja ślizgów") tekst zawija się na dwie linie w chipie,
@@ -2324,6 +2351,99 @@ var PALETY_APKA = {
 
 /* ---- ekran „Ustawienia" (tryb + palety): CSS WE WSPÓLNYM BLOKU KANONU ---- */
 
+
+/* ═══ W-68 (16.09.2026): IMPORT TANKOWAŃ Z FLOTY ═══════════════════════════
+   Wybór Marka z makiety: karta „C" (zielona, wzór W-52b), lista „1"
+   (zaznaczam i dopisuję razem), dzień jako RAMKA („b") — kolor ramki niesie
+   informację, zanim kierowca cokolwiek przeczyta.
+   ⚠ Kolory WYŁĄCZNIE z tokenów palety — te same, których używa `.komunikat.ok`
+   i `.wpis-uwaga`, więc kontrast jest już policzony we wszystkich 16
+   kombinacjach palety i motywu (lekcja z Z-8b). */
+.karta-tank{border-radius:12px; padding:14px; margin:0 0 12px;
+  background:var(--karta); border:1.5px solid #16a34a;}
+[data-motyw="ciemny"] .karta-tank{border-color:#86efac;}
+.karta-tank .kt-tyt{font-weight:700; font-size:15px; margin:0 0 2px;
+  display:flex; align-items:center; gap:7px;}
+.karta-tank .kt-tyt .ikona{width:16px; height:16px; color:#16a34a;}
+[data-motyw="ciemny"] .karta-tank .kt-tyt .ikona{color:#86efac;}
+.karta-tank .kt-pod{font-size:14px; color:var(--szary); margin:0 0 10px;}
+.karta-tank .kt-pod b{color:var(--tekst); font-weight:650;}
+
+/* ── W-68 etap 3: PODPOWIEDŹ Z FLOTY W FORMULARZU ────────────────────────
+   DRUGA DROGA (decyzja Marka 14.09: „taka droga też jest potrzebna"). Kto
+   wypełnia ewidencję raz na tydzień, ten robi wpis i tankowanie w jednym
+   ruchu — wysyłanie go najpierw do „Importuj tankowania", a potem z powrotem
+   do formularza, byłoby drogą naokoło.
+   ⚠ Ta karta ZOSTAJE w formularzu po wstawieniu. Guzik wypełnia POLA, zapis
+   robi dopiero „Zapisz wpis" — inaczej kierowca traciłby kontrolę nad tym,
+   co właśnie zapisał (błąd złapany na makiecie 14.09).
+   Ramka cieńsza i bez własnego tła: to podpowiedź WEWNĄTRZ pola, nie karta
+   konkurująca o uwagę z zieloną kartą z „Moich wpisów". */
+.pf-karta{border:1px solid #16a34a; border-radius:10px; padding:10px 12px; margin:0 0 10px;}
+[data-motyw="ciemny"] .pf-karta{border-color:#86efac;}
+.pf-karta .pf-tyt{font-weight:650; font-size:13.5px; margin:0 0 6px;
+  display:flex; align-items:center; gap:6px;}
+.pf-karta .pf-tyt .ikona{width:15px; height:15px; color:#16a34a; flex:0 0 auto;}
+[data-motyw="ciemny"] .pf-karta .pf-tyt .ikona{color:#86efac;}
+.pf-karta .pf-poz{font-size:13px; color:var(--szary); margin:0 0 6px; line-height:1.4;}
+.pf-karta .pf-poz b{color:var(--tekst); font-weight:650;}
+/* Numer w OSOBNEJ linijce — sklejony z budową łamał się w połowie
+     („Ring Słupsk T-" / „000683") i wyglądał jak literówka. Ten sam wzorzec,
+     co `.tp-nr` na ekranie importu. */
+.pf-karta .pf-nr{display:block; font-size:11.5px; opacity:.7; letter-spacing:.02em;}
+.pf-karta .przycisk-maly{margin-top:2px;}
+
+/* ── dzień jako ramka (wariant „b") ── */
+.tank-dzien{border:1.5px solid var(--linia); border-radius:14px; overflow:hidden;
+  margin-bottom:14px; background:var(--karta);}
+.tank-dzien.ok{border-color:#16a34a;}
+[data-motyw="ciemny"] .tank-dzien.ok{border-color:#86efac;}
+.tank-dzien.brak{border-color:var(--brzeg-uwaga);}
+.td-pas{display:flex; align-items:center; gap:10px; padding:11px 13px;
+  border-bottom:1.5px solid var(--linia);}
+.tank-dzien.ok .td-pas{background:var(--bg-ok); border-bottom-color:#16a34a; color:var(--tekst-ok);}
+.tank-dzien.brak .td-pas{background:var(--bg-uwaga); border-bottom-color:var(--brzeg-uwaga); color:var(--tekst-uwaga);}
+.td-pas .td-data{font-size:19px; font-weight:700; line-height:1.15; flex:none;
+  font-variant-numeric:tabular-nums;}
+.td-pas .td-dow{font-size:13px; font-weight:600; opacity:.8; display:block; margin-top:1px;}
+.td-pas .td-co{font-size:13px; font-weight:600; text-align:right; flex:1; line-height:1.3;}
+.td-tresc{padding:10px 11px 11px;}
+
+.tank-poz{display:flex; gap:12px; align-items:flex-start; width:100%; text-align:left;
+  background:var(--karta); border:1.5px solid var(--linia); border-radius:12px;
+  padding:12px; margin-bottom:8px; color:inherit; font-family:inherit;}
+.tank-poz:last-child{margin-bottom:0;}
+.tank-poz.wybrana{border-color:#16a34a; background:var(--bg-ok);}
+[data-motyw="ciemny"] .tank-poz.wybrana{border-color:#86efac;}
+/* Pozycja, której kierowca nie może dopisać: WIDOCZNA i wyszarzona z powodem
+   (decyzja Marka 14.09) — schowana znikałaby bez śladu. */
+.tank-poz.nieczynna{opacity:.6; background:var(--tlo); cursor:default;}
+.tank-poz .tp-ptaszek{width:24px; height:24px; flex:none; border-radius:7px; margin-top:2px;
+  border:1.5px solid var(--input-brzeg); background:var(--input-tlo);
+  display:inline-flex; align-items:center; justify-content:center; color:transparent;}
+.tank-poz.wybrana .tp-ptaszek{background:#16a34a; border-color:#16a34a; color:#fff;}
+.tank-poz .tp-ptaszek .ikona{width:14px; height:14px;}
+.tank-poz .tp-tresc{flex:1; min-width:0; display:block;}
+.tank-poz .tp-1{display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+  font-size:16px; font-weight:600;}
+.tank-poz .tp-litry{font-variant-numeric:tabular-nums;}
+.tank-poz .tp-licz{font-size:13px; font-weight:400; color:var(--szary); white-space:nowrap;
+  font-variant-numeric:tabular-nums;}
+.tank-poz .tp-licz b{color:var(--tekst); font-weight:600;}
+.tank-poz .tp-2{display:block; font-size:13px; color:var(--szary); margin-top:3px;}
+.tank-poz .tp-powod{display:block; font-size:12.5px; margin-top:7px;
+  color:var(--tekst-uwaga); font-weight:600; line-height:1.35;}
+.tank-poz .tp-nr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
+  color:var(--szary); opacity:.7; margin-top:6px; display:block;}
+
+.tank-zaznacz{display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin:0 2px 12px; font-size:12.5px; color:var(--szary); font-weight:600;}
+.tank-zaznacz button{background:none; border:0; padding:6px 0; font-family:inherit;
+  font-size:13px; font-weight:700; color:var(--akcent); text-decoration:underline;
+  text-underline-offset:3px; flex:none;}
+.tank-pas{border-top:1px solid var(--linia); padding:14px 0 2px; margin-top:6px;}
+.tank-pas .przycisk{margin-top:0;}
+.tank-pas .info{font-size:12.5px; color:var(--szary); text-align:center; margin-top:8px;}
 </style>
 </head>
 <body>
@@ -2583,6 +2703,10 @@ var PALETY_APKA = {
         <input type="text" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
         <!-- E-16: treść wstawia `zastosujEtykieteLicznika_` — zależy od trybu. -->
         <div class="podpowiedz-pola" id="podpowiedzLicznik"></div>
+        <!-- W-68 pkt 11 (znalazł Marek na makiecie): licznika z tankowania
+             NIE wstawiamy do tego pola — tu ma być stan PORANNY, a tankowanie
+             jest z połowy dnia. Zamiast wypełnić, mówimy, co wiemy. -->
+        <div class="podpowiedz-pola" id="podpowiedzLicznikFloty"></div>
         <div class="blad-pola" id="bladLicznik"></div>
         <div class="plakietka" id="ostatniLicznikInfo"></div>
         <div class="ostrzezenie-pola" id="ostrzezeniePrzyrost"></div>
@@ -2600,6 +2724,8 @@ var PALETY_APKA = {
            przed oczami. Puste = po prostu się nie zapisują. -->
       <div class="pole">
         <label><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-fuel"></use></svg> Tankowanie <span class="opcjonalne">(jeśli tankowano)</span></label>
+        <!-- W-68 etap 3: podpowiedź z Floty (druga droga). Pusta = niewidoczna. -->
+        <div id="podpowiedzFloty"></div>
         <div id="listaTankowan"></div>
         <button type="button" class="przycisk-maly" id="dodajTankowanieBtn">+ Dodaj kolejne tankowanie</button>
         <div class="tank-podglad" id="tankPodglad"></div>
@@ -2695,9 +2821,25 @@ var PALETY_APKA = {
       <!-- Z-80: stan świeżości listy. Chowany domyślnie, sterowany przez
            `pokazPasekWpisow_`. -->
       <div id="pasekWpisow" class="pasek-odswiezania ukryte" style="margin-top:12px;"></div>
+      <!-- W-68: zielona karta „tankowania czekają". Treść wstawia
+           `rysujKarteTankowan_`; pusty div = karty nie ma. -->
+      <div id="kartaTankowan" style="margin-top:12px;"></div>
       <!-- Z-87: szkielet zamiast napisu „Ładowanie…" (skrypt podmienia go
            na prawdziwe wpisy albo na własny szkielet — patrz otworzWpisy). -->
       <div id="listaWpisow" style="margin-top:12px;"><div class="wpis szkielet" aria-hidden="true"><div class="sz-tresc"><div class="sz-l" style="width:68%"></div><div class="sz-l" style="width:45%"></div><div class="sz-l" style="width:31%"></div></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===================== EKRAN: IMPORT TANKOWAŃ (W-68, 16.09.2026) =====================
+       Wchodzi się tu WYŁĄCZNIE z „Moich wpisów", zielonej karty — czyli już
+       wewnątrz wybranej maszyny (decyzja Marka: nigdy z ekranu wyboru pojazdu). -->
+  <section id="ekranImport" class="ukryte">
+    <div class="karta">
+      <h2 class="ekran-baner">Tankowania z Floty</h2>
+      <div class="p2" id="importPodtytul" style="font-size:14px; color:var(--szary); margin:2px 0 12px;"></div>
+      <div id="listaImportu"></div>
+      <div class="tank-pas" id="pasImportu"></div>
+      <button type="button" class="przycisk-link" id="importWroc">Wróć do moich wpisów</button>
     </div>
   </section>
 
@@ -2843,7 +2985,7 @@ function bezpiecznyTekst(s){
 }
 function pokazEkran(nazwa){
   ['ekranStart','ekranWpis','ekranSukces','ekranWpisy','ekranPodsumowanie','ekranPin',
-   'ekranUstawienia'].forEach(function(e){                      // W-31
+   'ekranUstawienia','ekranImport'].forEach(function(e){        // W-31, W-68
     el(e).classList.add('ukryte');
   });
   el(nazwa).classList.remove('ukryte');
@@ -2855,7 +2997,9 @@ function pokazEkran(nazwa){
   // podświetla Start. Do 28.08 wisiało pod „Moje wpisy" (E-07).
   el('navStart').classList.toggle('aktywna', nazwa === 'ekranStart' || nazwa === 'ekranPodsumowanie');
   el('navNowy').classList.toggle('aktywna', nazwa === 'ekranWpis');
-  el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy');
+  /* W-68: ekran importu to „dziecko" Moich wpisów — zakładka zostaje
+     podświetlona, tak jak podsumowanie zostawia podświetlony Start (W-26). */
+  el('navWpisy').classList.toggle('aktywna', nazwa === 'ekranWpisy' || nazwa === 'ekranImport');
   ustawWskaznikNawigacji_();   // Z-86
   animujWejscie_(nazwa);       // Z-86
   ustawTytulNaglowka_();       // W-49
@@ -4478,6 +4622,13 @@ function wybierzPojazd(j, zPamieci){
       return !w.anulowany && w.data.slice(0, 7) === m;
     }).length;
   }).catch(function(){ el('mWpisy').textContent = '—'; });
+
+  /* W-68 pkt 15 — czerwona linijka w karcie „zgłoszony jako zamknięty" mieszka
+     na pulpicie MASZYNY, więc listę tankowań trzeba mieć już tutaj.
+     ⚠ Decyzja Marka, powtórzona dwa razy (14.09 i 16.09): „nie przypominamy
+     na wyborze pojazdów, tylko już w pojeździe". Ta funkcja rysuje pulpit
+     JEDNEJ maszyny — ekran wyboru pojazdu jej nie woła. */
+  pobierzTankowania_(j.idPojazdu, false);
 }
 
 /* ---------- E-08 (02.08.2026): „Zamykam miesiąc" ----------
@@ -4541,6 +4692,17 @@ function miesiaceZwiezle_(nazwy){
 }
 function zWielkiej_(t){ return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
 
+/* „w sierpniu", nie „w: sierpień" — polszczyzna wymaga miejscownika, a lista
+   MIESIACE_PL trzyma mianowniki. Zdanie z „W: sierpień 2026 —" zobaczyliśmy
+   na podglądzie 16.09 i czytało się jak wyciąg z bazy danych, nie jak zdanie.
+   Rok pomijamy: nazwa miesiąca jest w tytule karty tuż wyżej, razem z rokiem. */
+var MIESIACE_PL_GDZIE = ['styczniu','lutym','marcu','kwietniu','maju','czerwcu',
+  'lipcu','sierpniu','wrześniu','październiku','listopadzie','grudniu'];
+function miesiacGdzie_(m){
+  var nr = parseInt(String(m).substring(5), 10);
+  return MIESIACE_PL_GDZIE[nr - 1] || String(m);
+}
+
 /* W-46/W-47 (02.09.2026): karta „co na tej maszynie już zgłoszone".
    ⚠ W ewidencji deklaracja idzie za MASZYNĄ, nie za osobą — więc patrzący
    nie musi być tym, kto zgłosił. Stąd dwa różne zdania: „Masz zgłoszone…"
@@ -4593,6 +4755,28 @@ function rysujZgloszone_(j){
           '<div class="zgl-linia"><p class="zgl-stan">' + bezpiecznyTekst(stan) + '</p>' +
           '<button type="button" class="zgl-cel" id="zglWiecej"><span class="zgl-pigulka">' +
           (ZGL_ROZWINIETE ? 'zwiń \u25b4' : 'szczegóły \u25be') + '</span></button></div>';
+
+  /* W-68 pkt 15 — czerwona linijka. Liczymy TYLKO miesiące, których dotyczy
+     ta karta (nie cały rok) i TYLKO tę maszynę. Okno życia linijki jest krótkie
+     i właściwe: od zgłoszenia kierowcy do zamknięcia miesiąca przez Marka —
+     od W-67 karta znika przy zamknięciu, więc linijka znika razem z nią. */
+  var razem = 0, gdzie = [];
+  zgl.forEach(function(z){
+    var ile = tankowaniaWMiesiacu_(z.miesiac);
+    if (!ile) return;
+    razem += ile;
+    gdzie.push(miesiacGdzie_(z.miesiac));
+  });
+  /* JEDNA linijka, nie jedna na miesiąc. Dwa identyczne czerwone akapity pod
+     sobą (zobaczone na podglądzie 16.09) czyta się jak błąd appki, a nie jak
+     informację — i dokładnie tak samo działa: człowiek przestaje je czytać. */
+  if (razem){
+    h += '<p class="zgl-tank">' + ikonaHTML_('ic-warn') + '<span>' +
+         (gdzie.length === 1 && jeden ? 'W tym miesiącu ' : 'W ' + bezpiecznyTekst(listaMiesiecyTekst_(gdzie)) + ' ') +
+         zdanieOCzekajacych_(razem) +
+         ' Dopisz je w \u201eMoich wpisach\u201d i zgłoś ' +
+         (gdzie.length > 1 ? 'te miesiące' : 'miesiąc') + ' ponownie.</span></p>';
+  }
 
   if (ZGL_ROZWINIETE){
     /* Kto i kiedy — tylko przy cudzych zgłoszeniach. Przy swoich byłoby to
@@ -4845,10 +5029,14 @@ function rysujJednostki(){
 }
 
 /* ---------- tankowanie: powtarzalne pary litry + licznik (D51) ---------- */
-function dodajWierszTankowania(litry, licznik){
+function dodajWierszTankowania(litry, licznik, nrFloty){
   var jed = STAN.aktywna ? STAN.aktywna.jednostkaLicznika : 'km';
   var div = document.createElement('div');
   div.className = 'tank-item';
+  /* W-68 etap 3: wiersz wstawiony z Floty niesie swój numer, żeby „Cofnij
+     wstawienie" wiedziało, co dokładnie usunąć — a nie kasowało wiersza,
+     który kierowca wpisał ręcznie obok. */
+  if (nrFloty) div.dataset.zfloty = nrFloty;
   div.innerHTML =
     '<input type="text" inputmode="decimal" class="t-litry" placeholder="litry" value="' +
       bezpiecznyTekst(litry || '') + '">' +
@@ -5017,6 +5205,11 @@ function otworzWpis(j, wpisDoEdycji){
     odswiezPodpowiedzLicznika();
   }
   dodajWierszTankowania();
+  /* W-68 etap 3: formularz otwiera się ZAWSZE bez wstawienia — poprzednie
+     dotyczyło innego dnia albo innej maszyny. */
+  zerujWstawienie_();
+  el('podpowiedzLicznikFloty').textContent = '';
+  odswiezPodpowiedzFloty_();
   el('poleLicznikBox').style.display = (j.maLicznik === 'NIE') ? 'none' : '';
   pokazEkran('ekranWpis');
 }
@@ -5069,6 +5262,9 @@ function odswiezPodpowiedzLicznika(){
     : '';
 }
 el('poleData').addEventListener('change', odswiezPodpowiedzLicznika);
+/* W-68 etap 3: inna data = inne tankowania. Podpowiedź przeliczamy, a wstawienie
+   z poprzedniej daty samo się cofa (patrz `odswiezPodpowiedzFloty_`). */
+el('poleData').addEventListener('change', odswiezPodpowiedzFloty_);
 
 /* D98 — ostrzeżenie o podejrzanie dużym przyroście licznika, liczone NA
    MIEJSCU, zanim wpis pojedzie na serwer. Wcześniej ten próg istniał tylko
@@ -5195,6 +5391,12 @@ el('zapiszBtn').onclick = function(){
     serwisKategoria: pobierzSerwisKategorie_(),
     uwagi: el('poleUwagi').value
   };
+  /* W-68 etap 3 — znacznik jedzie RAZEM z tekstem tankowania. Gdyby pojechał
+     osobno (albo wcale), tankowanie dalej wyglądałoby na nieprzypisane
+     i kierowca dopisałby je drugi raz przez „Importuj". */
+  if (!STAN.edytowanyId && !STAN.gosc && WSTAWIONE.numery.length && WSTAWIONE.data === data) {
+    payload.numeryTankowan = WSTAWIONE.numery.slice();
+  }
   // E-20/E-21 pkt 8: przy poprawce pole idzie ZAWSZE (puste = wyczyszczenie
   // wpisanej wcześniej osoby), przy nowym wpisie tylko gdy wypełnione.
   if (!STAN.gosc) {
@@ -5261,6 +5463,11 @@ el('zapiszBtn').onclick = function(){
     // jednostki. Trzy żądania jedno po drugim to było kilka sekund czekania.
     zastosujStanPo_(odp.stanPo);
     pokazSukces(odp);
+    /* W-68 etap 3: wpis powstał, więc tankowania z tego dnia albo właśnie
+       zostały przypisane, albo mają już swój wpis i zmieniły stan na liście.
+       Świeżo, bo dopiero co sami zmieniliśmy dane. */
+    zerujWstawienie_();
+    if (payload.idPojazdu) pobierzTankowania_(payload.idPojazdu, true);
   }).catch(function(){
     schowajOverlay();
     dodajDoKolejki(payload);
@@ -5599,6 +5806,468 @@ function chipPojazduHtml_(j){
     '<span>' + bezpiecznyTekst(j.podtytul) + '</span></span>';
 }
 
+/* ═══ W-68 (16.09.2026): IMPORT TANKOWAŃ Z FLOTY — strona kierowcy ═════════
+
+   Wchodzi się TYLKO z „Moich wpisów" (decyzja Marka: nigdy z ekranu wyboru
+   pojazdu). Dane biorą się z jednego zapytania `tankowaniaDoImportu`, które
+   obsługuje i licznik na karcie, i samą listę.
+   ═════════════════════════════════════════════════════════════════════════ */
+var TANK = { pozycje: [], wybrane: {}, idPojazdu: null, rozjazdy: [] };
+
+/* Awaria odczytu Floty NIE MOŻE ruszyć „Moich wpisów" (W-68 pkt 14, poprawka 1).
+   Dlatego wszystko tu jest „best effort": nie udało się — karty po prostu nie ma. */
+function pobierzTankowania_(idPojazdu, swieze){
+  /* Czyścimy TYLKO przy zmianie maszyny. Przy odświeżaniu tej samej zostawiamy
+     to, co już widać — inaczej ekran importu mrugnąłby „Nie ma nic do dopisania"
+     i wrócił do listy sekundę później. */
+  if (TANK.idPojazdu !== idPojazdu) { TANK.pozycje = []; TANK.wybrane = {}; TANK.rozjazdy = []; }
+  TANK.idPojazdu = idPojazdu;
+  return wolajAPI('tankowaniaDoImportu', { idPojazdu: idPojazdu, swieze: !!swieze }).then(function(d){
+    if (d && d.ok) {
+      /* `dostepne:false` = arkusz Floty się zaciął (pkt 14). Wtedy karty MA NIE
+         BYĆ — pusta lista jest uczciwsza niż stara liczba udająca aktualną. */
+      TANK.pozycje = d.dostepne ? (d.pozycje || []) : [];
+      TANK.rozjazdy = d.dostepne ? (d.rozjazdy || []) : [];   // 13d
+      /* Zaznaczenia przeżywają odświeżenie, ale tylko te, które nadal istnieją. */
+      var sa = {};
+      TANK.pozycje.forEach(function(p){ sa[p.nr] = true; });
+      Object.keys(TANK.wybrane).forEach(function(nr){ if (!sa[nr]) delete TANK.wybrane[nr]; });
+    }
+    poTankowaniach_();
+  }).catch(function(){
+    /* Brak sieci — zostawiamy to, co już było na ekranie. Nic nie tracimy:
+       zapisu i tak nie da się zrobić bez połączenia. */
+    poTankowaniach_();
+  });
+}
+
+/* Jedno miejsce, w którym odmalowuje się WSZYSTKO, co zależy od listy tankowań.
+   Bez tego łatwo dołożyć trzeci widok i zapomnieć go odświeżyć — a wtedy karta
+   mówiłaby co innego niż czerwona linijka dwa ekrany dalej. */
+function poTankowaniach_(){
+  rysujKarteTankowan_();                       // zielona karta w „Moich wpisach"
+  if (ZGL_OSTATNIE) rysujZgloszone_(ZGL_OSTATNIE);   // czerwona linijka (pkt 15)
+  var ekr = el('ekranImport');
+  if (ekr && !ekr.classList.contains('ukryte')) rysujImport_();   // otwarty ekran importu
+  odswiezPodpowiedzFloty_();                   // podpowiedź w formularzu (etap 3)
+}
+
+/* Ile tankowań TEJ maszyny czeka w danym miesiącu (`rrrr-mm`).
+   ⚠ Liczymy też pozycje, których patrzący sam nie może dopisać (cudzy wpis) —
+   dla MASZYNY one nadal czekają, a schowanie ich znaczyłoby „już nic nie ma",
+   co byłoby nieprawdą. Powód i tak zobaczy na ekranie importu. */
+function tankowaniaWMiesiacu_(miesiac){
+  var aktywna = STAN.aktywna ? String(STAN.aktywna.idPojazdu) : '';
+  if (!aktywna || String(TANK.idPojazdu || '') !== aktywna) return 0;
+  return TANK.pozycje.filter(function(p){
+    return String(p.data || '').slice(0, 7) === miesiac;
+  }).length;
+}
+
+/* Polska odmiana — ten sam problem co w `zdanieOTankowaniach_`, ale inny
+   czasownik i inny szyk, więc osobne zdanie zamiast sklejania kawałków. */
+function zdanieOCzekajacych_(n){
+  if (n === 1) return 'czeka jeszcze <b>1</b> tankowanie tej maszyny.';
+  var ost = n % 10, dwa = n % 100;
+  return (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14))
+    ? 'czekają jeszcze <b>' + n + '</b> tankowania tej maszyny.'
+    : 'czeka jeszcze <b>' + n + '</b> tankowań tej maszyny.';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   W-68 ETAP 3 — DRUGA DROGA: TANKOWANIE PRZY TWORZENIU WPISU (16.09.2026)
+
+   Marek 14.09: „tak wchodzi, taka droga też jest potrzebna". Kto uzupełnia
+   ewidencję raz na tydzień, robi wpis i tankowanie jednym ruchem; odsyłanie go
+   do „Importuj tankowania" i z powrotem byłoby drogą naokoło.
+
+   ⚠ DWIE ZASADY, OBIE ZNALAZŁ MAREK NA MAKIECIE:
+   1. Guzik WYPEŁNIA POLA I ZOSTAJE w formularzu. Zapis robi dopiero „Zapisz
+      wpis". Pierwsza wersja makiety zapisywała od razu — kierowca tracił
+      kontrolę nad tym, co właśnie poszło do arkusza.
+   2. LICZNIKA NIE WYPEŁNIAMY. Pole wpisu to stan PORANNY, licznik z tankowania
+      jest z połowy dnia i wyższy; wpisanie go zawyżyłoby stan, rozjechało
+      „km tego dnia" i zapaliło fałszywe „do poprawy". Zamiast wypełnić —
+      mówimy pod polem, co wiemy.
+   ═════════════════════════════════════════════════════════════════════════ */
+var WSTAWIONE = { numery: [], data: '', budowaPrzed: '', budowaUstawiona: false };
+
+function zerujWstawienie_(){
+  WSTAWIONE = { numery: [], data: '', budowaPrzed: '', budowaUstawiona: false };
+}
+
+/* Tankowania tej maszyny z TEGO dnia, które nie mają jeszcze wpisu.
+   `p.wpis` niepuste znaczy, że wpis na ten dzień już istnieje — wtedy nowego
+   i tak nie da się zrobić (E008), a tankowanie dopisuje się przez „Importuj". */
+function pozycjeFlotyNaDzien_(data){
+  if (!data || !STAN.aktywna) return [];
+  if (String(TANK.idPojazdu || '') !== String(STAN.aktywna.idPojazdu)) return [];
+  return TANK.pozycje.filter(function(p){ return p.data === data && !p.wpis; });
+}
+
+function maOpcjeSelect_(sel, wartosc){
+  if (!sel || !wartosc) return false;
+  for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === wartosc) return true;
+  return false;
+}
+
+function odswiezPodpowiedzFloty_(){
+  var cel = el('podpowiedzFloty');
+  if (!cel) return;
+  var pod = el('podpowiedzLicznikFloty');
+
+  /* Podpowiedź jest TYLKO przy nowym wpisie z konta. Przy poprawce tankowanie
+     dopisuje „Importuj" (tam jest kontrola dostępu), a gość z QR to rzadki,
+     jednorazowy użytkownik — dokładanie mu drugiej drogi to druga droga do
+     testowania i utrzymania, bez zysku. */
+  if (STAN.gosc || STAN.edytowanyId) { cel.innerHTML = ''; if (pod) pod.textContent = ''; return; }
+
+  var data = el('poleData').value;
+  /* Zmiana daty unieważnia wstawienie — wstawione litry dotyczyły TAMTEGO dnia.
+     Zostawienie ich byłoby cichym przepisaniem tankowania na zły dzień. */
+  if (WSTAWIONE.numery.length && WSTAWIONE.data !== data) cofnijWstawienie_(true);
+
+  var poz = pozycjeFlotyNaDzien_(data);
+  var h = '';
+
+  if (WSTAWIONE.numery.length) {
+    h = '<div class="pf-karta"><p class="pf-tyt">' + ikonaHTML_('ic-check') +
+        (WSTAWIONE.numery.length === 1 ? 'Wstawiono tankowanie z Floty' : 'Wstawiono tankowania z Floty') +
+        '</p><p class="pf-poz">Sprawdź pola niżej i zapisz wpis. ' +
+        '<span class="pf-nr">' + bezpiecznyTekst(WSTAWIONE.numery.join(', ')) + '</span></p>' +
+        '<button type="button" class="przycisk-maly" id="pfCofnij">Cofnij wstawienie</button></div>';
+  } else if (poz.length) {
+    h = '<div class="pf-karta"><p class="pf-tyt">' + ikonaHTML_('ic-fuel') +
+        (poz.length === 1 ? 'We Flocie jest tankowanie z tego dnia' : 'We Flocie są tankowania z tego dnia') +
+        '</p>';
+    poz.forEach(function(p){
+      h += '<p class="pf-poz"><b>' + bezpiecznyTekst(p.litry) + ' L</b>' +
+        (p.licznik !== '' && p.licznik != null
+          ? ' \u00b7 licznik ' + bezpiecznyTekst(p.licznik) : '') +
+        (p.budowa ? ' \u00b7 ' + bezpiecznyTekst(p.budowa) : '') +
+        (p.kierowca ? ' \u00b7 tankował: ' + bezpiecznyTekst(p.kierowca) : '') +
+        ' <span class="pf-nr">' + bezpiecznyTekst(p.nr) + '</span></p>';
+    });
+    h += '<button type="button" class="przycisk-maly" id="pfWstaw">Wstaw do formularza</button></div>';
+  }
+
+  cel.innerHTML = h;
+  var bw = el('pfWstaw');  if (bw) bw.onclick = wstawZFloty_;
+  var bc = el('pfCofnij'); if (bc) bc.onclick = function(){ cofnijWstawienie_(false); };
+}
+
+function wstawZFloty_(){
+  var data = el('poleData').value;
+  var poz = pozycjeFlotyNaDzien_(data);
+  if (!poz.length) return;
+
+  /* Pusty wiersz tankowania ustępuje miejsca. Wypełnionego NIE ruszamy —
+     kierowca mógł wpisać ręcznie coś, czego we Flocie nie ma. */
+  el('listaTankowan').querySelectorAll('.tank-item').forEach(function(d){
+    if (!d.querySelector('.t-litry').value.trim() && !d.querySelector('.t-licznik').value.trim()) d.remove();
+  });
+
+  var budowaPrzed = el('poleBudowa').value;
+  var budowaUstawiona = false;
+  poz.forEach(function(p){ dodajWierszTankowania(p.litry, p.licznik, p.nr); });
+
+  /* BUDOWĘ wypełniamy (pkt 12) — zmierzone: 136/136 wrześniowych tankowań ma
+     budowę, a słownik jest ten sam w obu appkach. To zamiana gorszego źródła
+     (D12: „ostatnia budowa") na lepsze, nie nowa podpowiedź.
+     ⚠ Tylko wartość, którą Ewidencja ZNA ze słownika — obcej nie wstawiamy,
+     bo `select` i tak by ją odrzucił, a pole zrobiłoby się puste. */
+  var zFloty = '';
+  for (var i = poz.length - 1; i >= 0; i--) if (poz[i].budowa) { zFloty = poz[i].budowa; break; }
+  if (zFloty && zFloty !== budowaPrzed && maOpcjeSelect_(el('poleBudowa'), zFloty)) {
+    el('poleBudowa').value = zFloty;
+    odswiezPoleWyb_('poleBudowa');
+    budowaUstawiona = true;
+  }
+
+  /* ⚠ pkt 11 — licznika NIE wypełniamy, tylko mówimy, co wiemy. */
+  var jed = STAN.aktywna ? STAN.aktywna.jednostkaLicznika : 'km';
+  var zLicznikiem = poz.filter(function(p){ return p.licznik !== '' && p.licznik != null; });
+  el('podpowiedzLicznikFloty').textContent = zLicznikiem.length
+    ? 'Przy tankowaniu licznik pokazywał ' + formatLicznik_(zLicznikiem[0].licznik) + ' ' + jed +
+      ' — stan na początek dnia jest niższy.'
+    : '';
+
+  WSTAWIONE = {
+    numery: poz.map(function(p){ return p.nr; }),
+    data: data, budowaPrzed: budowaPrzed, budowaUstawiona: budowaUstawiona
+  };
+  odswiezPodgladTankowania();
+  odswiezPodpowiedzFloty_();
+}
+
+/* Cofnięcie ma wrócić formularz DOKŁADNIE tam, gdzie był: znika tylko to, co
+   wstawiliśmy (wiersze ze znacznikiem `data-zfloty`), a budowa wraca do
+   poprzedniej wartości TYLKO wtedy, gdy to my ją zmieniliśmy. */
+function cofnijWstawienie_(cicho){
+  el('listaTankowan').querySelectorAll('.tank-item[data-zfloty]').forEach(function(d){ d.remove(); });
+  if (!el('listaTankowan').querySelector('.tank-item')) dodajWierszTankowania();
+  if (WSTAWIONE.budowaUstawiona) {
+    el('poleBudowa').value = WSTAWIONE.budowaPrzed || '';
+    odswiezPoleWyb_('poleBudowa');
+  }
+  el('podpowiedzLicznikFloty').textContent = '';
+  zerujWstawienie_();
+  odswiezPodgladTankowania();
+  if (!cicho) odswiezPodpowiedzFloty_();
+}
+
+function rysujKarteTankowan_(){
+  var cel = el('kartaTankowan');
+  if (!cel) return;
+  var ile = TANK.pozycje.length;
+  if (!ile) { cel.innerHTML = ''; return; }
+  cel.innerHTML =
+    '<div class="karta-tank">' +
+      '<div class="kt-tyt">' + ikonaHTML_('ic-check') + 'Tankowania z Floty czekają</div>' +
+      '<p class="kt-pod">' + zdanieOTankowaniach_(ile) + '</p>' +
+      '<button type="button" class="przycisk-drugi" id="tankOtworz">' +
+        ikonaHTML_('ic-fuel') + ' Importuj tankowania</button>' +
+    '</div>';
+  el('tankOtworz').onclick = otworzImport_;
+}
+
+/* Polska odmiana razem z czasownikiem — „3 tankowania CZEKAJĄ", ale
+   „5 tankowań CZEKA". Zrobione jednym zdaniem, bo sklejanie rzeczownika
+   z czasownikiem osobno dawało „3 tankowania nie jest dopisanych"
+   (złapane na podglądzie 16.09). */
+function zdanieOTankowaniach_(n){
+  if (n === 1) return '<b>1</b> tankowanie z tej maszyny czeka na dopisanie do wpisu.';
+  var ost = n % 10, dwa = n % 100;
+  return (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14))
+    ? '<b>' + n + '</b> tankowania z tej maszyny czekają na dopisanie do wpisów.'
+    : '<b>' + n + '</b> tankowań z tej maszyny czeka na dopisanie do wpisów.';
+}
+
+function otworzImport_(){
+  if (!STAN.aktywna) return;
+  /* pkt 14, poprawka 2: LISTA jest zawsze świeża. Między pokazaniem karty
+     a kliknięciem mogło minąć pół godziny, a zaraz przepiszemy cudze dane.
+     Ekran otwieramy od razu — czekanie z pustym telefonem w ręku jest gorsze
+     niż lista, która po sekundzie sama się uzupełni. */
+  pobierzTankowania_(STAN.aktywna.idPojazdu, true);
+  /* ⚠ Bez tej klasy ikona typu maszyny nie dostaje swojego CSS i rozlewa się
+     na pół ekranu — złapane na podglądzie 16.09. `otworzWpisy` robi to samo. */
+  el('importPodtytul').className = 'wpisy-pojazd';
+  el('importPodtytul').innerHTML = chipPojazduHtml_(STAN.aktywna);
+  rysujImport_();
+  pokazEkran('ekranImport');
+}
+
+/* Dzień jako RAMKA (wariant „b" z makiety): zielona = wpis na ten dzień jest
+   i mogę go poprawić, pomarańczowa = wpisu nie ma albo nie jest mój.
+   Kształt niesie informację, zanim kierowca cokolwiek przeczyta. */
+function rysujImport_(){
+  var dni = [];
+  TANK.pozycje.forEach(function(p){ if (dni.indexOf(p.data) < 0) dni.push(p.data); });
+  dni.sort();
+
+  var doDopisania = TANK.pozycje.filter(function(p){ return p.mozna && p.wpis; });
+  var h = '';
+
+  /* Pasek „zaznacz wszystkie" — tylko gdy jest co zaznaczać hurtem. Przy trzech
+     pozycjach byłby szumem; zobaczyliśmy go dopiero na makiecie w skali 18. */
+  if (doDopisania.length > 3) {
+    var wszystkie = doDopisania.every(function(p){ return TANK.wybrane[p.nr]; });
+    h += '<div class="tank-zaznacz"><span>' + doDopisania.length + ' do dopisania</span>' +
+      '<button type="button" data-wszystkie="' + (wszystkie ? '0' : '1') + '">' +
+      (wszystkie ? 'Odznacz wszystkie' : 'Zaznacz wszystkie') + '</button></div>';
+  }
+
+  dni.forEach(function(d){
+    var wd = TANK.pozycje.filter(function(p){ return p.data === d; });
+    var pierwsza = wd[0];
+    var maWpis = !!pierwsza.wpis;
+    var mozna = maWpis && pierwsza.mozna;
+    h += '<div class="tank-dzien ' + (mozna ? 'ok' : 'brak') + '">' +
+      '<div class="td-pas"><span class="td-data">' + dataPL_(d) +
+        '<span class="td-dow">' + dzienTygodnia_(d) + '</span></span>' +
+        '<span class="td-co">' + (mozna
+          ? 'dopisze się do wpisu<br>' + bezpiecznyTekst(pierwsza.wpis)
+          : (maWpis ? 'nie możesz tu dopisać'
+                    : 'brak wpisu na ten dzień<br>dodaj wpis i wróć')) + '</span></div>' +
+      '<div class="td-tresc">';
+    wd.forEach(function(p){
+      var czynna = p.mozna && p.wpis;
+      h += '<button type="button" class="tank-poz' + (czynna ? '' : ' nieczynna') +
+        (TANK.wybrane[p.nr] ? ' wybrana' : '') + '"' +
+        (czynna ? ' data-nr="' + bezpiecznyTekst(p.nr) + '"' : ' disabled') + '>' +
+        (czynna ? '<span class="tp-ptaszek">' + ikonaHTML_('ic-check') + '</span>' : '') +
+        '<span class="tp-tresc">' +
+          '<span class="tp-1"><span class="tp-litry">' + bezpiecznyTekst(p.litry) + ' L</span>' +
+            (p.licznik !== '' && p.licznik != null
+              ? '<span class="tp-licz">Licznik: <b>' + bezpiecznyTekst(p.licznik) + '</b></span>' : '') +
+          '</span>' +
+          /* „kto tankował" tylko wtedy, gdy to NIE ten, kto patrzy — bo tankuje
+             często kto inny niż autor wpisu (zmierzone: 4 z 35 dni). */
+          (p.kierowca ? '<span class="tp-2">tankował: ' + bezpiecznyTekst(p.kierowca) + '</span>' : '') +
+          (p.budowa ? '<span class="tp-2">' + bezpiecznyTekst(p.budowa) + '</span>' : '') +
+          (czynna ? '' : '<span class="tp-powod">' +
+             bezpiecznyTekst(p.wpis ? p.powod : 'na ten dzień nie ma jeszcze wpisu') + '</span>') +
+          '<span class="tp-nr">' + bezpiecznyTekst(p.nr) + '</span>' +
+        '</span></button>';
+    });
+    h += '</div></div>';
+  });
+
+  if (!dni.length) h = '<div class="srodek">Nie ma nic do dopisania.</div>';
+  el('listaImportu').innerHTML = h;
+
+  var ileWybranych = TANK.pozycje.filter(function(p){ return TANK.wybrane[p.nr]; }).length;
+  el('pasImportu').innerHTML = dni.length
+    ? '<button type="button" class="przycisk" id="tankDopisz"' + (ileWybranych ? '' : ' disabled') + '>' +
+      (ileWybranych ? 'Dopisz do wpisów (' + ileWybranych + ')' : 'Zaznacz, co dopisać') + '</button>' +
+      '<div class="info">Tankowania z dnia bez wpisu dopiszesz, gdy zrobisz wpis na ten dzień.</div>'
+    : '';
+
+  el('listaImportu').querySelectorAll('[data-nr]').forEach(function(b){
+    b.onclick = function(){
+      var nr = b.getAttribute('data-nr');
+      if (TANK.wybrane[nr]) delete TANK.wybrane[nr]; else TANK.wybrane[nr] = true;
+      rysujImport_();
+    };
+  });
+  var wsz = el('listaImportu').querySelector('[data-wszystkie]');
+  if (wsz) wsz.onclick = function(){
+    var wl = wsz.getAttribute('data-wszystkie') === '1';
+    TANK.pozycje.forEach(function(p){
+      if (p.mozna && p.wpis) { if (wl) TANK.wybrane[p.nr] = true; else delete TANK.wybrane[p.nr]; }
+    });
+    rysujImport_();
+  };
+  if (el('tankDopisz')) el('tankDopisz').onclick = dopiszTankowania_;
+}
+
+el('importWroc').onclick = function(){ pokazEkran('ekranWpisy'); };
+
+function dzienTygodnia_(iso){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return '';
+  var c = String(iso).split('-');
+  return DNI_PELNE_[new Date(Date.UTC(+c[0], +c[1] - 1, +c[2])).getUTCDay()];
+}
+var DNI_PELNE_ = ['niedziela','poniedziałek','wtorek','środa','czwartek','piątek','sobota'];
+
+/* Wybrane pozycje grupujemy PO WPISIE — jedno wywołanie na wpis, bo serwer
+   dopisuje do jednego wiersza naraz (i tylko do takiego, który należy do
+   wołającego). */
+/* ═══════════════════════════════════════════════════════════════════════════
+   W-68 pkt 13d — „WE FLOCIE JEST DZIŚ INACZEJ" (16.09.2026)
+
+   Marek, zapytany, jak często tankowanie zmienia litry po wpisaniu: *„w sumie
+   to zazwyczaj jest to bardzo sporadyczne, i to bardziej moment, w którym ktoś
+   musi poprawić"*. Skoro źródłem zmiany jest POPRAWIANIE POMYŁKI, to informacja
+   o niej musi dojść — inaczej w ewidencji zostaje liczba, o której już wiadomo,
+   że była zła.
+
+   ⚠ Ale kierowca też ma prawo poprawić tankowanie u siebie. Wtedy jego wpis
+   również przestanie pasować do Floty. Dlatego pokazujemy OBIE wartości i nie
+   podmieniamy niczego bez kliknięcia, a guzik jest tylko wtedy, gdy serwer umie
+   trafić w konkretny kawałek tekstu (ten o tym samym liczniku). Kto chce
+   zostawić swoją wersję — po prostu nie klika (decyzja Marka 16.09).
+   ═══════════════════════════════════════════════════════════════════════════ */
+function rozjazdWpisu_(idWpisu){
+  for (var i = 0; i < (TANK.rozjazdy || []).length; i++) {
+    if (TANK.rozjazdy[i].idWpisu === idWpisu) return TANK.rozjazdy[i];
+  }
+  return null;
+}
+
+function rozjazdHtml_(idWpisu){
+  var r = rozjazdWpisu_(idWpisu);
+  if (!r || !r.pozycje.length) return '';
+  /* Nagłówek mówi, CO SIĘ STAŁO — zmiana i zniknięcie to dwie różne wiadomości.
+     Jeden wspólny napis („jest dziś inaczej") nad informacją, że tankowania
+     w ogóle nie ma, brzmiałby jak pomyłka appki (złapane na podglądzie 16.09). */
+  var samoZnikniecie = r.pozycje.every(function(p){ return p.zniklo; });
+  var h = '<div class="wpis-tank"><b>' + ikonaHTML_('ic-fuel') + ' ' +
+          (samoZnikniecie
+            ? (r.pozycje.length === 1 ? 'Tego tankowania nie ma już we Flocie'
+                                      : 'Tych tankowań nie ma już we Flocie')
+            : 'We Flocie jest dziś inaczej') + '</b>';
+  r.pozycje.forEach(function(p){
+    if (p.zniklo){
+      h += '<span class="wt-para">' +
+           (samoZnikniecie ? 'Mogło zostać anulowane. ' : 'Tego tankowania nie ma już we Flocie. ') +
+           'Jeśli nie powinno go być we wpisie — popraw wpis.' +
+           '<span class="wt-nr">' + bezpiecznyTekst(p.nr) + '</span></span>';
+      return;
+    }
+    h += '<span class="wt-para">' +
+         (p.mam ? 'W tym wpisie: <b>' + bezpiecznyTekst(p.mam) + '</b><br>' : '') +
+         'We Flocie: <b>' + bezpiecznyTekst(p.wFlocie) + '</b>' +
+         '<span class="wt-nr">' + bezpiecznyTekst(p.nr) + '</span></span>';
+    if (p.doKliku){
+      h += '<button type="button" class="przycisk-maly" data-aktualizuj="' +
+           bezpiecznyTekst(idWpisu) + '" data-nr="' + bezpiecznyTekst(p.nr) + '">' +
+           'Weź z Floty</button>';
+    } else {
+      /* Bez uchwytu nie zgadujemy, który kawałek podmienić — mówimy wprost,
+         czym to poprawić, zamiast dawać guzik, który mógłby trafić w zły. */
+      h += '<span class="wt-para">Popraw wpis ręcznie — nie umiem bezpiecznie ' +
+           'wskazać, który kawałek podmienić.</span>';
+    }
+  });
+  return h + '</div>';
+}
+
+function aktualizujTankowanie_(idWpisu, nr){
+  pokazOverlay('Biorę z Floty…');
+  wolajAPI('aktualizujTankowanie', { idWpisu: idWpisu, nr: nr }).then(function(d){
+    schowajOverlay();
+    if (!d || !d.ok){
+      pokazInfo_('Nie udało się', (d && d.blad) || 'Spróbuj jeszcze raz.', 'ic-warn');
+      return;
+    }
+    if (d.stanPo) zastosujStanPo_(d.stanPo);
+    if (STAN.aktywna){
+      odswiezHistorie_(STAN.aktywna).then(function(){ pobierzTankowania_(STAN.aktywna.idPojazdu, true); });
+    }
+  }).catch(function(){
+    schowajOverlay();
+    pokazInfo_('Brak połączenia', 'Tej poprawki nie da się zrobić bez internetu.', 'ic-warn');
+  });
+}
+
+function dopiszTankowania_(){
+  var wgWpisu = {};
+  TANK.pozycje.forEach(function(p){
+    if (!TANK.wybrane[p.nr] || !p.wpis || !p.mozna) return;
+    (wgWpisu[p.wpis] = wgWpisu[p.wpis] || []).push(p.nr);
+  });
+  var wpisy = Object.keys(wgWpisu);
+  if (!wpisy.length) return;
+
+  pokazOverlay('Dopisuję tankowania…');
+  var dopisane = 0, bledy = [];
+  var kolejka = wpisy.reduce(function(lancuch, idW){
+    return lancuch.then(function(){
+      return wolajAPI('importujTankowania', { idWpisu: idW, numery: wgWpisu[idW] })
+        .then(function(d){
+          if (d && d.ok) { dopisane += d.dopisano || 0; if (d.stanPo) zastosujStanPo_(d.stanPo); }
+          else bledy.push((d && d.blad) || 'nie udało się');
+        });
+    });
+  }, Promise.resolve());
+
+  kolejka.then(function(){
+    schowajOverlay();
+    if (bledy.length) {
+      pokazInfo_('Nie wszystko się dopisało', bledy.join('\n'), 'ic-warn');
+    }
+    /* Wracamy do „Moich wpisów" i odświeżamy — kierowca ma ZOBACZYĆ efekt,
+       a nie usłyszeć o nim. ⚠ Import jest poprawką wpisu, więc cofa
+       „Zamykam miesiąc" (W-55) — `stanPo` wyżej już to uwzględnia. */
+    pokazEkran('ekranWpisy');
+    if (STAN.aktywna) {
+      odswiezHistorie_(STAN.aktywna).then(function(){ pobierzTankowania_(STAN.aktywna.idPojazdu, true); });
+    }
+  });
+}
+
 function otworzWpisy(j){
   if (STAN.gosc) { otworzWpisyGoscia_(); return; }   // E-20/E-21
   if (!j) { pokazEkran('ekranStart'); return; }
@@ -5626,6 +6295,14 @@ function otworzWpisy(j){
     }
     return;
   }
+
+  /* W-68: karta „tankowania czekają" — osobne, nieblokujące zapytanie.
+     Gdyby padło, karty po prostu nie będzie; lista wpisów rysuje się tak
+     samo jak dotąd. */
+  el('kartaTankowan').innerHTML = '';
+  /* pkt 14, poprawka 2: licznikowi na karcie wolno być sprzed minuty — to tylko
+     zachęta do kliknięcia. Świeżość dobiera `otworzImport_`, tuż przed listą. */
+  pobierzTankowania_(j.idPojazdu, false);
 
   pokazPasekWpisow_('ladowanie');
   odswiezHistorie_(j).then(function(wynik){
@@ -5874,6 +6551,9 @@ function rysujWpisy(){
             ? '<div class="wpis-uwaga"><b>' + ikonaHTML_('ic-warn') + ' Wymaga uwagi</b>' +
               komunikatHTML_(w.cofniety, { bezKodu: true }) + '</div>'
             : '') +
+          // W-68 pkt 13d: „we Flocie jest dziś inaczej" — szara, poza
+          // `.wpis-szczegoly`, bo prosi o decyzję, a nie o przeczytanie.
+          rozjazdHtml_(w.idWpisu) +
           // E-20/E-21: autor + osoba z „Jeździł ktoś inny?" (doklejona przez
           // „ + ", jak na wydruku); wpis gościa (autor „Aplikacja") pokazuje
           // samo imię z kolumny R.
@@ -5932,6 +6612,14 @@ function rysujWpisy(){
       if (grupa) grupa.classList.toggle('ukryte');
       h.classList.toggle('rozwiniety');
     });
+  });
+  el('listaWpisow').querySelectorAll('[data-aktualizuj]').forEach(function(b){
+    b.onclick = function(ev){
+      /* ⚠ `stopPropagation`: guzik siedzi wewnątrz `.wpis-tresc`, które rozwija
+         i zwija wpis. Bez tego kliknięcie robiłoby dwie rzeczy naraz. */
+      ev.stopPropagation();
+      aktualizujTankowanie_(b.dataset.aktualizuj, b.dataset.nr);
+    };
   });
   el('listaWpisow').querySelectorAll('.wpis').forEach(function(e){
     e.querySelector('.wpis-tresc').onclick = function(){ e.classList.toggle('rozwiniety'); };
