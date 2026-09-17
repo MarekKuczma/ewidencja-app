@@ -2446,6 +2446,16 @@ var PALETY_APKA = {
    z tego, czego na liście NIE MA i dlaczego. Bez niej pominięcie byłoby
    schowaniem, a tego Marek nie chciał od pierwszego dnia. */
 .tank-reczne{font-size:13px; color:var(--szary); line-height:1.4; margin:14px 2px 0;}
+/* W-77: szkielet ładowania tankowań. Wzorzec i animacja są z Z-87 (`.szkielet`,
+   `.sz-l`) — dokładamy tylko odstępy, żeby kształt pasował do miejsca.
+   ⚠ Karta ładowania NIE ma zielonej ramki: zielona obwódka, która po sekundzie
+   znika, obiecuje tankowania, zanim wiemy, czy jakieś są. */
+.tank-szkielet{margin:0 0 12px; padding:14px; border-radius:12px;
+  border:1.5px solid var(--linia);}
+.tank-dzien.szkielet{border-color:var(--linia);}
+.tank-dzien.szkielet .td-pas{display:block; padding:14px 16px;}
+.tank-dzien.szkielet .tank-poz{cursor:default; display:block;}
+.tank-dzien.szkielet .tp-tresc{display:block; width:100%;}
 /* W-72: „nic nie czeka" w „Moich wpisach". Spokojna linijka, nie karta —
    ma uspokoić, a nie prosić o uwagę. */
 .tank-cisza{display:flex; gap:7px; align-items:flex-start; margin:0 2px 12px;
@@ -2464,14 +2474,15 @@ var PALETY_APKA = {
   padding:6px 12px; border-radius:8px; border:1px solid currentColor; background:none;
   color:inherit; cursor:pointer;}
 .nowa-wersja button:active{transform:scale(.97);}
-/* W-71: pozycja „wpisane ręcznie, ale z literówką". Nie jest przyciskiem
-   wyboru — nie ma tu czego zaznaczać, jest jedna rzecz do zrobienia. */
+/* W-78: pozycja „wpisane ręcznie, ale z literówką" jest teraz zwykłą pozycją
+   listy — zaznacza się ptaszkiem. Zostaje tylko wyróżnienie linijki z tym,
+   co kierowca ma u siebie, żeby różnica rzucała się w oczy. */
 /* ⚠ Układ PIONOWY, nie obok siebie — złapane na podglądzie 16.09: przy guziku
    z boku zostawało tak mało miejsca, że „43,68 L" łamało się na „43,68" i „L",
    a wpisana wartość szła po jednym słowie w linijce. Na telefonie 390 px nie
    ma miejsca na dwie kolumny, gdy jedna z nich to przycisk z liczbą. */
-.tank-poz.poprawka{cursor:default; flex-direction:column; align-items:stretch; gap:8px;}
-.tank-poz.poprawka .przycisk-maly{align-self:flex-start;}
+.tank-poz .tp-popr{color:var(--tekst-uwaga); font-weight:600;}
+.tank-poz .tp-popr b{font-weight:750;}
 /* Reakcja na dotknięcie. Na telefonie nie ma „hover", więc jedyne, co daje
    poczucie trafienia w przycisk, to `:active` i stan po kliknięciu. */
 .przycisk-maly:active{transform:scale(.97);}
@@ -4472,7 +4483,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v138';
+var WERSJA_SHELL = 'ewidencja-v140';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -5937,7 +5948,7 @@ function chipPojazduHtml_(j){
    pojazdu). Dane biorą się z jednego zapytania `tankowaniaDoImportu`, które
    obsługuje i licznik na karcie, i samą listę.
    ═════════════════════════════════════════════════════════════════════════ */
-var TANK = { pozycje: [], wybrane: {}, idPojazdu: null, rozjazdy: [] };
+var TANK = { pozycje: [], wybrane: {}, idPojazdu: null, rozjazdy: [], laduje: false };
 
 /* Awaria odczytu Floty NIE MOŻE ruszyć „Moich wpisów" (W-68 pkt 14, poprawka 1).
    Dlatego wszystko tu jest „best effort": nie udało się — karty po prostu nie ma. */
@@ -5947,6 +5958,10 @@ function pobierzTankowania_(idPojazdu, swieze){
      i wrócił do listy sekundę później. */
   if (TANK.idPojazdu !== idPojazdu) { TANK.pozycje = []; TANK.wybrane = {}; TANK.rozjazdy = []; }
   TANK.idPojazdu = idPojazdu;
+  /* W-77: szkielet rysuje się OD RAZU, a nie dopiero po odpowiedzi — inaczej
+     pokazywałby się wtedy, gdy już nie jest potrzebny. */
+  TANK.laduje = true;
+  poTankowaniach_();
   return wolajAPI('tankowaniaDoImportu', { idPojazdu: idPojazdu, swieze: !!swieze }).then(function(d){
     if (d && d.ok) {
       /* `dostepne:false` = arkusz Floty się zaciął (pkt 14). Wtedy karty MA NIE
@@ -5958,10 +5973,14 @@ function pobierzTankowania_(idPojazdu, swieze){
       TANK.pozycje.forEach(function(p){ sa[p.nr] = true; });
       Object.keys(TANK.wybrane).forEach(function(nr){ if (!sa[nr]) delete TANK.wybrane[nr]; });
     }
+    TANK.laduje = false;
     poTankowaniach_();
   }).catch(function(){
     /* Brak sieci — zostawiamy to, co już było na ekranie. Nic nie tracimy:
-       zapisu i tak nie da się zrobić bez połączenia. */
+       zapisu i tak nie da się zrobić bez połączenia.
+       ⚠ Szkielet MUSI zejść także tą drogą — szkielet, który został na zawsze,
+       jest gorszy od pustki, bo obiecuje coś, co nie przyjdzie (pkt 14). */
+    TANK.laduje = false;
     poTankowaniach_();
   });
 }
@@ -6163,6 +6182,17 @@ function rysujKarteTankowan_(){
   /* W-70: tankowania rozpoznane jako WPISANE RĘCZNIE nie są „do zrobienia" —
      nie liczymy ich na karcie. Gdyby liczyły się, karta krzyczałaby o 74
      tankowaniach z lipca i sierpnia, które dawno są w arkuszu. */
+  /* ⚠ W-77 (17.09.2026) — SZKIELET TYLKO WTEDY, GDY NIE MA CZEGO POKAZAĆ.
+     Zasada wprost z Z-87: kto ma już dane, widzi je od pierwszej klatki, a nie
+     migoczące paski. Dlatego warunek to „trwa pobieranie ORAZ pozycji nie ma" —
+     przy odświeżaniu listy, która JEST na ekranie, szkieletu nie ma wcale
+     (decyzja Marka 17.09: „zostaw listę, bez szkieletu"). */
+  if (TANK.laduje && !TANK.pozycje.length) {
+    cel.innerHTML = '<div class="tank-szkielet szkielet" aria-hidden="true">' +
+      '<div class="sz-l" style="width:58%"></div>' +
+      '<div class="sz-l" style="width:38%"></div></div>';
+    return;
+  }
   var ile = TANK.pozycje.filter(function(p){ return !p.recznie; }).length;
   var reczne = TANK.pozycje.filter(function(p){ return p.recznie; }).length;
   if (!ile) {
@@ -6235,14 +6265,15 @@ function rysujImport_(){
   widoczne.forEach(function(p){ if (dni.indexOf(p.data) < 0) dni.push(p.data); });
   dni.sort();
 
-  var doDopisania = widoczne.filter(function(p){ return p.mozna && p.wpis; });
+  /* W-78: „do zrobienia" to i dopisania, i poprawki — jeden ekran, jedna zasada. */
+  var doDopisania = widoczne.filter(function(p){ return (p.mozna && p.wpis) || p.doPoprawki; });
   var h = '';
 
   /* Pasek „zaznacz wszystkie" — tylko gdy jest co zaznaczać hurtem. Przy trzech
      pozycjach byłby szumem; zobaczyliśmy go dopiero na makiecie w skali 18. */
   if (doDopisania.length > 3) {
     var wszystkie = doDopisania.every(function(p){ return TANK.wybrane[p.nr]; });
-    h += '<div class="tank-zaznacz"><span>' + doDopisania.length + ' do dopisania</span>' +
+    h += '<div class="tank-zaznacz"><span>' + doDopisania.length + ' do zrobienia</span>' +
       '<button type="button" data-wszystkie="' + (wszystkie ? '0' : '1') + '">' +
       (wszystkie ? 'Odznacz wszystkie' : 'Zaznacz wszystkie') + '</button></div>';
   }
@@ -6267,24 +6298,16 @@ function rysujImport_(){
                     : 'brak wpisu na ten dzień<br>dodaj wpis i wróć')) + '</span></div>' +
       '<div class="td-tresc">';
     wd.forEach(function(p){
-      /* W-71: tankowanie wpisane ręcznie, ale z literówką — NIE ptaszek „dopisz",
-         tylko guzik „Popraw". Dopisanie zrobiłoby z jednego tankowania dwa. */
-      if (p.doPoprawki) {
-        h += '<div class="tank-poz poprawka">' +
-          '<span class="tp-tresc">' +
-            '<span class="tp-1"><span class="tp-litry">' + bezpiecznyTekst(p.litry) + ' L</span>' +
-              (p.licznik !== '' && p.licznik != null
-                ? '<span class="tp-licz">Licznik: <b>' + bezpiecznyTekst(p.licznik) + '</b></span>' : '') +
-            '</span>' +
-            '<span class="tp-2">masz wpisane: <b>' + bezpiecznyTekst(p.poprawka) + '</b></span>' +
-            '<span class="tp-nr">' + bezpiecznyTekst(p.nr) + '</span>' +
-          '</span>' +
-          '<button type="button" class="przycisk-maly" data-popraw="' + bezpiecznyTekst(p.wpis) +
-            '" data-nr="' + bezpiecznyTekst(p.nr) + '">Popraw na ' +
-            bezpiecznyTekst(p.litry) + ' L</button></div>';
-        return;
-      }
-      var czynna = p.mozna && p.wpis;
+      /* ⚠ W-78 (17.09.2026): pozycja „wpisane ręcznie, ale z literówką" zaznacza
+         się TAK SAMO jak reszta. Wcześniej był tu osobny guzik działający od
+         razu — i Marek powiedział wprost: *„zaznaczając «popraw na xxx L» nie
+         widać, że to zaznaczyłem"*. Cały ten ekran działa według jednej zasady
+         („zaznaczam i dopisuję razem", wariant 1 z makiety), a ja wstawiłem
+         w niego jedyny element, który się z niej wyłamywał.
+         **Nauczka: element, który wygląda jak pozycja listy, musi zachowywać
+         się jak pozycja listy — inaczej człowiek klika i nie wie, czy trafił.**
+         Co z tym zrobi guzik na dole, mówi jego napis („Dopisz i popraw"). */
+      var czynna = (p.mozna && p.wpis) || p.doPoprawki;
       h += '<button type="button" class="tank-poz' + (czynna ? '' : ' nieczynna') +
         (TANK.wybrane[p.nr] ? ' wybrana' : '') + '"' +
         (czynna ? ' data-nr="' + bezpiecznyTekst(p.nr) + '"' : ' disabled') + '>' +
@@ -6298,10 +6321,11 @@ function rysujImport_(){
              często kto inny niż autor wpisu (zmierzone: 4 z 35 dni). */
           (p.kierowca ? '<span class="tp-2">tankował: ' + bezpiecznyTekst(p.kierowca) + '</span>' : '') +
           (p.budowa ? '<span class="tp-2">' + bezpiecznyTekst(p.budowa) + '</span>' : '') +
-          /* W-71: literówka we WPISIE, którego nie mogę poprawić (cudzy, zamknięty) —
-             mówimy o niej, chociaż guzika nie ma. */
-          (p.poprawka && !p.doPoprawki
-            ? '<span class="tp-2">masz wpisane: <b>' + bezpiecznyTekst(p.poprawka) + '</b></span>' : '') +
+          /* W-71: literówka we wpisie — mówimy, co jest wpisane. Gdy wpis jest
+             cudzy albo miesiąc zamknięty, zostaje sama informacja (bez ptaszka). */
+          (p.poprawka
+            ? '<span class="tp-2 tp-popr">' + (p.doPoprawki ? 'do poprawki \u2014 ' : '') +
+              'masz wpisane: <b>' + bezpiecznyTekst(p.poprawka) + '</b></span>' : '') +
           (czynna ? '' : '<span class="tp-powod">' +
              bezpiecznyTekst(p.wpis ? p.powod : 'na ten dzień nie ma jeszcze wpisu') + '</span>') +
           '<span class="tp-nr">' + bezpiecznyTekst(p.nr) + '</span>' +
@@ -6310,24 +6334,47 @@ function rysujImport_(){
     h += '</div></div>';
   });
 
+  /* ⚠ Szkielet zamiast „Nie ma nic do dopisania", DOPÓKI trwa pobieranie.
+     Bez tego ekran otwiera się zdaniem, które po sekundzie okazuje się
+     nieprawdą — a to gorsze niż czekanie, bo człowiek zdąży mu uwierzyć
+     i wyjść. Kształt dziedziczy po prawdziwych `.tank-dzien` i `.tank-poz`,
+     więc przyszła zmiana wyglądu listy zmieni też szkielet. */
+  if (!dni.length && TANK.laduje) {
+    /* ⚠ `sz-l` to element BLOKOWY — w `span` nie ma wysokości ani odstępu
+       i kreski znikają (złapane na podglądzie 17.09). Wzorzec z Z-87 używa
+       `div` i tak samo robimy tutaj. */
+    var kdzien = '<div class="tank-dzien szkielet" aria-hidden="true">' +
+      '<div class="td-pas"><div class="sz-l" style="width:42%"></div></div>' +
+      '<div class="td-tresc"><div class="tank-poz"><div class="tp-tresc">' +
+        '<div class="sz-l" style="width:56%"></div>' +
+        '<div class="sz-l" style="width:34%"></div>' +
+      '</div></div></div></div>';
+    el('listaImportu').innerHTML = kdzien + kdzien;
+    el('pasImportu').innerHTML = '';
+    return;
+  }
   if (!dni.length) h = '<div class="srodek">Nie ma nic do dopisania.</div>';
   if (reczne) {
     h += '<p class="tank-reczne">' + zdanieORecznych_(reczne) + '</p>';
   }
   el('listaImportu').innerHTML = h;
-  /* W-71: guzik „Popraw" idzie tą samą drogą co „Weź z Floty" z 13d —
-     podmienia JEDEN kawałek tekstu i dostawia znacznik `T-…`. */
-  el('listaImportu').querySelectorAll('[data-popraw]').forEach(function(bt){
-    bt.onclick = function(ev){
-      ev.stopPropagation();
-      aktualizujTankowanie_(bt.dataset.popraw, bt.dataset.nr, bt);
-    };
-  });
+  /* W-78: osobnego guzika „Popraw" na tym ekranie już nie ma — poprawkę
+     zaznacza się ptaszkiem jak wszystko inne, a wykonuje guzik na dole.
+     Droga z 13d („Weź z Floty" przy wpisie w „Moich wpisach") zostaje bez zmian. */
 
-  var ileWybranych = TANK.pozycje.filter(function(p){ return TANK.wybrane[p.nr]; }).length;
+  /* ⚠ Napis na guziku MÓWI, co się stanie — bo od W-78 mogą tu być dwie różne
+     rzeczy naraz. „Dopisz do wpisów" nad zaznaczoną poprawką byłoby nieprawdą,
+     a to jest guzik, który pisze do arkusza Marka. */
+  var wybrane = TANK.pozycje.filter(function(p){ return TANK.wybrane[p.nr]; });
+  var ileWybranych = wybrane.length;
+  var ilePopr = wybrane.filter(function(p){ return p.doPoprawki; }).length;
+  var ileDop = ileWybranych - ilePopr;
+  var napis = !ileWybranych ? 'Zaznacz, co zrobić'
+    : (ilePopr && ileDop) ? 'Dopisz i popraw (' + ileWybranych + ')'
+    : (ilePopr ? 'Popraw (' + ilePopr + ')' : 'Dopisz do wpisów (' + ileDop + ')');
   el('pasImportu').innerHTML = dni.length
     ? '<button type="button" class="przycisk" id="tankDopisz"' + (ileWybranych ? '' : ' disabled') + '>' +
-      (ileWybranych ? 'Dopisz do wpisów (' + ileWybranych + ')' : 'Zaznacz, co dopisać') + '</button>' +
+      bezpiecznyTekst(napis) + '</button>' +
       '<div class="info">Tankowania z dnia bez wpisu dopiszesz, gdy zrobisz wpis na ten dzień.</div>'
     : '';
 
@@ -6342,7 +6389,7 @@ function rysujImport_(){
   if (wsz) wsz.onclick = function(){
     var wl = wsz.getAttribute('data-wszystkie') === '1';
     TANK.pozycje.forEach(function(p){
-      if (p.mozna && p.wpis) { if (wl) TANK.wybrane[p.nr] = true; else delete TANK.wybrane[p.nr]; }
+      if ((p.mozna && p.wpis) || p.doPoprawki) { if (wl) TANK.wybrane[p.nr] = true; else delete TANK.wybrane[p.nr]; }
     });
     rysujImport_();
   };
@@ -6452,17 +6499,35 @@ function aktualizujTankowanie_(idWpisu, nr, guzik){
 }
 
 function dopiszTankowania_(){
-  var wgWpisu = {};
+  /* ⚠ W-78: jeden guzik, DWIE różne operacje. Dopisania idą hurtem (jedno
+     zapytanie na wpis), poprawki po jednej (każda podmienia inny kawałek
+     tekstu). Kolejność jest celowa: NAJPIERW POPRAWKI. Poprawka dostawia
+     znacznik `T-…` do wpisu, a dopisanie czyta stan tego samego wiersza —
+     odwrotnie dopisanie widziałoby wiersz sprzed poprawki. */
+  var wgWpisu = {}, poprawki = [];
   TANK.pozycje.forEach(function(p){
-    if (!TANK.wybrane[p.nr] || !p.wpis || !p.mozna) return;
+    if (!TANK.wybrane[p.nr]) return;
+    if (p.doPoprawki) { poprawki.push({ wpis: p.wpis, nr: p.nr }); return; }
+    if (!p.wpis || !p.mozna) return;
     (wgWpisu[p.wpis] = wgWpisu[p.wpis] || []).push(p.nr);
   });
   var wpisy = Object.keys(wgWpisu);
-  if (!wpisy.length) return;
+  if (!wpisy.length && !poprawki.length) return;
 
-  pokazOverlay('Dopisuję tankowania…');
+  pokazOverlay(poprawki.length && !wpisy.length ? 'Poprawiam…' : 'Zapisuję zmiany…');
   var dopisane = 0, bledy = [];
-  var kolejka = wpisy.reduce(function(lancuch, idW){
+
+  var kolejka = poprawki.reduce(function(lancuch, pop){
+    return lancuch.then(function(){
+      return wolajAPI('aktualizujTankowanie', { idWpisu: pop.wpis, nr: pop.nr })
+        .then(function(d){
+          if (d && d.ok) { if (d.stanPo) zastosujStanPo_(d.stanPo); }
+          else bledy.push('poprawka ' + pop.nr + ': ' + ((d && d.blad) || 'nie udało się'));
+        });
+    });
+  }, Promise.resolve());
+
+  kolejka = wpisy.reduce(function(lancuch, idW){
     return lancuch.then(function(){
       return wolajAPI('importujTankowania', { idWpisu: idW, numery: wgWpisu[idW] })
         .then(function(d){
@@ -6470,12 +6535,12 @@ function dopiszTankowania_(){
           else bledy.push((d && d.blad) || 'nie udało się');
         });
     });
-  }, Promise.resolve());
+  }, kolejka);
 
   kolejka.then(function(){
     schowajOverlay();
     if (bledy.length) {
-      pokazInfo_('Nie wszystko się dopisało', bledy.join('\n'), 'ic-warn');
+      pokazInfo_('Nie wszystko się udało', bledy.join('\n'), 'ic-warn');
     }
     /* Wracamy do „Moich wpisów" i odświeżamy — kierowca ma ZOBACZYĆ efekt,
        a nie usłyszeć o nim. ⚠ Import jest poprawką wpisu, więc cofa
