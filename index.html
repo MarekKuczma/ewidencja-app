@@ -2453,6 +2453,17 @@ var PALETY_APKA = {
 .tank-cisza .ikona{width:15px; height:15px; flex:0 0 auto; margin-top:1px; color:#16a34a;}
 [data-motyw="ciemny"] .tank-cisza .ikona{color:#86efac;}
 .tank-cisza b{color:var(--tekst); font-weight:650;}
+/* W-76: pasek „obsługa w tle jest nowsza niż ta strona". Pomarańczowy (uwaga),
+   nie czerwony (błąd) — nic się nie zepsuło, trzeba tylko przeładować. */
+.nowa-wersja{margin:0 0 12px; padding:10px 12px; border-radius:10px;
+  background:var(--bg-uwaga); border:1px solid var(--brzeg-uwaga); color:var(--tekst-uwaga);
+  font-size:13px; line-height:1.4; display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap;}
+.nowa-wersja .ikona{width:16px; height:16px; flex:0 0 auto; margin-top:1px;}
+.nowa-wersja b{color:inherit; font-weight:750;}
+.nowa-wersja button{margin-left:auto; font-family:inherit; font-size:13px; font-weight:700;
+  padding:6px 12px; border-radius:8px; border:1px solid currentColor; background:none;
+  color:inherit; cursor:pointer;}
+.nowa-wersja button:active{transform:scale(.97);}
 /* W-71: pozycja „wpisane ręcznie, ale z literówką". Nie jest przyciskiem
    wyboru — nie ma tu czego zaznaczać, jest jedna rzecz do zrobienia. */
 /* ⚠ Układ PIONOWY, nie obok siebie — złapane na podglądzie 16.09: przy guziku
@@ -2529,6 +2540,8 @@ var PALETY_APKA = {
 </header>
 
 <main>
+  <!-- W-76 (16.09.2026): „masz starą wersję strony". Patrz `pokazWersje_`. -->
+  <div id="pasekNowaWersja" class="nowa-wersja ukryte"></div>
   <div class="kolejka-info" id="kolejkaInfo"></div>
   <!-- E-37 (19.08.2026): pasek „komunikat Marka" (W-05) usunięty — komunikat
        przychodzi teraz wysuwanym arkuszem, patrz sprawdzKomunikatMarka_. -->
@@ -4446,13 +4459,56 @@ function wersjaWorkera_(){
 /* Rysuje stopkę. Woływane po każdym odświeżeniu statusu — wersja API bierze
    się z odpowiedzi serwera (D85: `wersjaApi` wraca w KAŻDEJ odpowiedzi), więc
    pokazuje realny stan wdrożenia Apps Script, nie to, co myśli front. */
+/* ═══ W-76 (16.09.2026) — „TA STRONA JEST STARSZA NIŻ APLIKACJA" ═══════════
+   Skąd to się wzięło. Telefon Anety pokazywał w stopce nową wersję i mimo to
+   nie miał zielonej karty tankowań — a narzędzie z W-73 dowiodło, że serwer
+   TO TANKOWANIE WIDZI („DO DOPISANIA — wpis E-000602 zrobiła Cytacka Aneta").
+   ⚠ To klasyczna pułapka aplikacji instalowanych na telefonie: obsługa w tle
+   (service worker) aktualizuje się PIERWSZA i to ona podaje numer wersji do
+   stopki, a sama strona zostaje w telefonie stara, dopóki ktoś jej naprawdę
+   nie przeładuje. Stopka mówiła prawdę o jednej połowie i nieprawdę o drugiej.
+   ⚠ Lekarstwo jest w PORÓWNANIU, nie w napisie: strona niesie własny numer
+   (`WERSJA_SHELL`), obsługa w tle swój (`WERSJA_CACHE`). Różnią się → mówimy to
+   wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
+   dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
+   ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
+var WERSJA_SHELL = 'ewidencja-v138';
+
 function pokazWersje_(){
   var e = el('stopkaWersji');
   if (!e) return;
   wersjaWorkera_().then(function(sw){
     var api = STAN.wersjaApi ? 'API ' + STAN.wersjaApi : 'API —';
-    e.textContent = (sw || 'front —') + ' \u00b7 ' + api;
+    /* W stopce pokazujemy wersję STRONY, bo to ona decyduje o tym, co widać.
+       Gdy obsługa w tle jest inna, dopisujemy ją w nawiasie — inaczej numer
+       w stopce znów opisywałby coś innego, niż człowiek ma przed oczami. */
+    e.textContent = WERSJA_SHELL + (sw && sw !== WERSJA_SHELL ? ' (w tle: ' + sw + ')' : '') +
+      ' \u00b7 ' + api;
+    ostrzezOStarejStronie_(sw);
   });
+}
+
+function ostrzezOStarejStronie_(sw){
+  var pas = el('pasekNowaWersja');
+  if (!pas) return;
+  if (!sw || sw === WERSJA_SHELL) { pas.classList.add('ukryte'); pas.innerHTML = ''; return; }
+  pas.innerHTML = ikonaHTML_('ic-warn') +
+    '<span><b>Jest nowsza wersja aplikacji.</b> Ta strona jeszcze jej nie wczytała, ' +
+    'więc możesz nie widzieć najnowszych rzeczy.</span>' +
+    '<button type="button" id="nowaWersjaOdswiez">Odśwież teraz</button>';
+  pas.classList.remove('ukryte');
+  var b = el('nowaWersjaOdswiez');
+  if (b) b.onclick = function(){
+    b.disabled = true; b.textContent = 'Odświeżam…';
+    /* Najpierw prosimy obsługę w tle, żeby przejęła stronę — bez tego
+       przeładowanie potrafi znów podać starą wersję z pamięci telefonu. */
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ typ: 'przejmij' });
+      }
+    } catch (e) { /* brak obsługi w tle — zwykłe przeładowanie i tak pomoże */ }
+    setTimeout(function(){ location.reload(); }, 250);
+  };
 }
 
 function odswiezStart(){
