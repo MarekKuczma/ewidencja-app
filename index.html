@@ -4488,7 +4488,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v141';
+var WERSJA_SHELL = 'ewidencja-v142';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -6008,6 +6008,19 @@ function poTankowaniach_(){
   if (ZGL_OSTATNIE) rysujZgloszone_(ZGL_OSTATNIE);   // czerwona linijka (pkt 15)
   var ekr = el('ekranImport');
   if (ekr && !ekr.classList.contains('ukryte')) rysujImport_();   // otwarty ekran importu
+  /* ⚠ W-80 (17.09.2026): LISTA WPISÓW TEŻ. Szara linijka „we Flocie jest dziś
+     inaczej" (13d) rysuje się w `rysujWpisy` z `TANK.rozjazdy` — a `rysujWpisy`
+     woła `odswiezHistorie_`, który kończy się ZANIM przyjdą świeże tankowania.
+     Kolejność po poprawce była więc taka: lista przerysowana ze STARYMI
+     rozjazdami → dopiero potem nowe dane → i nikt już listy nie odmalował.
+     Zgłoszenie Marka z telefonu Anety: „gdy poprawka się zapisała, nadal była
+     ramka, że «wisi» tankowanie, i musiałem odświeżyć widok".
+     ⚠ Ta funkcja powstała po to, żeby było JEDNO miejsce przerysowania
+     wszystkiego, co zależy od tankowań — i sam przeoczyłem w niej jeden widok.
+     Nauczka: „jedno miejsce" działa tylko wtedy, gdy naprawdę wymienia się
+     w nim WSZYSTKIE widoki, także te rysowane skądinąd. */
+  var ew = el('ekranWpisy');
+  if (ew && !ew.classList.contains('ukryte') && STAN.wpisy) rysujWpisy();
   odswiezPodpowiedzFloty_();                   // podpowiedź w formularzu (etap 3)
 }
 
