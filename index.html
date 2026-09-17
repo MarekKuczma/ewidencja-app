@@ -2435,6 +2435,17 @@ var PALETY_APKA = {
   font-variant-numeric:tabular-nums;}
 .tank-poz .tp-licz b{color:var(--tekst); font-weight:600;}
 .tank-poz .tp-2{display:block; font-size:13px; color:var(--szary); margin-top:3px;}
+/* W-69 — tankowanie łączone. Plakietka ma `margin-right:auto`, bo `.tp-1` jest
+   `space-between`: bez tego przy pozycji BEZ licznika (a takie są częste —
+   Flota pomija sprzęt bez licznika w kolumnie par) plakietka odjeżdżałaby
+   na prawy skraj i wyglądała jak osobna informacja, nie jak dopisek do litrów.
+   Kolory z istniejących tokenów „akcentjasny" — to nie jest ostrzeżenie ani
+   błąd, tylko wyjaśnienie, więc świadomie NIE bierze koloru uwagi. */
+.tank-poz .tp-lacz-plakietka{margin-right:auto; align-self:center;
+  padding:2px 7px; border-radius:999px; font-size:10.5px; font-weight:750;
+  letter-spacing:.4px; background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);}
+.tank-poz .tp-lacz{color:var(--tekst-akcentjasny); font-weight:600;}
+.tank-poz .tp-lacz b{font-weight:750;}
 .tank-poz .tp-powod{display:block; font-size:12.5px; margin-top:7px;
   color:var(--tekst-uwaga); font-weight:600; line-height:1.35;}
 .tank-poz .tp-nr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
@@ -4488,7 +4499,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v142';
+var WERSJA_SHELL = 'ewidencja-v143';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -6062,6 +6073,17 @@ function zdanieOCzekajacych_(n){
     : 'czeka jeszcze <b>' + n + '</b> tankowań tej maszyny.';
 }
 
+/* W-69: „na 2 maszyny", ale „na 5 maszyn". Ta sama zasada, co w zdaniu
+   o czekających tankowaniach — zdanie z błędem podważa wszystko, co appka mówi
+   obok (nauczka z etapu 3). Liczba maszyn bierze się z rozbicia we Flocie,
+   więc realnie bywa 2–4, ale reguła ma być pełna, nie „na tyle, ile widziałem". */
+function odmianaMaszyn_(n){
+  if (n === 1) return '1 maszynę';
+  var ost = n % 10, dwa = n % 100;
+  return (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14))
+    ? n + ' maszyny' : n + ' maszyn';
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    W-68 ETAP 3 — DRUGA DROGA: TANKOWANIE PRZY TWORZENIU WPISU (16.09.2026)
 
@@ -6336,12 +6358,21 @@ function rysujImport_(){
         (czynna ? '<span class="tp-ptaszek">' + ikonaHTML_('ic-check') + '</span>' : '') +
         '<span class="tp-tresc">' +
           '<span class="tp-1"><span class="tp-litry">' + bezpiecznyTekst(p.litry) + ' L</span>' +
+            /* W-69, wariant 3 (wybór Marka 17.09): plakietka mówi OD RAZU, że to
+               nie całe tankowanie — zanim człowiek zacznie liczyć, skąd te litry. */
+            (p.laczone ? '<span class="tp-lacz-plakietka">ŁĄCZONE</span>' : '') +
             (p.licznik !== '' && p.licznik != null
               ? '<span class="tp-licz">Licznik: <b>' + bezpiecznyTekst(p.licznik) + '</b></span>' : '') +
           '</span>' +
           /* „kto tankował" tylko wtedy, gdy to NIE ten, kto patrzy — bo tankuje
              często kto inny niż autor wpisu (zmierzone: 4 z 35 dni). */
           (p.kierowca ? '<span class="tp-2">tankował: ' + bezpiecznyTekst(p.kierowca) + '</span>' : '') +
+          /* ⚠ Mówimy TYLKO, z jakiej całości i na ile maszyn. Kierowca NIE widzi,
+             kto jeszcze ile dostał (wariant 2 z makiety, odrzucony): to nie jego
+             sprawa, a pełne rozbicie dawało trzy linijki tekstu w każdej pozycji. */
+          (p.laczone ? '<span class="tp-2 tp-lacz">z tankowania <b>' +
+             bezpiecznyTekst(p.laczone.calosc) + ' L</b> na ' +
+             odmianaMaszyn_(Number(p.laczone.ile) || 0) + '</span>' : '') +
           (p.budowa ? '<span class="tp-2">' + bezpiecznyTekst(p.budowa) + '</span>' : '') +
           /* W-71: literówka we wpisie — mówimy, co jest wpisane. Gdy wpis jest
              cudzy albo miesiąc zamknięty, zostaje sama informacja (bez ptaszka). */
