@@ -959,6 +959,10 @@ var PALETY_APKA = {
   .jedn .linia2{color:var(--szary); font-size:13px; margin-top:2px;}
   .jedn.uwaga{background:var(--bg-blad);}
   .jedn.uwaga .linia2{color:var(--tekst-blad);}
+  /* ⚠ W-79: pusta plakietka zostawiała szarą plamkę pod polem licznika
+     (widać ją było przy poprawianiu wpisu). Pudełko bez treści nie jest
+     informacją, tylko śmieciem na ekranie. */
+  .plakietka:empty{display:none;}
   .plakietka{display:inline-block; background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);
     font-size:13px; font-weight:600; border-radius:8px; padding:3px 10px; margin-top:6px;}
   /* Brakowało — plakietka „Anulowany" była szara jak zwykła (wzorzec z floty). */
@@ -2751,10 +2755,11 @@ var PALETY_APKA = {
         <input type="text" id="poleLicznik" inputmode="numeric" placeholder="np. 84210">
         <!-- E-16: treść wstawia `zastosujEtykieteLicznika_` — zależy od trybu. -->
         <div class="podpowiedz-pola" id="podpowiedzLicznik"></div>
-        <!-- W-68 pkt 11 (znalazł Marek na makiecie): licznika z tankowania
-             NIE wstawiamy do tego pola — tu ma być stan PORANNY, a tankowanie
-             jest z połowy dnia. Zamiast wypełnić, mówimy, co wiemy. -->
-        <div class="podpowiedz-pola" id="podpowiedzLicznikFloty"></div>
+        <!-- W-79 (17.09.2026): linijka „przy tankowaniu licznik pokazywał X"
+             USUNIĘTA na prośbę Marka. Reguła z pkt 11 obowiązuje dalej — pola
+             stanu licznika NIE wypełniamy z tankowania — ale tłumaczenie tego
+             pod polem było zbędne: licznik z tankowania i tak widać w wierszu
+             tankowania kilka pól niżej. Jedno miejsce, jedna liczba. -->
         <div class="blad-pola" id="bladLicznik"></div>
         <div class="plakietka" id="ostatniLicznikInfo"></div>
         <div class="ostrzezenie-pola" id="ostrzezeniePrzyrost"></div>
@@ -4483,7 +4488,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v140';
+var WERSJA_SHELL = 'ewidencja-v141';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -5327,7 +5332,6 @@ function otworzWpis(j, wpisDoEdycji){
   /* W-68 etap 3: formularz otwiera się ZAWSZE bez wstawienia — poprzednie
      dotyczyło innego dnia albo innej maszyny. */
   zerujWstawienie_();
-  el('podpowiedzLicznikFloty').textContent = '';
   odswiezPodpowiedzFloty_();
   el('poleLicznikBox').style.display = (j.maLicznik === 'NIE') ? 'none' : '';
   pokazEkran('ekranWpis');
@@ -5353,6 +5357,11 @@ function rozbijTankowanie(tekst){
 function odswiezPodpowiedzLicznika(){
   var j = STAN.aktywna, e = el('ostatniLicznikInfo');
   if (!j) { e.textContent = ''; return; }
+  /* ⚠ W-79: przy POPRAWIANIU tej podpowiedzi nie ma wcale. Licznik jest już
+     wpisany, więc „ostatni wpis" niczego nie wnosi, a linijka potrafiła wrócić
+     sama po odświeżeniu danych w tle (`odswiezHistorie_` woła tę funkcję) —
+     czyli raz była, raz jej nie było. `otworzWpis` czyścił ją tylko na starcie. */
+  if (STAN.edytowanyId) { e.textContent = ''; return; }
   var data = el('poleData').value;
 
   var wpisy = (STAN.wpisy || []).filter(function(w){
@@ -5368,10 +5377,10 @@ function odswiezPodpowiedzLicznika(){
        odsiany wyżej. */
     var naTen = null;
     wpisy.forEach(function(w){ if (w.data === data) naTen = w; });
-    if (naTen && !STAN.edytowanyId) {
+    if (naTen) {
       e.textContent = 'Na ' + dataPL_(data) + ' wpis już jest — ' + naTen.idWpisu +
         (naTen.kierowca ? ' (' + naTen.kierowca + ')' : '') +
-        '. Otwórz „Moje wpisy" i użyj „Popraw".';
+        '. Popraw go zamiast dodawać nowy.';
       return;
     }
 
@@ -5381,20 +5390,26 @@ function odswiezPodpowiedzLicznika(){
       if (!przed || w.data > przed.data) przed = w;
     });
     if (przed) {
-      /* ⚠ Zdanie NAZYWA dzień, względem którego liczy. „Poprzedni dzień z wpisem:
-         10.09" przy dacie 16.09 czytało się jak „appka nie widzi dzisiejszego
-         wpisu" (Marek, 16.09) — a to jest poprawna odpowiedź na inne pytanie. */
-      e.textContent = 'Ostatni wpis przed ' + dataPL_(data) + ': ' + dataPL_(przed.data) +
+      /* ⚠ W-79: bez dopisku „przed <wybrana data>". W W-75 dodaliśmy go, bo
+         „10.09" przy dacie 16.09 wyglądało na pomyłkę — ale przyczyną mylenia
+         był przypadek „na ten dzień wpis już jest", a ten ma teraz WŁASNE
+         zdanie (wyżej). Gdy tamto zdanie nie leci, wpisu na wybrany dzień po
+         prostu nie ma i „ostatni wpis: 09.09" jest jednoznaczne. */
+      e.textContent = 'Ostatni wpis: ' + dataPL_(przed.data) +
         ' — ' + formatLicznik_(przed.licznik) + ' ' + j.jednostkaLicznika;
       return;
     }
-    e.textContent = 'Przed ' + dataPL_(data) + ' nie ma wcześniejszego wpisu.';
+    e.textContent = 'To pierwszy wpis tej maszyny.';
     return;
   }
 
+  /* ⚠ Ta sama TREŚĆ co wyżej, choć dane z innego miejsca (pulpit maszyny zamiast
+     historii). W-75 zaczęło się od tego, że te dwa warianty brzmiały inaczej
+     i człowiek widział „liczbę, która skacze". Jedno zdanie — nie ma czego
+     porównywać, nawet gdy historia jeszcze nie doszła. */
   e.textContent = j.ostatniStanLicznika
-    ? 'Ostatni znany stan: ' + formatLicznik_(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika +
-      (j.ostatniaData ? ' (' + dataPL_(j.ostatniaData) + ')' : '')
+    ? 'Ostatni wpis: ' + (j.ostatniaData ? dataPL_(j.ostatniaData) + ' — ' : '') +
+      formatLicznik_(j.ostatniStanLicznika) + ' ' + j.jednostkaLicznika
     : '';
 }
 el('poleData').addEventListener('change', odswiezPodpowiedzLicznika);
@@ -6074,13 +6089,12 @@ function maOpcjeSelect_(sel, wartosc){
 function odswiezPodpowiedzFloty_(){
   var cel = el('podpowiedzFloty');
   if (!cel) return;
-  var pod = el('podpowiedzLicznikFloty');
 
   /* Podpowiedź jest TYLKO przy nowym wpisie z konta. Przy poprawce tankowanie
      dopisuje „Importuj" (tam jest kontrola dostępu), a gość z QR to rzadki,
      jednorazowy użytkownik — dokładanie mu drugiej drogi to druga droga do
      testowania i utrzymania, bez zysku. */
-  if (STAN.gosc || STAN.edytowanyId) { cel.innerHTML = ''; if (pod) pod.textContent = ''; return; }
+  if (STAN.gosc || STAN.edytowanyId) { cel.innerHTML = ''; return; }
 
   var data = el('poleData').value;
   /* Zmiana daty unieważnia wstawienie — wstawione litry dotyczyły TAMTEGO dnia.
@@ -6144,13 +6158,9 @@ function wstawZFloty_(){
     budowaUstawiona = true;
   }
 
-  /* ⚠ pkt 11 — licznika NIE wypełniamy, tylko mówimy, co wiemy. */
-  var jed = STAN.aktywna ? STAN.aktywna.jednostkaLicznika : 'km';
-  var zLicznikiem = poz.filter(function(p){ return p.licznik !== '' && p.licznik != null; });
-  el('podpowiedzLicznikFloty').textContent = zLicznikiem.length
-    ? 'Przy tankowaniu licznik pokazywał ' + formatLicznik_(zLicznikiem[0].licznik) + ' ' + jed +
-      ' — stan na początek dnia jest niższy.'
-    : '';
+  /* ⚠ pkt 11 obowiązuje dalej: pola „stan licznika na początek dnia" NIE
+     wypełniamy z tankowania. Od W-79 nie tłumaczymy tego osobną linijką —
+     licznik z tankowania widać w wierszu tankowania niżej. */
 
   WSTAWIONE = {
     numery: poz.map(function(p){ return p.nr; }),
@@ -6170,7 +6180,6 @@ function cofnijWstawienie_(cicho){
     el('poleBudowa').value = WSTAWIONE.budowaPrzed || '';
     odswiezPoleWyb_('poleBudowa');
   }
-  el('podpowiedzLicznikFloty').textContent = '';
   zerujWstawienie_();
   odswiezPodgladTankowania();
   if (!cicho) odswiezPodpowiedzFloty_();
