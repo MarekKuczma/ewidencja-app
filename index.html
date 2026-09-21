@@ -1423,7 +1423,16 @@ var PALETY_APKA = {
        visibility przełącza się BEZ opóźnienia (transition niżej). */
     transition:transform .28s cubic-bezier(.22,1,.36,1), visibility 0s .28s;
     max-width:520px; margin:0 auto;}
-  .arkusz-kom.widoczna{transform:translateY(0); visibility:visible;
+  /* ⚠ W-65 (21.09.2026): klasa nazywa się `widoczny`, NIE `widoczna`.
+     Ten blok ma być w obu appkach identyczny co do znaku, a rozjeżdżał się
+     systematycznie: Ewidencja miała `widoczna` przy `.arkusz-kom` I przy
+     `.zaslona`, Flota `widoczny` przy obu. To nie była „jedna litera", tylko
+     KONSEKWENTNA różnica konwencji — dlatego zmiana objęła oba elementy naraz
+     (zmiana jednego zostawiłaby rozjazd WEWNĄTRZ Ewidencji, czyli gorzej).
+     Decyzja Marka 21.09: bierzemy wersję Floty, poprawiamy Ewidencję — bo
+     Flota jest w becie u kierowców i nie chcemy jej ruszać bez potrzeby.
+     Pilnuje tego `Testy/wspolne/testy_w65.js`, który czyta OBA pliki naraz. */
+  .arkusz-kom.widoczny{transform:translateY(0); visibility:visible;
     transition:transform .28s cubic-bezier(.22,1,.36,1);}
   .zaslona.zaslona-kom{z-index:62;}
   .ak-uchwyt{width:38px; height:4px; border-radius:2px; background:var(--linia); margin:0 auto 12px;}
@@ -1757,7 +1766,7 @@ var PALETY_APKA = {
      korzysta z niej arkusz komunikatu Marka (E-35). */
   .zaslona{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:60;
     opacity:0; pointer-events:none; transition:opacity .2s;}
-  .zaslona.widoczna{opacity:1; pointer-events:auto;}
+  .zaslona.widoczny{opacity:1; pointer-events:auto;}
 
   @media (prefers-reduced-motion: reduce){
     [data-paleta="rgb"] header, [data-paleta="rgb"] .przycisk, [data-paleta="rgb"] .metryka .m-w,
@@ -3158,6 +3167,34 @@ function formatLicznik_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' 
    polsku, widział „Zapisano" i tankowania nie było w arkuszu — cicha utrata
    danych, najgorszy możliwy błąd w dobrowolnej aplikacji.
    Ta funkcja przyjmuje przecinek i spacje, tak samo jak `formatLicznik_()` we flocie. */
+/* ══ W-81 (21.09.2026): LITRY PO POLSKU — ale TYLKO NA EKRANIE ═════════════
+
+   Marek: „395.22 L" czyta się jak z obcej appki. Po polsku część dziesiętna
+   idzie po PRZECINKU.
+
+   ⚠ ZMIENIAMY WYŁĄCZNIE TO, CO WIDAĆ. W arkuszu tekst tankowania zostaje
+   z kropką i tak ma być: czytają go z powrotem trzy parsery (`rozbijTankowanie_`,
+   `licznikZFragmentu_`, `dopasujKawalek_`), a po nim dopasowujemy tankowania do
+   74 historycznych wpisów z palca. Kropka jest tam FORMATEM DANYCH, nie wyglądem
+   — decyzja Marka 21.09 po pokazaniu obu zakresów.
+
+   Dlatego są DWIE funkcje, a nie jedna „popraw kropki":
+
+     · `litryPL_(v)`         — liczba, którą trzymamy sami. Zamieniamy jedyną
+                               kropkę, jaka w niej może być.
+     · `tekstTankowaniaPL_(s)` — NAPIS z arkusza („43.68L / 122873km"). Tu nie
+                               wolno zamieniać każdej kropki, bo pole tankowania
+                               wolno kierowcy dopisać własnym tekstem — a w nim
+                               może stać data („17.09.2026"). Zamieniamy więc
+                               TYLKO kropkę dziesiętną stojącą przed jednostką
+                               (L / km / mth). ⚠ Pilnuje tego test z datą. */
+function litryPL_(v){
+  return String(v == null ? '' : v).replace('.', ',');
+}
+function tekstTankowaniaPL_(s){
+  return String(s == null ? '' : s).replace(/(\d)\.(\d+)(?=\s*(?:L|km|mth)\b)/gi, '$1,$2');
+}
+
 function naLiczbe_(v){
   var s = String(v == null ? '' : v).trim().replace(/\s+/g, '').replace(',', '.');
   if (s === '') return null;
@@ -4333,15 +4370,15 @@ function pokazArkuszKom_(o){
     else if (o.po) o.po(wybrane);
   };
   if (o.dwa) el('arkuszKomZostaw').onclick = function(){ zamknijArkuszKom_(); };
-  el('zaslonaKom').classList.add('widoczna');
-  a.classList.add('widoczna');
+  el('zaslonaKom').classList.add('widoczny');
+  a.classList.add('widoczny');
 }
 function zamknijArkuszKom_(){
-  el('zaslonaKom').classList.remove('widoczna');
-  el('arkuszKom').classList.remove('widoczna');
+  el('zaslonaKom').classList.remove('widoczny');
+  el('arkuszKom').classList.remove('widoczny');
 }
 function arkuszKomOtwarty_(){
-  return el('arkuszKom').classList.contains('widoczna');
+  return el('arkuszKom').classList.contains('widoczny');
 }
 
 /* E-38 (19.08.2026): zamiennik natywnego alert() — arkusz-info w kolorach
@@ -4499,7 +4536,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v143';
+var WERSJA_SHELL = 'ewidencja-v145';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -6150,7 +6187,7 @@ function odswiezPodpowiedzFloty_(){
         (poz.length === 1 ? 'We Flocie jest tankowanie z tego dnia' : 'We Flocie są tankowania z tego dnia') +
         '</p>';
     poz.forEach(function(p){
-      h += '<p class="pf-poz"><b>' + bezpiecznyTekst(p.litry) + ' L</b>' +
+      h += '<p class="pf-poz"><b>' + bezpiecznyTekst(litryPL_(p.litry)) + ' L</b>' +
         (p.licznik !== '' && p.licznik != null
           ? ' \u00b7 licznik ' + bezpiecznyTekst(p.licznik) : '') +
         (p.budowa ? ' \u00b7 ' + bezpiecznyTekst(p.budowa) : '') +
@@ -6357,7 +6394,7 @@ function rysujImport_(){
         (czynna ? ' data-nr="' + bezpiecznyTekst(p.nr) + '"' : ' disabled') + '>' +
         (czynna ? '<span class="tp-ptaszek">' + ikonaHTML_('ic-check') + '</span>' : '') +
         '<span class="tp-tresc">' +
-          '<span class="tp-1"><span class="tp-litry">' + bezpiecznyTekst(p.litry) + ' L</span>' +
+          '<span class="tp-1"><span class="tp-litry">' + bezpiecznyTekst(litryPL_(p.litry)) + ' L</span>' +
             /* W-69, wariant 3 (wybór Marka 17.09): plakietka mówi OD RAZU, że to
                nie całe tankowanie — zanim człowiek zacznie liczyć, skąd te litry. */
             (p.laczone ? '<span class="tp-lacz-plakietka">ŁĄCZONE</span>' : '') +
@@ -6371,14 +6408,14 @@ function rysujImport_(){
              kto jeszcze ile dostał (wariant 2 z makiety, odrzucony): to nie jego
              sprawa, a pełne rozbicie dawało trzy linijki tekstu w każdej pozycji. */
           (p.laczone ? '<span class="tp-2 tp-lacz">z tankowania <b>' +
-             bezpiecznyTekst(p.laczone.calosc) + ' L</b> na ' +
+             bezpiecznyTekst(litryPL_(p.laczone.calosc)) + ' L</b> na ' +
              odmianaMaszyn_(Number(p.laczone.ile) || 0) + '</span>' : '') +
           (p.budowa ? '<span class="tp-2">' + bezpiecznyTekst(p.budowa) + '</span>' : '') +
           /* W-71: literówka we wpisie — mówimy, co jest wpisane. Gdy wpis jest
              cudzy albo miesiąc zamknięty, zostaje sama informacja (bez ptaszka). */
           (p.poprawka
             ? '<span class="tp-2 tp-popr">' + (p.doPoprawki ? 'do poprawki \u2014 ' : '') +
-              'masz wpisane: <b>' + bezpiecznyTekst(p.poprawka) + '</b></span>' : '') +
+              'masz wpisane: <b>' + bezpiecznyTekst(tekstTankowaniaPL_(p.poprawka)) + '</b></span>' : '') +
           (czynna ? '' : '<span class="tp-powod">' +
              bezpiecznyTekst(p.wpis ? p.powod : 'na ten dzień nie ma jeszcze wpisu') + '</span>') +
           '<span class="tp-nr">' + bezpiecznyTekst(p.nr) + '</span>' +
@@ -6504,8 +6541,8 @@ function rozjazdHtml_(idWpisu){
       return;
     }
     h += '<span class="wt-para">' +
-         (p.mam ? 'W tym wpisie: <b>' + bezpiecznyTekst(p.mam) + '</b><br>' : '') +
-         'We Flocie: <b>' + bezpiecznyTekst(p.wFlocie) + '</b>' +
+         (p.mam ? 'W tym wpisie: <b>' + bezpiecznyTekst(tekstTankowaniaPL_(p.mam)) + '</b><br>' : '') +
+         'We Flocie: <b>' + bezpiecznyTekst(tekstTankowaniaPL_(p.wFlocie)) + '</b>' +
          '<span class="wt-nr">' + bezpiecznyTekst(p.nr) + '</span></span>';
     if (p.doKliku){
       h += '<button type="button" class="przycisk-maly" data-aktualizuj="' +
@@ -6920,7 +6957,7 @@ function rysujWpisy(){
               '<span class="wpis-strzalka">&#9662;</span>' +
             '</span></div>' +
           '<div class="wpis-szczegoly"><div class="wsz-zawartosc">' +
-            (w.tankowanie ? '<div class="wsz-wiersz dwie"><span>' + ikonaHTML_('ic-fuel') + ' Tankowanie</span><b>' + bezpiecznyTekst(w.tankowanie) + '</b></div>' : '') +
+            (w.tankowanie ? '<div class="wsz-wiersz dwie"><span>' + ikonaHTML_('ic-fuel') + ' Tankowanie</span><b>' + bezpiecznyTekst(tekstTankowaniaPL_(w.tankowanie)) + '</b></div>' : '') +
             (w.serwisKategoria ? '<div class="wsz-wiersz dwie"><span>' + ikonaHTML_('ic-wrench') + ' Serwis</span><b>' + bezpiecznyTekst(w.serwisKategoria) + '</b></div>' : '') +
             (w.uwagi ? '<div class="wsz-wiersz dwie"><span>' + ikonaHTML_('ic-note') + ' Uwagi</span><b>' + bezpiecznyTekst(w.uwagi) + '</b></div>' : '') +
             (!w.tankowanie && !w.serwisKategoria && !w.uwagi
@@ -7838,7 +7875,7 @@ function kartaWpisuGoscia_(w, j, moj){
         (w.anulowany ? '<div><span class="plakietka plakietka-blad">Anulowany</span></div>' : '') +
         '<div class="linia2">' + bezpiecznyTekst(w.kierowca || '') +
           (w.budowa ? ' &middot; ' + bezpiecznyTekst(w.budowa) : '') + '</div>' +
-        (w.tankowanie ? '<div class="linia2">' + ikonaHTML_('ic-fuel') + ' ' + bezpiecznyTekst(w.tankowanie) + '</div>' : '') +
+        (w.tankowanie ? '<div class="linia2">' + ikonaHTML_('ic-fuel') + ' ' + bezpiecznyTekst(tekstTankowaniaPL_(w.tankowanie)) + '</div>' : '') +
         (w.serwisKategoria ? '<div class="linia2">' + ikonaHTML_('ic-wrench') + ' ' + bezpiecznyTekst(w.serwisKategoria) + '</div>' : '') +
         (w.uwagi ? '<div class="linia2">' + ikonaHTML_('ic-note') + ' ' + bezpiecznyTekst(w.uwagi) + '</div>' : '') +
         '<div class="linia-data"><span class="plakietka-id">' + bezpiecznyTekst(w.idWpisu) + '</span></div>' +
