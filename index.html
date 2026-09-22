@@ -3150,6 +3150,23 @@ function dzisiajISO(){
   var d = new Date();
   return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
 }
+/* E-62 (22.09.2026): WPIS NA JUTRO. Kierowcy przez Marka: wolą czasem wpisać
+   licznik wieczorem, wysiadając ostatni raz z auta. Nie robimy do tego żadnego
+   przelącznika „rano / wieczór" (Marek: dokładanie komplikacji mniej technicznym
+   kierowcom) — pozwalamy po prostu wybrać jutrzejszą datę. Działa, bo appka
+   zapisuje stan licznika na POCZĄTEK dnia (E-16), a auto stoi przez noc.
+   ⚠ `setDate(+1)` liczy przejście między miesiącami i latami samo — nie wolno
+   tego robić dodawaniem 86400000 ms, bo zmiana czasu zimą da tę samą datę. */
+function jutroISO(){
+  var d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+}
+/* Dokąd wolno sięgnąć datą. Gość z QR zostaje na dziś (decyzja Marka 22.09):
+   zająłby jutrzejszy dzień głównemu kierowcy, a poprawić by tego nie mógł. */
+function maxDatyWpisu_(){
+  return STAN.gosc ? dzisiajISO() : jutroISO();
+}
 function inicjaly(imie){
   if (!imie) return '?';
   var c = String(imie).trim().split(/\s+/);
@@ -3802,7 +3819,7 @@ function start(){
   wczytajWyglad();
   odswiezKolejkeInfo();
   pokazWersje_();   // W-22 — od razu, jeszcze przed odpowiedzią serwera
-  el('poleData').max = dzisiajISO();     // D52 — brak dat z przyszłości
+  el('poleData').max = maxDatyWpisu_();  // D52 + E-62 — ustawiane też w `otworzWpis`
 
   var parametry = new URLSearchParams(location.search);
   var zUrl = parametry.get('kod');
@@ -4536,7 +4553,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v145';
+var WERSJA_SHELL = 'ewidencja-v146';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -5110,12 +5127,18 @@ function rysujTerminy(j){
 }
 
 /* Opis pod nazwą pojazdu. Musi znieść dane niemożliwe: w arkuszu potrafi
-   zostać wpis z datą z przyszłości (zrobiony, zanim doszła blokada D52,
-   albo dopisany ręcznie w arkuszu). Wtedy `dniOdWpisu` jest UJEMNE i bez
-   tego zabezpieczenia na ekranie widniało „brak wpisu od -2 dni". */
+   zostać wpis z datą z przyszłości (dopisany ręcznie w arkuszu). Wtedy
+   `dniOdWpisu` jest UJEMNE i bez tego zabezpieczenia na ekranie widniało
+   „brak wpisu od -2 dni".
+   ⚠ E-62 (22.09.2026): JUTRO PRZESTAŁO BYĆ BŁĘDEM. Od tej wersji kierowca
+   sam robi wpis na jutro, więc `-1` to stan NORMALNY i alarm przy nim byłby
+   ochrzanem za skorzystanie z własnej funkcji appki. Ostrzeżenie zostaje
+   wyłącznie dla dat DALSZYCH niż jutro — tych appka nadal nie pozwala zapisać,
+   więc mogą wziąć się tylko z ręcznego dopisku w arkuszu. */
 function opisOstatniegoWpisu(j){
   if (!j.ostatniaData) return 'brak wpisów';
   var d = j.dniOdWpisu;
+  if (d === -1) return 'wpis zrobiony już na jutro';
   if (d < 0) return 'wpis z datą ' + dataPL_(j.ostatniaData) + ' (przyszła data!)';
   if (d === 0) return 'ostatni wpis: dziś';
   if (d === 1) return 'ostatni wpis: wczoraj';
@@ -5326,6 +5349,10 @@ function otworzWpis(j, wpisDoEdycji){
   // użyte na tym telefonie), konta normalne — zwiniętą linijkę „Jeździł
   // ktoś inny?" (rozwinięta od razu przy poprawce wpisu z wypełnionym R).
   var trybGoscia = !!STAN.gosc;
+  // E-62: górna granica daty zależy od tego, KTO wpisuje, więc liczymy ją przy
+  // każdym otwarciu formularza, a nie raz na starcie — appka potrafi wisieć
+  // otwarta przez północ, a ten sam ekran obsługuje kierowcę i gościa z QR.
+  el('poleData').max = maxDatyWpisu_();
   el('poleImieBox').classList.toggle('ukryte', !trybGoscia);
   el('ktoJezdzilBox').classList.toggle('ukryte', trybGoscia);
   if (trybGoscia) {
@@ -5530,8 +5557,11 @@ el('zapiszBtn').onclick = function(){
 
   if (!STAN.edytowanyId) {
     if (!data) { bladPola('poleDataBox','bladData','Podaj datę.'); zlePola.push('Data'); }
-    else if (data > dzisiajISO()) {
-      bladPola('poleDataBox','bladData','Nie można wpisać daty z przyszłości.'); zlePola.push('Data');
+    else if (data > maxDatyWpisu_()) {
+      bladPola('poleDataBox','bladData', STAN.gosc
+        ? 'Nie można wpisać daty z przyszłości.'
+        : 'Najdalej można zrobić wpis na jutro.');   // E-62
+      zlePola.push('Data');
     }
   }
 
