@@ -94,6 +94,8 @@ var PALETY_APKA = {
    definicje wszystkich 12 są wszędzie (włączenie palety = 1 linijka).
    ⚠ Ciemne bloki specjalnych przebarwiają też tło/karty/linie/inputy —
    to celowe (klimat palety), wartości wspólne całej rodziny.
+   ⚠ KOSMOS (W-85) NIE MA tu definicji — ma WŁASNY blok kanonu, który stoi
+   w appce PO jej ogólnym bloku ciemnym (powód opisany w tamtym bloku).
    ================================================================ */
 /* ---- Pomarańcz ---- */
 [data-paleta="pomaranczowa"]{
@@ -2514,9 +2516,99 @@ var PALETY_APKA = {
 .tank-reczne b{color:var(--tekst); font-weight:650;}
 .tank-pas .przycisk{margin-top:0;}
 .tank-pas .info{font-size:12.5px; color:var(--szary); text-align:center; margin-top:8px;}
+/* ================================================================
+   KANON PALET RODZINY — KOSMOS (W-85, 23.09.2026) — CSS.
+   TEN BLOK JEST IDENTYCZNY CO DO ZNAKU w trzech aplikacjach (wzorzec:
+   Testy/kanon/kanon-kosmos.css, generator: Dokumentacja/kanon-generator/).
+   Paleta specjalna z nocnym niebem pod appką — powstała we Flocie jako
+   wyjątek W-50 (21.09), do rodziny weszła decyzją Marka 23.09.
+   Dlaczego OSOBNY blok, a nie w bloku wspólnym:
+     1. to nie same tokeny — pod appką leży niebo (#niebo, gwiazdy
+        i mgławice rysuje rysujNiebo_() w JS kanonu), a karty są szklane;
+     2. Kosmos jest ZAWSZE NOCĄ: ten sam zestaw ustawia i tokeny palety,
+        i chrom (tło, karty, teksty) w obu trybach. Musi więc stać PO
+        ogólnym bloku ciemnym appki (ta sama swoistość — późniejszy
+        wygrywa). W bloku wspólnym przegrałby: w Asystencie jasny :root
+        stoi dopiero PO bloku wspólnym. Przełącznik Jasny/Ciemny w tej
+        palecie nie zmienia nic — to świadome.
+   Tu są TYLKO powierzchnie wspólne (.karta, nav, .przycisk-trzeci).
+   Szklane elementy jednej appki (kafelki, wpisy, statystyki…) i jej
+   własne poprawki stoją po stronie appki, ZARAZ POD tym blokiem.
+   ⚠ Wydajność: jedyny koszt to backdrop-filter — zmierzony 21.09 na
+   telefonie Marka jako płynny. Niebo to JEDEN element position:fixed
+   (NIE background-attachment:fixed — na Androidzie bywa ignorowane albo
+   tnie), malowany raz; w innych paletach display:none — zero pracy.
+   ================================================================ */
+[data-paleta="kosmos"]{
+  --akcent:#c4a2ff;
+  --akcent-moc:#e0ccff;
+  --on-akcent:#fff;
+  --gradient:linear-gradient(115deg,#05060f 0%,#241056 34%,#6d28d9 58%,#c026d3 80%,#22d3ee 100%);
+  --grad-maly:linear-gradient(135deg,#6d28d9,#c026d3);
+  --ikona-grad:linear-gradient(135deg,#241056,#6d28d9 55%,#22d3ee);
+  --przycisk-cien:rgba(124,58,237,.45);
+  --bg-akcentjasny:#241a4d;
+  --tekst-akcentjasny:#d7c4ff;
+  --metryka-grad:linear-gradient(135deg,#141033 0%,#1d1240 100%);
+  --stozek:#67e8f9,#c4a2ff,#f0abfc,#6d28d9,#241056,#6d28d9,#f0abfc,#c4a2ff,#67e8f9;
+  --wskaznik-grad:linear-gradient(90deg,#6d28d9,#c4a2ff,#22d3ee,#c4a2ff,#6d28d9);
+  --luk:#67e8f9 0deg, #c4a2ff 46deg, #f0abfc 86deg;
+  --luk-glow:#c026d3;
+  --glow-krycie:.85;
+  --turkus:#67e8f9;
+  --bg-turkus:#0d3345;
+  --tekst-turkus:#a5f3fc;
+  --beta-poswiata:rgba(192,38,211,.6);
+  --tlo:#04030c;
+  --karta:#0f0f2a;
+  --input-tlo:#181739;
+  --input-brzeg:#332f5e;
+  --podpowiedz:#6f6a99;
+  --tekst:#f0f1f3;
+  --szary:#b1afd0;
+  --linia:#2a2456;
+  --blad:#f87171;
+  --bg-uwaga:#453615;
+  --brzeg-uwaga:#8a5a12;
+  --tekst-uwaga:#fcd34d;
+  --bg-ok:#123522;
+  --tekst-ok:#86efac;
+  --bg-blad:#451a17;
+  --tekst-blad:#fca5a5;
+  --sz-baza:#1e1b40;
+  --sz-polysk:rgba(255,255,255,.10);
+  --wcisk:#181739;
+}
+#niebo{display:none; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background-color:#04030c;}
+[data-paleta="kosmos"] #niebo{display:block;}
+[data-paleta="kosmos"] body{background:transparent;}
+/* Karty przeświecają: 40% krycia + rozmycie tego, co pod nimi. */
+[data-paleta="kosmos"] .karta{
+  background:rgba(16,11,44,.40);
+  -webkit-backdrop-filter:blur(10px) saturate(1.3); backdrop-filter:blur(10px) saturate(1.3);
+  border:1px solid rgba(170,150,255,.22);}
+[data-paleta="kosmos"] nav{background:rgba(9,7,26,.78);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);}
+[data-paleta="kosmos"] .przycisk-trzeci{background:rgba(255,255,255,.05);}
+/* ============== KONIEC BLOKU KANONU — KOSMOS (CSS) ============== */
+/* ---- Kosmos — część EWIDENCJI (W-85, 23.09.2026) ----
+   Szklane elementy tej appki: metryki i powitanie (jak we Flocie) plus kafelki
+   pojazdów na ekranie wyboru i wpisy w „Moich wpisach". Wygląd zatwierdzony
+   przez Marka na podglądzie z 23.09 (Makiety/W-85…). Cyfry metryk zostają
+   białe — w Ewidencji nie mają gradientu w żadnej palecie, więc ozdoba
+   z Floty tu nie wchodzi. */
+[data-paleta="kosmos"] .metryka, [data-paleta="kosmos"] .powitanie,
+[data-paleta="kosmos"] .jedn, [data-paleta="kosmos"] .wpis{
+  background:rgba(16,11,44,.40);
+  -webkit-backdrop-filter:blur(10px) saturate(1.3); backdrop-filter:blur(10px) saturate(1.3);
+  border:1px solid rgba(170,150,255,.22);}
+/* ---- koniec części Ewidencji ---- */
 </style>
 </head>
 <body>
+<!-- W-85: niebo pod appką dla palety „Kosmos" (blok kanonu KOSMOS w CSS, rysujNiebo_() w JS kanonu). Ukryte w każdej innej palecie. -->
+<div id="niebo" aria-hidden="true"></div>
 <!-- ===== Z-82: sprite ikon (ikony/ikony-sprite.svg) — wspólny dla obu appek.
      Zasady: 24x24, kontur 1.75, currentColor; <symbol> BEZ atrybutów
      fill/stroke (dziedziczenie z reguły .ikona na końcu <style>). Rodzina
@@ -3293,7 +3385,8 @@ function ikonaTypu(typ, kolor){
    danej appki): prefiks kluczy localStorage, paleta domyślna, lista i
    kolejność palet podstawowych, mapa migracji starych id, id ekranu
    i karty ustawień. Wymaga: el(), ikonaHTML_() i sprite'u ikon
-   (ic-sun/ic-moon/ic-phone/ic-check/ic-lock/ic-user) po stronie appki.
+   (ic-sun/ic-moon/ic-phone/ic-check/ic-lock/ic-user) po stronie appki,
+   a od W-85 także elementu <div id="niebo"> tuż po <body> (niebo Kosmosu).
    ================================================================ */
 var KLUCZ_PALETA      = PALETY_APKA.prefiks + '_paleta';
 var KLUCZ_MOTYW       = PALETY_APKA.prefiks + '_motyw';
@@ -3304,7 +3397,9 @@ var KLUCZ_PALETY_SPEC = PALETY_APKA.prefiks + '_palety_specjalne';
    w kolejności appki) + bramka specjalnych. `pasek` -> <meta theme-color>
    (najciemniejszy odcień nagłówka; wyjątek aurora #4D96FF — świadoma
    decyzja Marka 30.08.2026). Opis "domyślna" dokleja się w locie tej
-   palecie, która jest domyślna w danej appce. */
+   palecie, która jest domyślna w danej appce.
+   ⚠ Kosmos (W-85, 23.09.2026): w rejestrze zwykła specjalna, ale jego CSS
+   żyje w osobnym bloku kanonu (niebo + szklane karty) — patrz tam. */
 var PALETY_REJESTR = [
   { id:'pomaranczowa', nazwa:'Pomarańcz', opis:'energiczna', pasek:'#f97316',
     probka:'linear-gradient(135deg,#fbbf24,#f97316 55%,#dc2626)' },
@@ -3329,7 +3424,9 @@ var PALETY_REJESTR = [
   { id:'gamma', nazwa:'Gamma', opis:'zieleń i fiolet', pasek:'#14532d',
     probka:'linear-gradient(135deg,#14532d,#22c55e 45%,#9333ea)', specjalna:true },
   { id:'heros', nazwa:'Heros', opis:'czerwień i błękit', pasek:'#7f1d1d',
-    probka:'linear-gradient(135deg,#7f1d1d,#dc2626 45%,#2563eb)', specjalna:true }
+    probka:'linear-gradient(135deg,#7f1d1d,#dc2626 45%,#2563eb)', specjalna:true },
+  { id:'kosmos', nazwa:'Kosmos', opis:'gwiazdy i mgławice', pasek:'#05060f',
+    probka:'linear-gradient(115deg,#05060f,#241056 34%,#6d28d9 58%,#c026d3 80%,#22d3ee)', specjalna:true }
 ];
 function paletaDomyslna_(){
   return (typeof KONFIG !== 'undefined' && KONFIG && KONFIG.PALETA_DOMYSLNA)
@@ -3457,6 +3554,32 @@ function rysujUstawienia_(){
     };
   });
 }
+/* Niebo Kosmosu (W-85; z W-50 Floty 1:1): 230 gwiazd (kafelek 270 px)
+   + 4 mgławice + poświata u góry, liczone RAZ przy starcie z ziarna na sztywno —
+   każdy telefon widzi to samo niebo. Element jest `display:none` w każdej innej
+   palecie, więc dla reszty to zero pracy przeglądarki. */
+function rysujNiebo_(){
+  var n = el('niebo'); if (!n) return;
+  var s = 11, los = function(){ s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  var warstwy = [], rozmiary = [], powtorki = [];
+  for (var i = 0; i < 230; i++) {
+    var x = (los() * 100).toFixed(2), y = (los() * 100).toFixed(2);
+    var r = (0.6 + los() * 2.1).toFixed(2), a = (0.35 + los() * 0.65).toFixed(2);
+    warstwy.push('radial-gradient(' + r + 'px ' + r + 'px at ' + x + '% ' + y +
+      '%, rgba(255,255,255,' + a + ') 0%, rgba(255,255,255,0) 100%)');
+    rozmiary.push('270px 270px'); powtorki.push('repeat');
+  }
+  [ 'radial-gradient(78% 40% at 12% 10%, rgba(124,58,237,.62) 0%, rgba(124,58,237,0) 72%)',
+    'radial-gradient(66% 34% at 92% 22%, rgba(217,70,239,.55) 0%, rgba(217,70,239,0) 74%)',
+    'radial-gradient(95% 46% at 68% 60%, rgba(34,211,238,.30) 0%, rgba(34,211,238,0) 74%)',
+    'radial-gradient(72% 38% at 4% 86%, rgba(99,102,241,.42) 0%, rgba(99,102,241,0) 72%)',
+    'radial-gradient(120% 80% at 50% 0%, #140b31 0%, #04030c 70%)'
+  ].forEach(function(w){ warstwy.push(w); rozmiary.push('cover'); powtorki.push('no-repeat'); });
+  n.style.backgroundImage  = warstwy.join(',');
+  n.style.backgroundSize   = rozmiary.join(',');
+  n.style.backgroundRepeat = powtorki.join(',');
+}
+rysujNiebo_();
 wczytajWyglad();
 /* ============== KONIEC WSPÓLNEGO BLOKU KANONU (JS) ============== */
 
@@ -4553,7 +4676,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v146';
+var WERSJA_SHELL = 'ewidencja-v147';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
