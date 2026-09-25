@@ -1536,6 +1536,43 @@ var PALETY_APKA = {
   .przycisk-glow.stozek-zielony{--stozek:#86efac,#16a34a,#14532d,#16a34a,#86efac;}   /* E-39 */
   [data-motyw="ciemny"] .przycisk-glow.stozek-zielony{--stozek:#4ade80,#16a34a,#bbf7d0,#16a34a,#4ade80;}
 
+  /* E-64 cz. 2 (25.09.2026) — FIOLET KONSERWACJI także w arkuszu komunikatu
+     (wybór Marka C1: okno w tym samym kolorze co pasek E-36). Świadomy wyjątek
+     poza kanonem komunikatów — tak jak fioletowy pasek; NIE jest w kanonie
+     rodziny, bo Flota konserwacji nie ma. Kolory stałe, nie z palety. */
+  .przycisk-glow.stozek-fiolet{--stozek:#c4b5fd,#7c3aed,#4c1d95,#7c3aed,#c4b5fd;}
+  [data-motyw="ciemny"] .przycisk-glow.stozek-fiolet{--stozek:#a78bfa,#8b5cf6,#ede9fe,#8b5cf6,#a78bfa;}
+  .arkusz-kom.fiolet{border-top:3px solid #7c3aed;
+    box-shadow:0 -10px 30px rgba(0,0,0,.4), 0 -3px 18px rgba(124,58,237,.5);}
+  .arkusz-kom.fiolet .ak-kolko{background:#ede9fe; color:#6d28d9; border:1px solid rgba(124,58,237,.35);}
+  .arkusz-kom.fiolet h3, .arkusz-kom.fiolet .ak-lista li b{color:#5b21b6;}
+  .arkusz-kom.fiolet .przycisk{background:#7c3aed;}
+  [data-motyw="ciemny"] .arkusz-kom.fiolet .ak-kolko{background:#2a1f45; color:#ddd0fe;}
+  [data-motyw="ciemny"] .arkusz-kom.fiolet h3,
+  [data-motyw="ciemny"] .arkusz-kom.fiolet .ak-lista li b{color:#c4b5fd;}
+  [data-motyw="ciemny"] .arkusz-kom.fiolet .przycisk{background:#8b5cf6;}
+  /* E-64 cz. 2 — PYTANIE O RÓWNEJ WADZE (decyzja Marka 25.09): „nie podpowiadamy
+     kolorem guzika, że chcemy, aby zaznaczył — oba guziki muszą mieć tę samą wagę,
+     aby musiał się zastanowić, który chce nacisnąć". Dlatego OBA przyciski
+     identyczne: neutralne tło karty, ta sama fioletowa obwódka. Ani czerwień akcji
+     (kanon E-39), ani zieleń „bezpiecznej" opcji — tu żadna nie jest „bezpieczna".
+     ⚠ `.arkusz-kom.rowne` ma 3–4 klasy, żeby wygrać z `.przycisk-glow.stozek-*`
+     (2 klasy) i z `.arkusz-kom.fiolet .przycisk` (2 klasy) — sprawdza to test. */
+  .arkusz-kom.rowne .ak-dwa .przycisk-glow{--stozek:#c4b5fd,#7c3aed,#4c1d95,#7c3aed,#c4b5fd;}
+  [data-motyw="ciemny"] .arkusz-kom.rowne .ak-dwa .przycisk-glow{--stozek:#a78bfa,#8b5cf6,#ede9fe,#8b5cf6,#a78bfa;}
+  .arkusz-kom.rowne .ak-dwa .przycisk{background:var(--karta); color:var(--tekst); box-shadow:none;
+    font-size:16px; line-height:1.25;}
+
+  /* E-63 (25.09.2026, wybór Marka A2) — ZAZNACZONA KATEGORIA W SWOIM KOLORZE.
+     Ten sam odcień co kafelek tej kategorii w „Podsumowaniu miesiąca"
+     (`odcienKategoriiSerwisu_`), przekazany zmienną --kat-h. Konserwacja =
+     fiolet, serwis olej i filtry = bursztyn (spójnie z arkuszem i wydrukiem).
+     Ptaszek ✓ i pogrubienie, żeby zaznaczenie było widać także bez koloru. */
+  .serwis-chip.zaznaczony{background:hsla(var(--kat-h,220),70%,50%,.22);
+    border:2px solid hsl(var(--kat-h,220),60%,42%); color:var(--tekst); font-weight:600;}
+  [data-motyw="ciemny"] .serwis-chip.zaznaczony{border-color:hsl(var(--kat-h,220),65%,62%);}
+  .serwis-chip.zaznaczony::before{content:"✓ "; font-weight:700;}
+
   .pole-blad input,.pole-blad select,.pole-blad textarea{
     box-shadow:0 0 0 3px rgba(217,48,37,.14), 0 0 12px rgba(217,48,37,.30);}
   .pole-blad-puls input,.pole-blad-puls select,.pole-blad-puls textarea{
@@ -3123,7 +3160,7 @@ var KLUCZ_ZOLTE = 'ewidencja_terminy_zolte_pokazane';      // {klucz terminu: tr
 // E-36 (19.08.2026): po ilu dniach od ostatniego wpisu „Konserwacja koparki"
 // przypominać operatorowi. Marek najpierw mówił o tygodniu, ostatecznie 5 dni
 // (decyzja 19.08: „e-36 bym zrobił po 5 dniach jednak").
-var PROG_KONSERWACJI_DNI = 5;
+var PROG_KONSERWACJI_DNI = 3;   // E-64 (25.09.2026): Marek — co 3 dni. Świadomie w kodzie, nie w arkuszu (decyzja Marka: tańszy wariant).
 
 // E-37 (19.08.2026): ostatnio potwierdzony komunikat Marka — {d: dzień, t: treść}.
 var KLUCZ_KOMUNIKAT = 'ewidencja_komunikat_marka';
@@ -4596,13 +4633,75 @@ function sprawdzPopupyTerminow_(){
         // Zaliczamy dopiero przy kliknięciu — zabity ekran = pokaże się znowu.
         nowe.forEach(function(p){ pokazane[kluczZoltego_(p)] = true; });
         try { localStorage.setItem(KLUCZ_ZOLTE, JSON.stringify(pokazane)); } catch(e){}
-        sprawdzKomunikatMarka_();   // E-37 — komunikat na końcu łańcucha
+        sprawdzKonserwacje_();   // E-64 cz. 2 — potem komunikat Marka
       }
     });
   } else {
     try { localStorage.setItem(KLUCZ_ZOLTE, JSON.stringify(pokazane)); } catch(e){}
-    sprawdzKomunikatMarka_();   // E-37 — komunikat na końcu łańcucha
+    sprawdzKonserwacje_();   // E-64 cz. 2 — potem komunikat Marka
   }
+}
+
+/* E-64 cz. 2 (25.09.2026, wybór Marka C1) — OKNO KONSERWACJI RAZ DZIENNIE.
+   Marek: przypomnienie ma być „jeszcze bardziej widoczne". Fioletowy pasek na
+   pulpicie zostaje; dochodzi wysuwane okno w tym samym kolorze, raz na dobę
+   LOKALNĄ (`dzisLokalnie_`, zasada z E-37). Ogniwo łańcucha popupów: alarm →
+   żółte → TO → komunikat Marka. Liczone z tej samej listy co pasek
+   (`koparkiDoKonserwacji_`), więc okno i pasek nigdy się nie rozjadą. */
+var KLUCZ_KONSERWACJA_DZIEN = 'ewidencja_konserwacja_dzien';
+function sprawdzKonserwacje_(){
+  var dzis = dzisLokalnie_();
+  var koparki = koparkiDoKonserwacji_();
+  var juz = null;
+  try { juz = localStorage.getItem(KLUCZ_KONSERWACJA_DZIEN); } catch(e){}
+  if (!koparki.length || juz === dzis) { sprawdzKomunikatMarka_(); return; }
+  pokazArkuszKom_({
+    typ: 'fiolet', ikona: 'ic-wrench', tytul: 'Konserwacja koparki',
+    wstep: 'Dawno nie było zapisanej konserwacji. Zrób ją i zaznacz ' +
+      '„Konserwacja Koparki" we wpisie z tego dnia.',
+    pozycje: koparki.map(function(j){ return {
+      lewa: bezpiecznyTekst(j.tytul),
+      prawa: j.konserwacjaDni === -1 ? 'brak zapisanej' : j.konserwacjaDni + ' dni temu'
+    }; }),
+    przycisk: 'Rozumiem', stozek: 'stozek-fiolet',
+    po: function(){
+      // Zaliczamy dopiero przy kliknięciu — zabity ekran = pokaże się znowu.
+      try { localStorage.setItem(KLUCZ_KONSERWACJA_DZIEN, dzis); } catch(e){}
+      sprawdzKomunikatMarka_();
+    }
+  });
+}
+
+/* E-64 cz. 2 (25.09.2026, wybór Marka D2 ze zmianą) — PYTANIE PRZY ZAPISIE.
+   Kiedy: NOWY wpis koparki, której konserwacja jest po progu (ta sama lista co
+   pasek i okno), a kierowca NIE zaznaczył „Konserwacja Koparki".
+   ⚠ Marek: „trzeba podkreślić, że ma zapisać z zaznaczoną konserwacją TYLKO
+   jeśli ją zrobił, i nie podpowiadamy kolorem guzika" — oba przyciski mają
+   tę samą wagę (`.arkusz-kom.rowne`). Oba przyciski ZAPISUJĄ wpis — różnią się
+   tylko tym, czy konserwacja zostanie dopisana. */
+function czipKonserwacji_(){
+  var czipy = el('poleSerwis') ? el('poleSerwis').querySelectorAll('.serwis-chip') : [];
+  for (var i = 0; i < czipy.length; i++) {
+    if (String(czipy[i].dataset.k || '').trim().toLowerCase() === 'konserwacja koparki') return czipy[i];
+  }
+  return null;   // kategoria wyłączona w arkuszu — nie pytamy o coś, czego nie da się zaznaczyć
+}
+function trzebaPytacOKonserwacje_(j){
+  if (STAN.edytowanyId || !j) return false;
+  var czip = czipKonserwacji_();
+  if (!czip || czip.classList.contains('zaznaczony')) return false;
+  return koparkiDoKonserwacji_().some(function(k){ return k.idPojazdu === j.idPojazdu; });
+}
+function zapytajOKonserwacje_(j, dalej){
+  pokazArkuszKom_({ typ: 'fiolet rowne', ikona: 'ic-wrench', tytul: 'Czy dziś była konserwacja?',
+    wstep: '<b>' + bezpiecznyTekst(j.tytul) + '</b> — ' + (j.konserwacjaDni === -1
+      ? 'nie ma zapisanej konserwacji.' : 'ostatnia konserwacja ' + j.konserwacjaDni + ' dni temu.') +
+      '<br><br>Zaznacz ją <b>tylko jeśli naprawdę została zrobiona</b>. ' +
+      'Jeśli nie — zapisz wpis bez niej.',   // 25.09: Marek kazał usunąć „to też jest dobra odpowiedź”
+    dwa: { zostaw: 'Nie robiłem', akcja: 'Zrobiłem', stozek: '',   // wybór Marka 25.09 (krótko, symetrycznie)
+      poAkcji: function(){ var c = czipKonserwacji_(); if (c) c.classList.add('zaznaczony'); dalej(); } } });
+  // „Zostaw" w kanonie tylko zamyka — tu MA zapisać wpis (bez konserwacji).
+  el('arkuszKomZostaw').onclick = function(){ zamknijArkuszKom_(); dalej(); };
 }
 
 function odswiezStartZPaskiem_(){
@@ -4676,7 +4775,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v147';
+var WERSJA_SHELL = 'ewidencja-v149';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -4828,7 +4927,8 @@ function rysujSerwisKategorie_(zaznaczone){
   el('poleSerwis').innerHTML = STAN.kategorie.map(function(k){
     var on = !!wybrane[k];
     return '<div class="serwis-chip' + (on ? ' zaznaczony' : '') + '" data-k="' +
-      bezpiecznyTekst(k) + '">' + bezpiecznyTekst(k) + '</div>';
+      bezpiecznyTekst(k) + '" style="--kat-h:' + odcienKategoriiSerwisu_(k) + '">' +
+      bezpiecznyTekst(k) + '</div>';   // E-63: odcień kategorii dla stanu „zaznaczony”
   }).join('');
   el('poleSerwis').querySelectorAll('.serwis-chip').forEach(function(chip){
     chip.onclick = function(){ chip.classList.toggle('zaznaczony'); };
@@ -5734,6 +5834,17 @@ el('zapiszBtn').onclick = function(){
     return;
   }
 
+  // E-64 cz. 2: pytanie o konserwację — raz na próbę zapisu. Flaga gaśnie
+  // przy każdym przejściu dalej, więc następny wpis znowu zapyta.
+  if (!STAN.konserwacjaOdpowiedziana && trzebaPytacOKonserwacje_(j)) {
+    zapytajOKonserwacje_(j, function(){
+      STAN.konserwacjaOdpowiedziana = true;
+      el('zapiszBtn').onclick();
+    });
+    return;
+  }
+  STAN.konserwacjaOdpowiedziana = false;
+
   var payload = {
     idPojazdu: j.idPojazdu,
     data: data,
@@ -5754,6 +5865,15 @@ el('zapiszBtn').onclick = function(){
   if (!STAN.gosc) {
     if (STAN.edytowanyId) payload.ktoJezdzil = ktoJezdzil;
     else if (ktoJezdzil) payload.ktoJezdzil = ktoJezdzil;
+  }
+
+  // E-64 cz. 2: zapisana konserwacja od razu gasi pasek, okno i pytanie —
+  // bez czekania na `status` (i także przy zapisie do kolejki offline).
+  // Serwer przy następnym odświeżeniu poda prawdziwą liczbę dni.
+  if (j.konserwacjaDni !== undefined && j.konserwacjaDni !== null &&
+      String(payload.serwisKategoria || '').toLowerCase().indexOf('konserwacja koparki') !== -1) {
+    var dniKons = Math.round((new Date(dzisiajISO()) - new Date(data)) / 86400000);
+    if (dniKons >= 0 && (j.konserwacjaDni === -1 || dniKons < j.konserwacjaDni)) j.konserwacjaDni = dniKons;
   }
 
   pokazOverlay(STAN.edytowanyId ? 'Zapisywanie poprawki…' : 'Zapisywanie… proszę czekać');
@@ -6891,6 +7011,12 @@ function kmDniaHtml_(w, jed, kolor){
 // STAN.wpisy, już wczytanego dla otwartej maszyny — bez nowego zapytania
 // do API, więc otwiera się natychmiast.
 function odcienKategoriiSerwisu_(nazwa){
+  // E-63 (25.09.2026): dwie kategorie mają kolor STAŁY, uzgodniony z Markiem —
+  // ten sam w formularzu, w arkuszu (Setup.gs) i na wydruku (Cykl.gs).
+  // Porównanie bez wielkości liter: w arkuszu jest „Konserwacja Koparki".
+  var n = String(nazwa || '').trim().toLowerCase();
+  if (n === 'konserwacja koparki') return 265;    // fiolet
+  if (n === 'serwis olej i filtry') return 38;    // bursztyn / żółty
   var h = 0;
   for (var i = 0; i < nazwa.length; i++) h = (h * 31 + nazwa.charCodeAt(i)) % 360;
   return h;
