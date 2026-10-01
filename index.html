@@ -2369,6 +2369,20 @@ var PALETY_APKA = {
   border:1.5px solid var(--linia);
   padding:12px 14px; margin-bottom:16px;}
 #dashboardPojazdu #kartaWybranego{margin-bottom:4px;}
+/* E-67 (wybór Marka 01.10.2026: D1 + E2 + F0): „Zmień" mieszka W KAFELKU POJAZDU,
+   bo kierowcy nie zauważali dużego guzika na dole pulpitu (był pod krawędzią
+   ekranu). Jasne tło akcentu bez ramki — kontrast napisu policzony z pikseli:
+   Grafit 9,5/10,2, Pomarańcz 4,7/6,1 (jasny/ciemny). ⚠ Ramka + tekst w akcencie
+   (wariant E1) odpadł: w Pomarańczy jasnej 2,8:1 i bliźniak „Zamykam miesiąc"
+   (łamie hierarchię W-36). 44 px wysokości — reguła celu dotyku z W-36 (34 z makiety za mało).
+   Długa nazwa ŁAMIE SIĘ w dwie linijki zamiast chować pod guzikiem. */
+#dashboardPojazdu #kartaWybranego .linia1{white-space:normal; overflow-wrap:anywhere;}
+.zmien-mini{flex:none; display:inline-flex; align-items:center; gap:6px;
+  min-height:44px; padding:8px 14px; margin:0; border:0; border-radius:10px;
+  background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);
+  font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;}
+.zmien-mini .ikona{width:16px; height:16px;}
+.zmien-mini:active{filter:brightness(.92);}
 #dashboardPojazdu .metryki{margin-bottom:16px;}
 
 .avatar-pierscien{padding:2.5px; border-radius:50%; position:relative;
@@ -2420,6 +2434,19 @@ var PALETY_APKA = {
 [data-motyw="ciemny"] .karta-tank .kt-tyt .ikona{color:#86efac;}
 .karta-tank .kt-pod{font-size:14px; color:var(--szary); margin:0 0 10px;}
 .karta-tank .kt-pod b{color:var(--tekst); font-weight:650;}
+/* E-66 (wybór Marka 01.10.2026: A2 + B1 + C1): po „Dopisz do wpisów" karta w
+   „Moich wpisach" stała jeszcze kilka sekund ze starym guzikiem „Importuj
+   tankowania" (czekała na świeże dane) — wyglądało, jakby nic się nie zapisało.
+   Teraz guzik mówi „Importowanie…" z kręcącym się kółkiem i jest nieaktywny,
+   a potem przez 3 s „✓ Zaimportowano N tankowań". Ekran importu bez zmian (B1). */
+.karta-tank .przycisk-drugi.trwa{opacity:1; cursor:default;}
+.kt-kolo{display:inline-block; width:16px; height:16px; flex:none; box-sizing:border-box;
+  border:2.5px solid currentColor; border-right-color:transparent; border-radius:50%;
+  animation:kreciSie .8s linear infinite; vertical-align:-3px; margin-right:8px;}
+@media (prefers-reduced-motion: reduce){ .kt-kolo{animation:none; border-right-color:currentColor; opacity:.5;} }
+.karta-tank.kt-gotowe{display:flex; align-items:center; gap:8px; font-weight:600; font-size:15px;}
+.karta-tank.kt-gotowe .ikona{width:18px; height:18px; color:#16a34a;}
+[data-motyw="ciemny"] .karta-tank.kt-gotowe .ikona{color:#86efac;}
 
 /* ── W-68 etap 3: PODPOWIEDŹ Z FLOTY W FORMULARZU ────────────────────────
    DRUGA DROGA (decyzja Marka 14.09: „taka droga też jest potrzebna"). Kto
@@ -2829,7 +2856,7 @@ var PALETY_APKA = {
         <!-- W-36: nawigacja = trzeci poziom; „Odepnij" schodzi do linku —
              nadal czerwony (var(--blad), więc i w ciemnym motywie), ale nie
              krzyczy na równi z akcjami, których kierowca używa codziennie. -->
-        <button class="przycisk-trzeci" id="zmienPojazdBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-swap"></use></svg> Zmień pojazd</button>
+        <!-- E-67 (01.10.2026): „Zmień pojazd" przeniesiony do kafelka pojazdu (u góry). -->
         <button class="przycisk-link grozny" id="odepnijBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-pin"></use></svg> Odepnij ten pojazd</button>
       </div>
 
@@ -4775,7 +4802,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v149';
+var WERSJA_SHELL = 'ewidencja-v150';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -4984,7 +5011,12 @@ function wybierzPojazd(j, zPamieci){
   el('kartaWybranego').innerHTML =
     '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ, j.kolor) + '</div>' +
     '<div class="tresc"><div class="linia1">' + bezpiecznyTekst(j.tytul) + '</div>' +
-    '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + '</div></div>';
+    '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + '</div></div>' +
+    '<button type="button" class="zmien-mini" id="zmienPojazdBtn" aria-label="Zmień pojazd">' +
+      '<svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-swap"></use></svg> Zmień</button>';
+  /* E-67: guzik rodzi się na nowo przy każdym rysowaniu kafelka — obsługę
+     podpinamy tutaj, a nie raz przy starcie. */
+  el('zmienPojazdBtn').onclick = function(){ localStorage.removeItem(KLUCZ_POJAZD); pokazWyborPojazdu(); };
 
   el('mLicznik').innerHTML = j.ostatniStanLicznika
     ? zJedn_(formatLicznik_(j.ostatniStanLicznika), j.jednostkaLicznika) : '—';
@@ -6284,7 +6316,8 @@ function chipPojazduHtml_(j){
    pojazdu). Dane biorą się z jednego zapytania `tankowaniaDoImportu`, które
    obsługuje i licznik na karcie, i samą listę.
    ═════════════════════════════════════════════════════════════════════════ */
-var TANK = { pozycje: [], wybrane: {}, idPojazdu: null, rozjazdy: [], laduje: false };
+var TANK = { pozycje: [], wybrane: {}, idPojazdu: null, rozjazdy: [], laduje: false,
+  importuje: null, gotowe: null };   // E-66: importuje = { id, napis }, gotowe = { id, ile } na 3 s po imporcie
 
 /* Awaria odczytu Floty NIE MOŻE ruszyć „Moich wpisów" (W-68 pkt 14, poprawka 1).
    Dlatego wszystko tu jest „best effort": nie udało się — karty po prostu nie ma. */
@@ -6541,6 +6574,24 @@ function rysujKarteTankowan_(){
      migoczące paski. Dlatego warunek to „trwa pobieranie ORAZ pozycji nie ma" —
      przy odświeżaniu listy, która JEST na ekranie, szkieletu nie ma wcale
      (decyzja Marka 17.09: „zostaw listę, bez szkieletu"). */
+  /* E-66: potwierdzenie „✓ Zaimportowano N" — tylko dla tej maszyny, przez 3 s. */
+  var trwa = TANK.importuje && TANK.importuje.id === TANK.idPojazdu;
+  if (TANK.gotowe && TANK.gotowe.id === TANK.idPojazdu && !trwa) {
+    cel.innerHTML = '<div class="karta-tank kt-gotowe" role="status">' + ikonaHTML_('ic-check') +
+      '<span>' + zdanieZaimportowano_(TANK.gotowe.ile) + '</span></div>';
+    return;
+  }
+  /* E-66: import trwa — guzik mówi to sam, dopóki nie przyjdą świeże dane.
+     Pokazujemy go także wtedy, gdy stara lista byłaby już pusta. */
+  if (trwa) {
+    cel.innerHTML =
+      '<div class="karta-tank">' +
+        '<div class="kt-tyt">' + ikonaHTML_('ic-check') + 'Tankowania z Floty czekają</div>' +
+        '<button type="button" class="przycisk-drugi trwa" id="tankOtworz" disabled aria-busy="true">' +
+          '<span class="kt-kolo" aria-hidden="true"></span>' + TANK.importuje.napis + '</button>' +
+      '</div>';
+    return;
+  }
   if (TANK.laduje && !TANK.pozycje.length) {
     cel.innerHTML = '<div class="tank-szkielet szkielet" aria-hidden="true">' +
       '<div class="sz-l" style="width:58%"></div>' +
@@ -6578,6 +6629,14 @@ function rysujKarteTankowan_(){
    „5 tankowań CZEKA". Zrobione jednym zdaniem, bo sklejanie rzeczownika
    z czasownikiem osobno dawało „3 tankowania nie jest dopisanych"
    (złapane na podglądzie 16.09). */
+/* E-66: „Zaimportowano 1 tankowanie / 2 tankowania / 5 tankowań". */
+function zdanieZaimportowano_(n){
+  var ost = n % 10, dwa = n % 100;
+  var slowo = n === 1 ? 'tankowanie'
+    : (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14)) ? 'tankowania' : 'tankowań';
+  return 'Zaimportowano ' + n + ' ' + slowo;
+}
+
 function zdanieOTankowaniach_(n){
   if (n === 1) return '<b>1</b> tankowanie z tej maszyny czeka na dopisanie do wpisu.';
   var ost = n % 10, dwa = n % 100;
@@ -6910,7 +6969,27 @@ function dopiszTankowania_(){
        „Zamykam miesiąc" (W-55) — `stanPo` wyżej już to uwzględnia. */
     pokazEkran('ekranWpisy');
     if (STAN.aktywna) {
-      odswiezHistorie_(STAN.aktywna).then(function(){ pobierzTankowania_(STAN.aktywna.idPojazdu, true); });
+      /* E-66: od powrotu do „Moich wpisów" aż do świeżych danych guzik na karcie
+         mówi „Importowanie…" (albo „Poprawiam…", gdy były same poprawki).
+         ⚠ Gasimy na OBU drogach (sukces i błąd) — guzik, który kręci się
+         na zawsze, obiecuje coś, co nie przyjdzie (ta sama zasada co W-77). */
+      var idTej = STAN.aktywna.idPojazdu;
+      TANK.gotowe = null;
+      var znakImportu = TANK.importuje = { id: idTej, napis: wpisy.length ? 'Importowanie…' : 'Poprawiam…' };
+      rysujKarteTankowan_();
+      var koniec = function(){
+        if (TANK.importuje === znakImportu) TANK.importuje = null;
+        if (dopisane > 0) {
+          var znak = TANK.gotowe = { id: idTej, ile: dopisane };
+          setTimeout(function(){
+            if (TANK.gotowe === znak) { TANK.gotowe = null; rysujKarteTankowan_(); }
+          }, 3000);
+        }
+        rysujKarteTankowan_();
+      };
+      odswiezHistorie_(STAN.aktywna)
+        .then(function(){ return pobierzTankowania_(idTej, true); })
+        .then(koniec, koniec);
     }
   });
 }
@@ -7814,7 +7893,7 @@ function dociagnijHistorie_(j){
   }
   odswiezHistorie_(j);
 }
-el('zmienPojazdBtn').onclick = function(){ localStorage.removeItem(KLUCZ_POJAZD); pokazWyborPojazdu(); };
+/* E-67: obsługa „Zmień pojazd" podpina się w `wybierzPojazd` (guzik jest w kafelku). */
 
 /* D70: odpiąć można tylko pojazd dodany samodzielnie — przypisania z
    arkusza zostają. Przycisk chowa się przy pojazdach przypisanych na stałe,
