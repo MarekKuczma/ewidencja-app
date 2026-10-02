@@ -4819,7 +4819,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v151';
+var WERSJA_SHELL = 'ewidencja-v152';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -6958,7 +6958,7 @@ function aktualizujTankowanie_(idWpisu, nr, guzik){
     schowajOverlay();
     if (!d || !d.ok){
       if (guzik){ guzik.disabled = false; guzik.textContent = etykieta; }
-      pokazInfo_('Nie udało się', (d && d.blad) || 'Spróbuj jeszcze raz.', 'ic-warn');
+      pokazInfo_('Nie udało się', komunikatHTML_(zKodem_(d) || 'Spróbuj jeszcze raz.'), 'ic-warn');   // W-87/E2: treść, nie sam kod
       return;
     }
     if (guzik) guzik.textContent = '\u2713 Poprawione';
@@ -6997,7 +6997,7 @@ function dopiszTankowania_(){
       return wolajAPI('aktualizujTankowanie', { idWpisu: pop.wpis, nr: pop.nr })
         .then(function(d){
           if (d && d.ok) { if (d.stanPo) zastosujStanPo_(d.stanPo); }
-          else bledy.push('poprawka ' + pop.nr + ': ' + ((d && d.blad) || 'nie udało się'));
+          else bledy.push('poprawka ' + pop.nr + ': ' + (zKodem_(d) || 'nie udało się'));   // W-87/E2
         });
     });
   }, Promise.resolve());
@@ -7007,7 +7007,7 @@ function dopiszTankowania_(){
       return wolajAPI('importujTankowania', { idWpisu: idW, numery: wgWpisu[idW] })
         .then(function(d){
           if (d && d.ok) { dopisane += d.dopisano || 0; if (d.stanPo) zastosujStanPo_(d.stanPo); }
-          else bledy.push((d && d.blad) || 'nie udało się');
+          else bledy.push(zKodem_(d) || 'nie udało się');   // W-87/E2
         });
     });
   }, kolejka);
@@ -7015,7 +7015,7 @@ function dopiszTankowania_(){
   kolejka.then(function(){
     schowajOverlay();
     if (bledy.length) {
-      pokazInfo_('Nie wszystko się udało', bledy.join('\n'), 'ic-warn');
+      pokazInfo_('Nie wszystko się udało', bledy.map(function(b){ return komunikatHTML_(b); }).join('<br>'), 'ic-warn');   // W-87/E2: <br>, bo to innerHTML
     }
     /* Wracamy do „Moich wpisów" i odświeżamy — kierowca ma ZOBACZYĆ efekt,
        a nie usłyszeć o nim. ⚠ Import jest poprawką wpisu, więc cofa
@@ -7098,10 +7098,11 @@ function otworzWpisy(j){
     }
   });
 }
-el('pokazAnulowane').onchange = rysujWpisy;
+/* W-87/E1: gość z QR ma własną listę (`rysujWpisyGoscia_`) — do 02.10 ten przełącznik
+   rysował mu listę kierowcy z kontem, z guzikami, które backend i tak odrzucał. */
+el('pokazAnulowane').onchange = function(){ if (STAN.gosc) rysujWpisyGoscia_(); else rysujWpisy(); };
 
-var MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec',
-  'sierpień','wrzesień','październik','listopad','grudzień'];
+/* W-87: `var MIESIACE` usunięte 02.10 — nieużywany duplikat `MIESIACE_PL`. */
 
 // ========== E-26 (05.08.2026) START: "km/mtg tego dnia" ==========
 // Licznik u Was jest poranny (LICZNIK_MOMENT='rano', potwierdzone przez
