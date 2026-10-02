@@ -2383,6 +2383,16 @@ var PALETY_APKA = {
   font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;}
 .zmien-mini .ikona{width:16px; height:16px;}
 .zmien-mini:active{filter:brightness(.92);}
+/* E-50 (wybór Marka 02.10.2026: A3 + B2 + C2 + D1) — skan QR maszyny spoza listy.
+   A3: „Wpisz bez dodawania” i „Dodaj i wpisz” TEJ SAMEJ WAGI (appka nie podpowiada,
+   tak jak pytanie o konserwację), „Anuluj” jako sam napis. C2: skromna przerywana
+   ramka w formularzu wpisu jednorazowego. */
+.ak-trzy{display:flex; flex-direction:column; gap:9px;}
+.ak-trzy .przycisk-trzeci{margin-top:0;}
+.ak-trzy .przycisk-link{margin-top:0;}
+.wpis-jednorazowy{border-radius:12px; padding:10px 12px; margin:0 0 12px;
+  border:1.5px dashed var(--linia); font-size:14px; color:var(--szary);}
+.wpis-jednorazowy b{color:var(--tekst); font-weight:650;}
 #dashboardPojazdu .metryki{margin-bottom:16px;}
 
 .avatar-pierscien{padding:2.5px; border-radius:50%; position:relative;
@@ -2904,6 +2914,8 @@ var PALETY_APKA = {
            kolor i ikonę, zanim przeczyta pierwszą literę. -->
       <h2 id="wpisTytul" class="ekran-baner">Nowy wpis</h2>
       <div id="wpisPodtytul" style="margin:0 0 14px;"></div>
+      <!-- E-50 (02.10.2026, C2): tylko przy wpisie jednorazowym z QR. -->
+      <div class="wpis-jednorazowy ukryte" id="wpisJednorazowyInfo"><b>Wpis jednorazowy</b> — maszyna nie trafi na Twoją listę.</div>
 
       <!-- E-20/E-21: imię gościa z QR — widoczne i obowiązkowe WYŁĄCZNIE
            w trybie gościa (steruje otworzWpis). Konta normalne go nie widzą:
@@ -3213,6 +3225,11 @@ function bezpiecznyTekst(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function pokazEkran(nazwa){
+  /* E-50: tryb wpisu jednorazowego żyje tylko na formularzu i ekranie sukcesu.
+     Każde inne przejście (Ekran główny, Anuluj, dolna nawigacja) wraca do
+     zapamiętanego pojazdu kierowcy — inaczej „Nowy wpis” w nawigacji trafiłby
+     w obcą maszynę. */
+  if (STAN.jednorazowa && nazwa !== 'ekranWpis' && nazwa !== 'ekranSukces') zakonczJednorazowy_();
   ['ekranStart','ekranWpis','ekranSukces','ekranWpisy','ekranPodsumowanie','ekranPin',
    'ekranUstawienia','ekranImport'].forEach(function(e){        // W-31, W-68
     el(e).classList.add('ukryte');
@@ -4802,7 +4819,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v150';
+var WERSJA_SHELL = 'ewidencja-v151';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -5608,6 +5625,11 @@ function otworzWpis(j, wpisDoEdycji){
   // każdym otwarciu formularza, a nie raz na starcie — appka potrafi wisieć
   // otwarta przez północ, a ten sam ekran obsługuje kierowcę i gościa z QR.
   el('poleData').max = maxDatyWpisu_();
+  /* E-50: wpis jednorazowy tylko na DZIŚ (serwer pilnuje tego samego — E003). */
+  var jednorazowy = czyJednorazowa_(j);
+  el('poleData').min = jednorazowy ? dzisiajISO() : '';
+  if (jednorazowy) el('poleData').max = dzisiajISO();
+  el('wpisJednorazowyInfo').classList.toggle('ukryte', !jednorazowy);
   el('poleImieBox').classList.toggle('ukryte', !trybGoscia);
   el('ktoJezdzilBox').classList.toggle('ukryte', trybGoscia);
   if (trybGoscia) {
@@ -5815,7 +5837,11 @@ el('zapiszBtn').onclick = function(){
     else if (data > maxDatyWpisu_()) {
       bladPola('poleDataBox','bladData', STAN.gosc
         ? 'Nie można wpisać daty z przyszłości.'
+        : czyJednorazowa_(j) ? 'Wpis bez dodawania maszyny można zrobić tylko na dziś.'   // E-50
         : 'Najdalej można zrobić wpis na jutro.');   // E-62
+      zlePola.push('Data');
+    } else if (czyJednorazowa_(j) && data !== dzisiajISO()) {   // E-50
+      bladPola('poleDataBox','bladData','Wpis bez dodawania maszyny można zrobić tylko na dziś.');
       zlePola.push('Data');
     }
   }
@@ -5936,7 +5962,7 @@ el('zapiszBtn').onclick = function(){
          zamknięty" nie została z nieprawdą do czasu, aż `odswiezStart` wróci.
          Starszy backend `stanPo` nie przyśle i wtedy zostaje samo odświeżenie. */
       if (odp.stanPo) zastosujStanPo_(odp.stanPo);
-      odswiezStart();   // przy poprawce stan jednostki może się zmienić dowolnie
+      if (!czyJednorazowa_(j)) odswiezStart();   // przy poprawce stan jednostki może się zmienić dowolnie
       // Z-80: poprawka nie idzie przez `zastosujStanPo_`, więc cache historii
       // trzeba odświeżyć tutaj — inaczej lista pokazywałaby wersję sprzed
       // poprawki i kierowca poprawiałby ten sam wpis drugi raz.
@@ -5944,6 +5970,28 @@ el('zapiszBtn').onclick = function(){
     }).catch(function(){
       schowajOverlay();
       komunikat('wpisKomunikat', 'Brak połączenia — poprawki nie da się zapisać offline. Spróbuj później.', 'blad');
+    });
+    return;
+  }
+
+  /* E-50: wpis jednorazowy — własna akcja na serwerze i BEZ kolejki offline
+     (zwykła kolejka wysyła `nowyWpis`, a ten odrzuciłby maszynę spoza listy —
+     wpis przepadłby po cichu po złapaniu sieci). Ten sam wybór co u gościa z QR. */
+  if (czyJednorazowa_(j)) {
+    if (!navigator.onLine) {
+      schowajOverlay();
+      komunikat('wpisKomunikat', 'Brak internetu. Wpis bez dodawania maszyny wymaga zasięgu — ' +
+        'spróbuj za chwilę albo dodaj maszynę do swojej listy.', 'blad');
+      return;
+    }
+    wolajAPI('nowyWpisJednorazowy', payload).then(function(odp){
+      schowajOverlay();
+      if (!odp.ok) { komunikat('wpisKomunikat', komunikatHTML_(zKodem_(odp) || 'Nie udało się zapisać.'), 'blad'); return; }
+      zerujWstawienie_();
+      pokazSukces(odp);   // bez `zastosujStanPo_` — tej maszyny nie ma na liście
+    }).catch(function(){
+      schowajOverlay();
+      komunikat('wpisKomunikat', 'Brak połączenia — wpis nie został zapisany. Spróbuj za chwilę.', 'blad');
     });
     return;
   }
@@ -6129,6 +6177,10 @@ function pokazSukces(odp){
   el('sStart').style.display = STAN.gosc ? 'none' : '';
   el('sKolejny').innerHTML = sukcesPoEdycji ? ikonaHTML_('ic-clip') + ' Moje wpisy' : ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis'; // Z-82: innerHTML — wstawiamy element
   el('sWpisy').innerHTML = sukcesPoEdycji ? ikonaHTML_('ic-plus') + ' Dodaj kolejny wpis' : ikonaHTML_('ic-clip') + ' Moje wpisy';
+  /* E-50: po wpisie jednorazowym zostaje sam „Ekran główny” — maszyny nie ma
+     na liście (brak „Moich wpisów”), a drugi wpis na ten dzień i tak by nie
+     przeszedł (D64). */
+  ustawSukcesJednorazowy_(czyJednorazowa_(STAN.aktywna));
 
   pokazEkran('ekranSukces');
 }
@@ -6172,6 +6224,7 @@ function pokazSukcesProsty_(tekst, podtekst){
     el('sStart').style.display = '';
   }
   el('sWskazowka').classList.toggle('ukryte', !sukcesPoZgloszeniu);
+  ustawSukcesJednorazowy_(false);   // E-50
   pokazEkran('ekranSukces');
 }
 
@@ -7932,6 +7985,7 @@ el('wpisWrocBtn').onclick = function(){
 };
 el('wpisAnulujEdycjeBtn').onclick = function(){
   STAN.edytowanyId = null;
+  if (STAN.jednorazowa) { pokazEkran('ekranStart'); return; }   // E-50: tej maszyny nie ma w „Moich wpisach”
   otworzWpisy(STAN.aktywna);
 };
 // W-07 (02.08.2026): role przycisków zamieniają się zależnie od tego, skąd
@@ -8263,6 +8317,46 @@ function obsluzCelQR_(){
   };
   var j = znajdz();
   if (j) { wybierzPojazd(j); otworzWpis(j); return; }
+  /* E-50 (02.10.2026): zanim zapytamy, sprawdzamy maszynę na serwerze — czy
+     już dziś jest na niej wpis (własny → D1 „Popraw wpis”, cudzy → dzień zajęty).
+     Bez sieci albo przy starszym backendzie zostaje dawne okno z dwoma wyjściami. */
+  pokazOverlay('Sprawdzam maszynę…');
+  wolajAPI('jednorazowyStatus', { idPojazdu: cel }).then(function(odp){
+    schowajOverlay();
+    if (!odp || !odp.ok || !odp.pojazd) { pytajODodanie_(cel, znajdz); return; }
+    var dw = odp.dzisWpis;
+    if (dw && dw.mojWpis) { pytajOPoprawke_(odp.pojazd, dw); return; }
+    pytajTrzyWyjscia_(cel, znajdz, odp.pojazd, dw);
+  }).catch(function(){
+    schowajOverlay();
+    pytajODodanie_(cel, znajdz);
+  });
+}
+
+/* E-50: wspólna droga „dodaj maszynę i otwórz wpis” — z dawnego okna i z nowego. */
+function dodajIWpisz_(cel, znajdz){
+  pokazOverlay('Dodaję maszynę…');
+  wolajAPI('dodajJednostke', { idPojazdu: cel }).then(function(odp){
+    if (!odp.ok) {
+      schowajOverlay();
+      pokazInfo_('Nie udało się dodać', bezpiecznyTekst(odp.wiadomosc ||
+        'Spróbuj ponownie za chwilę.'), 'ic-warn');
+      return;
+    }
+    odswiezStart().then(function(){
+      schowajOverlay();
+      var j2 = znajdz();
+      if (j2) { wybierzPojazd(j2); otworzWpis(j2); }
+    });
+  }).catch(function(){
+    schowajOverlay();
+    pokazInfo_('Brak połączenia', 'Nie udało się dodać maszyny — spróbuj przy zasięgu.', 'ic-warn');
+  });
+}
+
+/* Dawne okno (E-47a) — zostaje jako droga awaryjna: bez sieci albo przy
+   backendzie sprzed v63 trzeciego wyjścia nie da się obsłużyć. */
+function pytajODodanie_(cel, znajdz){
   // E-47a (20.08.2026, zgłoszenie Marka z telefonu): było `typ: 'pytanie'`
   // — wariant zarezerwowany dla akcji NIEODWRACALNYCH (usuń, odepnij), stąd
   // czerwona góra i czerwony przycisk. Marek: „jest ono czerwone i wygląda
@@ -8277,27 +8371,83 @@ function obsluzCelQR_(){
       '„Moich jednostek" i otworzyć wpis?',
     dwa: {
       zostaw: 'Jeszcze nie', akcja: 'Dodaj i wpisz', stozek: '',
-      poAkcji: function(){
-        pokazOverlay('Dodaję maszynę…');
-        wolajAPI('dodajJednostke', { idPojazdu: cel }).then(function(odp){
-          if (!odp.ok) {
-            schowajOverlay();
-            pokazInfo_('Nie udało się dodać', bezpiecznyTekst(odp.wiadomosc ||
-              'Spróbuj ponownie za chwilę.'), 'ic-warn');
-            return;
-          }
-          odswiezStart().then(function(){
-            schowajOverlay();
-            var j2 = znajdz();
-            if (j2) { wybierzPojazd(j2); otworzWpis(j2); }
-          });
-        }).catch(function(){
-          schowajOverlay();
-          pokazInfo_('Brak połączenia', 'Nie udało się dodać maszyny — spróbuj przy zasięgu.', 'ic-warn');
-        });
-      }
+      poAkcji: function(){ dodajIWpisz_(cel, znajdz); }
     }
   });
+}
+
+/* E-50, A3 + B2: trzy wyjścia tej samej wagi. Kanon `pokazArkuszKom_` zna tylko
+   jeden albo dwa przyciski i jest IDENTYCZNY we Flocie (W-65) — nie ruszamy go,
+   tylko podmieniamy blok przycisków po narysowaniu. */
+function pytajTrzyWyjscia_(cel, znajdz, pojazd, dzisWpis){
+  pokazArkuszKom_({
+    typ: 'zgloszenie', ikona: 'ic-plus', tytul: 'Maszyna spoza Twojej listy',
+    wstep: 'Zeskanowana maszyna nie jest na Twojej liście. Możesz zrobić ' +
+      '<b>jeden wpis bez dodawania</b> albo dodać ją do „Moich jednostek”.',
+    przycisk: 'Anuluj'
+  });
+  var stary = el('arkuszKomOk').parentNode;
+  var box = document.createElement('div');
+  box.className = 'ak-trzy';
+  box.innerHTML =
+    '<button type="button" class="przycisk-trzeci" id="akJednorazowo">' + ikonaHTML_('ic-pencil') + ' Wpisz bez dodawania</button>' +
+    '<button type="button" class="przycisk-trzeci" id="akDodaj">' + ikonaHTML_('ic-plus') + ' Dodaj i wpisz</button>' +
+    '<button type="button" class="przycisk-link" id="akAnuluj">Anuluj</button>';
+  stary.parentNode.replaceChild(box, stary);
+  el('akAnuluj').onclick = function(){ zamknijArkuszKom_(); };
+  el('akDodaj').onclick = function(){ zamknijArkuszKom_(); dodajIWpisz_(cel, znajdz); };
+  el('akJednorazowo').onclick = function(){
+    zamknijArkuszKom_();
+    if (dzisWpis) {   // D64 — dzień tej maszyny jest już zajęty przez kogoś innego
+      pokazInfo_('Na dziś wpis już jest', 'Zrobił go ' + bezpiecznyTekst(dzisWpis.kierowcaWyswietlany || dzisWpis.kierowca) +
+        '. Jeden dzień maszyny to jeden wpis — poprawić go może tylko autor.', 'ic-warn');
+      return;
+    }
+    rozpocznijJednorazowy_(pojazd);
+    otworzWpis(pojazd);
+  };
+}
+
+/* E-50, D1: ponowny skan tej samej maszyny tego samego dnia. */
+function pytajOPoprawke_(pojazd, wpis){
+  var licz = (wpis.licznik === '' || wpis.licznik == null) ? '' :
+    ', ' + formatLicznik_(wpis.licznik) + ' ' + (wpis.jednostkaLicznika || pojazd.jednostkaLicznika);
+  pokazArkuszKom_({
+    typ: 'zgloszenie', ikona: 'ic-pencil', tytul: 'Masz już dziś wpis na tej maszynie',
+    wstep: bezpiecznyTekst(pojazd.tytul) + ' · dziś' + licz + '. Chcesz go poprawić?',
+    dwa: { zostaw: 'Zostaw', akcja: 'Popraw wpis', stozek: '',
+      poAkcji: function(){
+        if (!wpis.edytowalny) {
+          pokazInfo_('Tego wpisu nie da się poprawić', 'Jest zablokowany albo miesiąc jest już zamknięty — poproś Marka.', 'ic-warn');
+          return;
+        }
+        rozpocznijJednorazowy_(pojazd);
+        otworzWpis(pojazd, wpis);
+      } }
+  });
+}
+
+/* E-50: tryb wpisu jednorazowego. `STAN.jednorazowa` = maszyna spoza listy,
+   na którą właśnie wpisujemy; `STAN.aktywna` wraca do pojazdu kierowcy
+   przy każdym wyjściu poza formularz i ekran sukcesu (`pokazEkran`). */
+function rozpocznijJednorazowy_(pojazd){
+  STAN.jednorazowa = pojazd;
+  STAN.wpisy = [];   // historia innej maszyny — dociągnie ją `otworzWpis`
+}
+function czyJednorazowa_(j){
+  return !!(STAN.jednorazowa && j && String(j.idPojazdu) === String(STAN.jednorazowa.idPojazdu));
+}
+function zakonczJednorazowy_(){
+  STAN.jednorazowa = null;
+  STAN.edytowanyId = null;
+  STAN.wpisy = [];
+  var zap = localStorage.getItem(KLUCZ_POJAZD);
+  STAN.aktywna = (STAN.jednostki || []).filter(function(x){ return x.idPojazdu === zap; })[0] || null;
+}
+function ustawSukcesJednorazowy_(jednorazowy){
+  el('sKolejny').style.display = jednorazowy ? 'none' : '';
+  el('sWpisy').style.display = jednorazowy ? 'none' : '';
+  el('sStart').parentNode.style.gridTemplateColumns = jednorazowy ? '1fr' : '';
 }
 
 el('navStart').onclick = function(){ pokazEkran('ekranStart'); };
