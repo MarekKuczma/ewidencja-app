@@ -3422,12 +3422,15 @@ function ikonaHTML_(id) {
 function zJedn_(liczba, jednostka){
   return jednostka ? (liczba + '<span class="m-jedn">' + jednostka + '</span>') : liczba;
 }
-function odmianaWpisow_(n){
+/* W-87b: JEDNA reguła polskiej odmiany po liczbie (1 → poj., 2–4 → mian. l.mn.,
+   reszta i 12–14 → dop. l.mn.). Do 02.10 ta sama reguła była przepisana sześć razy. */
+function odmien_(n, jeden, dwa, piec){
   n = Math.abs(Number(n) || 0);
-  if (n === 1) return 'wpis';
+  if (n === 1) return jeden;
   var d = n % 10, s = n % 100;
-  return (d >= 2 && d <= 4 && (s < 12 || s > 14)) ? 'wpisy' : 'wpisów';
+  return (d >= 2 && d <= 4 && (s < 12 || s > 14)) ? dwa : piec;
 }
+function odmianaWpisow_(n){ return odmien_(n, 'wpis', 'wpisy', 'wpisów'); }
 function dataPL_(iso){
   var s = String(iso || '');
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.split('-').reverse().join('.') : s;
@@ -3447,6 +3450,21 @@ function dataZDniem_(iso){
   var n = new Date(Date.UTC(+cz[0], +cz[1] - 1, +cz[2])).getUTCDay();
   return dataPL_(s) + '<span class="dzien-tyg' + (n === 0 || n === 6 ? ' weekend' : '') +
          '">' + DNI_SKROT_[n] + '</span>';
+}
+/* W-87b: `kolor` i `jednostkaLicznika` z arkusza trafiają do atrybutów `style`
+   bez escapowania (wartości wpisuje Marek, ale zasada Z-78 mówi: nic z serwera
+   wprost do HTML). Czyścimy RAZ przy wejściu do STAN, nie w każdym renderze. */
+function bezpiecznyKolor_(k){
+  k = String(k || '').trim();
+  return /^#[0-9a-f]{3,8}$/i.test(k) || /^[a-z]{3,20}$/i.test(k) ? k : '#6b7280';
+}
+function oczyscJednostki_(lista){
+  (lista || []).forEach(function(j){
+    if (!j) return;
+    j.kolor = bezpiecznyKolor_(j.kolor);
+    if (j.jednostkaLicznika !== undefined) j.jednostkaLicznika = String(j.jednostkaLicznika || '').replace(/[<>"&]/g, '');
+  });
+  return lista;
 }
 function ikonaTypu(typ, kolor){
   var t = String(typ||'').toLowerCase(), k = 'inne';
@@ -4154,7 +4172,7 @@ function pokazZPamieci(){
   if (!cache || !cache.jednostki) return;
 
   STAN.imie = cache.imie;
-  STAN.jednostki = cache.jednostki;
+  STAN.jednostki = oczyscJednostki_(cache.jednostki);   // W-87b (cache sprzed v153 mógł być nieoczyszczony)
   STAN.budowy = cache.budowy || [];
   STAN.kategorie = cache.kategorie || [];
   STAN.limity = cache.limity || STAN.limity;
@@ -4819,7 +4837,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v152';
+var WERSJA_SHELL = 'ewidencja-v153';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -4885,7 +4903,7 @@ function odswiezStart(){
       localStorage.setItem(KLUCZ_BETA, odp.beta ? 'TAK' : 'NIE');
       pokazOdznakeBeta_();
     }
-    STAN.jednostki = odp.jednostki || [];
+    STAN.jednostki = oczyscJednostki_(odp.jednostki || []);   // W-87b
     STAN.budowy = odp.budowy || [];
     STAN.kategorie = odp.kategorie || [];
     STAN.limity = odp.limity || STAN.limity;
@@ -6456,29 +6474,20 @@ function zdanieOCiszy_(n){
 
 function zdanieORecznych_(n){
   if (n === 1) return 'Pominęliśmy <b>1</b> tankowanie — wygląda na wpisane ręcznie w Twoim wpisie.';
-  var ost = n % 10, dwa = n % 100;
-  var rzecz = (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14)) ? 'tankowania' : 'tankowań';
-  return 'Pominęliśmy <b>' + n + '</b> ' + rzecz + ' — wyglądają na wpisane ręcznie w Twoich wpisach.';
+  return 'Pominęliśmy <b>' + n + '</b> ' + odmien_(n, 'tankowanie', 'tankowania', 'tankowań') + ' — wyglądają na wpisane ręcznie w Twoich wpisach.';
 }
 
 function zdanieOCzekajacych_(n){
-  if (n === 1) return 'czeka jeszcze <b>1</b> tankowanie tej maszyny.';
-  var ost = n % 10, dwa = n % 100;
-  return (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14))
-    ? 'czekają jeszcze <b>' + n + '</b> tankowania tej maszyny.'
-    : 'czeka jeszcze <b>' + n + '</b> tankowań tej maszyny.';
+  return odmien_(n, 'czeka jeszcze <b>1</b> tankowanie tej maszyny.',
+    'czekają jeszcze <b>' + n + '</b> tankowania tej maszyny.',
+    'czeka jeszcze <b>' + n + '</b> tankowań tej maszyny.');
 }
 
 /* W-69: „na 2 maszyny", ale „na 5 maszyn". Ta sama zasada, co w zdaniu
    o czekających tankowaniach — zdanie z błędem podważa wszystko, co appka mówi
    obok (nauczka z etapu 3). Liczba maszyn bierze się z rozbicia we Flocie,
    więc realnie bywa 2–4, ale reguła ma być pełna, nie „na tyle, ile widziałem". */
-function odmianaMaszyn_(n){
-  if (n === 1) return '1 maszynę';
-  var ost = n % 10, dwa = n % 100;
-  return (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14))
-    ? n + ' maszyny' : n + ' maszyn';
-}
+function odmianaMaszyn_(n){ return odmien_(n, '1 maszynę', n + ' maszyny', n + ' maszyn'); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    W-68 ETAP 3 — DRUGA DROGA: TANKOWANIE PRZY TWORZENIU WPISU (16.09.2026)
@@ -6683,19 +6692,12 @@ function rysujKarteTankowan_(){
    z czasownikiem osobno dawało „3 tankowania nie jest dopisanych"
    (złapane na podglądzie 16.09). */
 /* E-66: „Zaimportowano 1 tankowanie / 2 tankowania / 5 tankowań". */
-function zdanieZaimportowano_(n){
-  var ost = n % 10, dwa = n % 100;
-  var slowo = n === 1 ? 'tankowanie'
-    : (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14)) ? 'tankowania' : 'tankowań';
-  return 'Zaimportowano ' + n + ' ' + slowo;
-}
+function zdanieZaimportowano_(n){ return 'Zaimportowano ' + n + ' ' + odmien_(n, 'tankowanie', 'tankowania', 'tankowań'); }
 
 function zdanieOTankowaniach_(n){
-  if (n === 1) return '<b>1</b> tankowanie z tej maszyny czeka na dopisanie do wpisu.';
-  var ost = n % 10, dwa = n % 100;
-  return (ost >= 2 && ost <= 4 && (dwa < 12 || dwa > 14))
-    ? '<b>' + n + '</b> tankowania z tej maszyny czekają na dopisanie do wpisów.'
-    : '<b>' + n + '</b> tankowań z tej maszyny czeka na dopisanie do wpisów.';
+  return odmien_(n, '<b>1</b> tankowanie z tej maszyny czeka na dopisanie do wpisu.',
+    '<b>' + n + '</b> tankowania z tej maszyny czekają na dopisanie do wpisów.',
+    '<b>' + n + '</b> tankowań z tej maszyny czeka na dopisanie do wpisów.');
 }
 
 function otworzImport_(){
@@ -7519,7 +7521,7 @@ function odepnijZListy_(j){
   pokazPytanie_({
     tytul: 'Odpiąć pojazd?', ikona: 'ic-pin',
     tresc: '„' + bezpiecznyTekst(j.tytul) + '" zniknie z Twojego widoku. ' +
-      'Twoje dotychczasowe wpisy zostaną w ewidencji.',
+      'Twoje dotychczasowe wpisy zostaną w ewidencji. Możesz go później dodać z powrotem.',
     akcja: 'Odepnij',
     poAkcji: function(){
       pokazOverlay('Odpinam…');
@@ -7952,29 +7954,9 @@ function dociagnijHistorie_(j){
 /* D70: odpiąć można tylko pojazd dodany samodzielnie — przypisania z
    arkusza zostają. Przycisk chowa się przy pojazdach przypisanych na stałe,
    żeby nikt nie klikał w ślepy zaułek. */
-el('odepnijBtn').onclick = function(){
-  var j = STAN.aktywna;
-  if (!j) return;
-  if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Odpięcie pojazdu wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
-  pokazPytanie_({
-    tytul: 'Odpiąć pojazd?', ikona: 'ic-pin',
-    tresc: '„' + bezpiecznyTekst(j.tytul) + '" zniknie z Twojego widoku. ' +
-      'Twoje dotychczasowe wpisy zostaną w ewidencji. Możesz go później ' +
-      'dodać z powrotem.',
-    akcja: 'Odepnij',
-    poAkcji: function(){
-      pokazOverlay('Odpinam…');
-      wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
-        schowajOverlay();
-        if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się odpiąć.'), 'ic-warn'); return; }
-        poOdpieciu_(j.idPojazdu);
-      }).catch(function(){
-        schowajOverlay();
-        pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
-      });
-    }
-  });
-};
+/* W-87b: ta sama droga co „Odepnij” z listy pojazdów (`odepnijZListy_`) —
+   do 02.10 dwie kopie tego samego pytania i wywołania. */
+el('odepnijBtn').onclick = function(){ if (STAN.aktywna) odepnijZListy_(STAN.aktywna); };
 // F-22 (wzorzec floty, 01.08.2026): „Anuluj" przy nowym wpisie — bez pytania
 // wraca na dashboard (pola i tak dostają domyślne wartości przy kolejnym
 // otworzWpis()). „Anuluj poprawianie" w edycji — wraca do „Moje wpisy",
@@ -8125,7 +8107,7 @@ function zastosujStatusGoscia_(odp){
   var p = odp.pojazd;
   STAN.aktywna = {
     idPojazdu: p.idPojazdu, tytul: p.tytul, podtytul: p.podtytul, typ: p.typ,
-    kolor: p.kolor, jednostkaLicznika: p.jednostkaLicznika, maLicznik: p.maLicznik,
+    kolor: bezpiecznyKolor_(p.kolor), jednostkaLicznika: String(p.jednostkaLicznika || '').replace(/[<>"&]/g, ''), maLicznik: p.maLicznik,   // W-87b
     ostatniStanLicznika: p.ostatniStanLicznika, ostatniaData: p.ostatniaData,
     ostatniaBudowa: p.ostatniaBudowa
   };
@@ -8325,6 +8307,7 @@ function obsluzCelQR_(){
   wolajAPI('jednorazowyStatus', { idPojazdu: cel }).then(function(odp){
     schowajOverlay();
     if (!odp || !odp.ok || !odp.pojazd) { pytajODodanie_(cel, znajdz); return; }
+    oczyscJednostki_([odp.pojazd]);   // W-87b
     var dw = odp.dzisWpis;
     if (dw && dw.mojWpis) { pytajOPoprawke_(odp.pojazd, dw); return; }
     pytajTrzyWyjscia_(cel, znajdz, odp.pojazd, dw);
