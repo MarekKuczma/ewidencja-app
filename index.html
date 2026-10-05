@@ -1049,6 +1049,25 @@ var PALETY_APKA = {
     text-transform:none; letter-spacing:normal; margin-left:6px; vertical-align:middle;}
   /* E-14 (01.08.2026): nagłówek sekcji listy jednostek (Twoje pojazdy /
      Podpięte) — sam styl co nagłówek miesiąca, ale nieklikalny. */
+  /* E-68 (05.10.2026): auta zastępcze — dwa kafelki dodawania (makieta A4),
+     pasek nad pojazdem (D4, kolory „uwaga”, działają w obu motywach i każdej
+     palecie) i zielona karta „to auto już jest” (B2). */
+  .kafel-dodaj{display:flex; align-items:center; gap:12px; text-align:left;
+    padding:12px 14px; margin:0 0 10px; height:auto; width:100%;}
+  .kafel-dodaj .kd-ikona{width:38px; height:38px; border-radius:12px; flex:none;
+    background:var(--bg-akcentjasny); color:var(--tekst-akcentjasny);
+    display:flex; align-items:center; justify-content:center;}
+  .kafel-dodaj .kd-ikona .ikona{width:21px; height:21px; margin:0;}
+  .kafel-dodaj .kd-tekst b{display:block; font-size:16px;}
+  .kafel-dodaj .kd-tekst span{display:block; font-size:13px; font-weight:400; color:var(--szary);}
+  .pasek-zastepcze{display:flex; align-items:center; gap:8px; margin:2px 0 8px;
+    padding:8px 12px; border-radius:12px; font-size:14px; line-height:1.35;
+    background:var(--bg-uwaga); color:var(--tekst-uwaga); border:1px solid var(--brzeg-uwaga);}
+  .pasek-zastepcze .ikona{flex:none; margin:0;}
+  .zast-znane{margin-top:8px; padding:10px 12px; border-radius:12px; font-size:14px;
+    line-height:1.4; background:var(--bg-ok); color:var(--tekst-ok);}
+  .pole-rejestracja{letter-spacing:.04em; font-weight:600;}
+  .lekki{font-weight:400; color:var(--szary);}
   .sekcja-jednostek-naglowek{font-size:13px; font-weight:700; color:var(--szary);
     text-transform:uppercase; letter-spacing:.03em; margin:16px 2px 8px;}
   .sekcja-jednostek-naglowek:first-child{margin-top:0;}
@@ -2819,6 +2838,8 @@ var PALETY_APKA = {
 
       <!-- Dashboard wybranego pojazdu (D54) -->
       <div id="dashboardPojazdu" class="ukryte">
+        <!-- E-68: pasek „Auto zastępcze · za: …” nad kafelkiem pojazdu (makieta D4). -->
+        <div class="pasek-zastepcze ukryte" id="pasekZastepcze"></div>
         <div class="jedn" id="kartaWybranego"></div>
         <div class="metryki">
           <div class="metryka">
@@ -2876,7 +2897,11 @@ var PALETY_APKA = {
              `pokazPasekJednostek_`. Ten sam wzorzec co #pasekWpisow (Z-80). -->
         <div id="pasekJednostek" class="pasek-odswiezania ukryte"></div>
         <div id="listaJednostek"></div>
-        <button class="przycisk-drugi" id="dodajJednostkeBtn"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg> Dodaj auto lub koparkę</button>
+        <!-- E-68 (05.10.2026): dwa kafelki od razu, bez kroku pośredniego (makieta A4). -->
+        <div id="dodajKafelki">
+          <button class="przycisk-drugi kafel-dodaj" id="dodajJednostkeBtn"><span class="kd-ikona"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-plus"></use></svg></span><span class="kd-tekst"><b>Dodaj auto lub koparkę</b><span>pojazd firmy, z listy</span></span></button>
+          <button class="przycisk-drugi kafel-dodaj" id="dodajZastepczeBtn"><span class="kd-ikona"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-swap"></use></svg></span><span class="kd-tekst"><b>Dodaj auto zastępcze</b><span>wpisz numer rejestracyjny</span></span></button>
+        </div>
       </div>
 
       <!-- W-22 (20.08.2026): wersje na dole ekranu głównego — patrz pokazWersje_. -->
@@ -2902,6 +2927,31 @@ var PALETY_APKA = {
           <button class="przycisk" id="potwierdzDodanieBtn">Dodaj do moich pojazdów</button>
         </div>
         <button class="przycisk-drugi" id="anulujDodanieBtn">Anuluj</button>
+      </div>
+
+      <!-- E-68 (05.10.2026): formularz auta zastępczego (makieta B1/B2). -->
+      <div id="zastBox" class="ukryte" style="margin-top:12px;">
+        <div class="sekcja-jednostek-naglowek">Auto zastępcze</div>
+        <div class="podpowiedz-pola" style="margin:0 0 12px;">Auto, którego nie ma na liście firmy.</div>
+        <div class="pole">
+          <label for="zastRej"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-car"></use></svg> Numer rejestracyjny</label>
+          <input type="text" id="zastRej" class="pole-rejestracja" placeholder="np. WX 1234A" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="14">
+          <div class="blad-pola" id="bladZastRej"></div>
+          <div class="zast-znane ukryte" id="zastZnane"></div>
+        </div>
+        <div class="pole">
+          <label for="zastMarka"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-note"></use></svg> Marka i model</label>
+          <input type="text" id="zastMarka" placeholder="np. Toyota Corolla" maxlength="60" autocomplete="off">
+          <div class="blad-pola" id="bladZastMarka"></div>
+        </div>
+        <div class="pole" id="zastZaBox">
+          <label for="zastZa"><svg class="ikona" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-swap"></use></svg> W zamian za <span class="lekki">(nieobowiązkowe)</span></label>
+          <select id="zastZa"><option value="">— nie wskazuję —</option></select>
+        </div>
+        <div class="przycisk-glow">
+          <button class="przycisk" id="zastDodajBtn">Dodaj auto zastępcze</button>
+        </div>
+        <button class="przycisk-drugi" id="zastAnulujBtn">Anuluj</button>
       </div>
     </div>
   </section>
@@ -3407,6 +3457,7 @@ var IKONY = {
      kształtu; ⚠ ten sam rysunek dopisać w „Panel Floty.html" (rodzajIcon),
      bo tam jest źródło tego zestawu. */
   zageszczarka: '<path d="M4 19.5h16"/><rect x="6" y="15.5" width="12" height="4" rx="1"/><path d="M9.5 15.5v-3.2A1.3 1.3 0 0 1 10.8 11h2.4a1.3 1.3 0 0 1 1.3 1.3v3.2"/><path d="M12 11V7"/><path d="M9 5.6h6"/>',
+  zastepcze: '<path d="M4.5 9.5a8 8 0 0 1 13.6-2.7M18.5 3.5v3.7h-3.7M19.5 14.5a8 8 0 0 1-13.6 2.7M5.5 20.5v-3.7h3.7"/>',   // E-68: auto zastępcze — ⇄ jak w makiecie C2
   inne: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'
 };
 // Z-82: markup ikony konturowej ze sprite'u (patrz początek <body>).
@@ -3468,7 +3519,8 @@ function oczyscJednostki_(lista){
 }
 function ikonaTypu(typ, kolor){
   var t = String(typ||'').toLowerCase(), k = 'inne';
-  if (t.indexOf('kopark') !== -1 || t.indexOf('ładowarka') !== -1) k = 'koparka';
+  if (t.indexOf('zastępcz') !== -1) k = 'zastepcze';   // E-68
+  else if (t.indexOf('kopark') !== -1 || t.indexOf('ładowarka') !== -1) k = 'koparka';
   else if (t.indexOf('hds') !== -1 || t.indexOf('dźwig') !== -1) k = 'hds';
   else if (t.indexOf('przyczep') !== -1) k = 'przyczepa';
   else if (t.indexOf('dostaw') !== -1 || t.indexOf('bus') !== -1 || t.indexOf('ciężarow') !== -1) k = 'bus';
@@ -4837,7 +4889,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v153';
+var WERSJA_SHELL = 'ewidencja-v154';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -5038,7 +5090,16 @@ function wybierzPojazd(j, zPamieci){
     : 'Pulpit pojazdu · ' + miesiacTeraz_();
 
   // D70 — odpiąć można tylko to, co kierowca sam sobie dodał.
-  el('odepnijBtn').classList.toggle('ukryte', j.sposob !== 'dodane samodzielnie');
+  // E-68: auto zastępcze — w tym samym miejscu czerwone „Oddałem to auto” (E2).
+  el('odepnijBtn').classList.toggle('ukryte', j.sposob !== 'dodane samodzielnie' && !j.zastepcze);
+  el('odepnijBtn').innerHTML = j.zastepcze
+    ? ikonaHTML_('ic-swap') + ' Oddałem to auto'
+    : ikonaHTML_('ic-pin') + ' Odepnij ten pojazd';
+  el('pasekZastepcze').classList.toggle('ukryte', !j.zastepcze);
+  el('pasekZastepcze').innerHTML = j.zastepcze
+    ? ikonaHTML_('ic-swap') + '<span><b>Auto zastępcze</b>' +
+      (j.zaTytul ? ' · za: ' + bezpiecznyTekst(j.zaTytul) : '') + '</span>'
+    : '';
 
   rysujDeklaracje_(j);   // E-08
 
@@ -5445,7 +5506,9 @@ function jednostkaHtml_(j, i){
     '<div class="ikona-krag" style="border-color:' + j.kolor + '">' + ikonaTypu(j.typ, j.kolor) + '</div>' +
     '<div class="tresc">' +
       '<div class="linia1">' + bezpiecznyTekst(j.tytul) + '</div>' +
-      '<div class="linia2">' + bezpiecznyTekst(j.podtytul) + ' &middot; ' + opis + '</div>' +
+      '<div class="linia2">' + bezpiecznyTekst(j.podtytul) +
+        (j.zastepcze && j.zaTytul ? ' &middot; za: ' + bezpiecznyTekst(j.zaTytul) : '') +   // E-68
+        ' &middot; ' + opis + '</div>' +
     '</div>' +
     (j.sposob === 'dodane samodzielnie'
       ? '<button class="przycisk-czerwony" data-odepnij="' + i + '" title="Odepnij">' + ikonaHTML_('ic-pin') + '</button>'
@@ -5463,8 +5526,9 @@ function rysujJednostki(){
   // wewnątrz sekcji bez zmian (porownajJednostki_ z backendu, D71). Nagłówki
   // tylko gdy obie sekcje faktycznie mają coś do pokazania — kierowca z
   // samymi głównymi/samymi podpiętymi widzi listę bez podziału, jak dotąd.
-  var glowneI = [], podpieteI = [];
+  var glowneI = [], podpieteI = [], zastepczeI = [];
   STAN.jednostki.forEach(function(j, i){
+    if (j.zastepcze) { zastepczeI.push(i); return; }   // E-68: osobna sekcja (makieta C2)
     (j.sposob === 'dodane samodzielnie' ? podpieteI : glowneI).push(i);
   });
   var dwieSekcje = glowneI.length > 0 && podpieteI.length > 0;
@@ -5476,6 +5540,12 @@ function rysujJednostki(){
   if (podpieteI.length) {
     if (dwieSekcje) html += '<div class="sekcja-jednostek-naglowek">Podpięte</div>';
     html += podpieteI.map(function(i){ return jednostkaHtml_(STAN.jednostki[i], i); }).join('');
+  }
+  // E-68: nagłówek „Auto zastępcze” ZAWSZE — także gdy to jedyne auto na liście;
+  // inaczej kafelek bez pastylki nie mówiłby, że to auto spoza firmy.
+  if (zastepczeI.length) {
+    html += '<div class="sekcja-jednostek-naglowek">Auto zastępcze</div>';
+    html += zastepczeI.map(function(i){ return jednostkaHtml_(STAN.jednostki[i], i); }).join('');
   }
   box.innerHTML = html;
   box.querySelectorAll('[data-wybierz]').forEach(function(e){
@@ -7515,6 +7585,142 @@ function poOdpieciu_(idPojazdu){
   odswiezStartZPaskiem_();   // Z-84
 }
 
+/* ══ E-68 (05.10.2026): AUTO ZASTĘPCZE ══════════════════════════════════════
+   Kierowca sam dodaje auto spoza floty (decyzje Marka 05.10, makiety cz. 1–3):
+   rejestracja + marka i model + nieobowiązkowe „w zamian za”. Gdy ta rejestracja
+   już jest (ktoś ją dodał), appka mówi to od razu i przycisk zmienia się na
+   „Dołącz do tego auta” — wspólne auto, wspólny licznik. „Oddałem to auto”
+   odpina tylko tego kierowcę; wpisy zostają. Rejestracja ujednolicana tak samo
+   jak na serwerze (`normalizujRejestracje_`) — inaczej „WZ 5821K” i „WZ5821K”
+   dałyby dwa auta. */
+var ZAST = { znane: null, t: null, pytanie: 0, markaZnana: false, maFirmowe: false };
+function normRej_(t){ return String(t == null ? '' : t).toUpperCase().replace(/[\s\-.]/g, ''); }
+function poprawnaRej_(n){ return /^[A-Z0-9]{4,10}$/.test(n) && /[0-9]/.test(n) && /[A-Z]/.test(n); }
+function zamknijZast_(){
+  clearTimeout(ZAST.t); ZAST.pytanie++; ZAST.znane = null; ZAST.markaZnana = false;
+  el('zastBox').classList.add('ukryte');
+  pokazKafelkiDodawania_(true);
+}
+function ustawPrzyciskZast_(){
+  el('zastDodajBtn').textContent = !ZAST.znane ? 'Dodaj auto zastępcze'
+    : (ZAST.znane.mam ? 'Przejdź do tego auta' : 'Dołącz do tego auta');
+}
+function zapomnijZnane_(){
+  if (!ZAST.znane) return;
+  ZAST.znane = null;
+  el('zastZnane').classList.add('ukryte');
+  el('zastMarka').disabled = false;
+  if (ZAST.markaZnana) { el('zastMarka').value = ''; ZAST.markaZnana = false; }
+  el('zastZaBox').classList.toggle('ukryte', !ZAST.maFirmowe);
+  ustawPrzyciskZast_();
+}
+function pokazZnane_(z){
+  var ost = z.ostatniaData
+    ? ' — ostatni wpis ' + dataPL_(z.ostatniaData) +
+      (z.ostatniStan !== null && z.ostatniStan !== '' && z.ostatniStan !== undefined
+        ? ', ' + formatLicznik_(z.ostatniStan) + ' km' : '') + '.'
+    : '.';
+  el('zastZnane').innerHTML = ikonaHTML_('ic-check') + ' ' + (z.mam
+    ? '<b>To auto już masz na liście:</b> ' + bezpiecznyTekst(z.marka) + '.'
+    : '<b>To auto już jest:</b> ' + bezpiecznyTekst(z.marka) +
+      (z.dodal ? ' (dodał ' + bezpiecznyTekst(z.dodal) + ')' : '') + '. Dołączysz do niego' + ost);
+  el('zastZnane').classList.remove('ukryte');
+  el('zastMarka').value = z.marka; el('zastMarka').disabled = true; ZAST.markaZnana = true;
+  // Dołączając, „w zamian za” nic nie zmienia — auto ma już swoje (serwer je zostawia).
+  el('zastZaBox').classList.add('ukryte');
+  ustawPrzyciskZast_();
+}
+function sprawdzRejestracje_(n){
+  var nr = ++ZAST.pytanie;
+  wolajAPI('zastepczeSprawdz', { rejestracja: n }).then(function(o){
+    if (nr !== ZAST.pytanie || el('zastBox').classList.contains('ukryte')) return;
+    if (normRej_(el('zastRej').value) !== n) return;   // kierowca pisze dalej
+    if (o && o.ok && o.znane) { ZAST.znane = o.znane; pokazZnane_(o.znane); }
+  }).catch(function(){ /* brak sieci: zapis i tak sprawdzi to na serwerze */ });
+}
+el('dodajZastepczeBtn').onclick = function(){
+  if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Dodanie auta zastępczego wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
+  el('dodajBox').classList.add('ukryte');
+  pokazKafelkiDodawania_(false);
+  ZAST.znane = null; ZAST.markaZnana = false;
+  el('zastRej').value = ''; el('zastMarka').value = ''; el('zastMarka').disabled = false;
+  el('bladZastRej').textContent = ''; el('bladZastMarka').textContent = '';
+  el('zastZnane').classList.add('ukryte');
+  var firmowe = STAN.jednostki.filter(function(j){ return !j.zastepcze; });
+  el('zastZa').innerHTML = '<option value="">— nie wskazuję —</option>' + firmowe.map(function(j){
+    return '<option value="' + bezpiecznyTekst(j.idPojazdu) + '">' + bezpiecznyTekst(j.tytul) +
+      (j.podtytul && j.podtytul !== j.tytul ? ' · ' + bezpiecznyTekst(j.podtytul) : '') + '</option>';
+  }).join('');
+  ZAST.maFirmowe = firmowe.length > 0;
+  el('zastZaBox').classList.toggle('ukryte', !ZAST.maFirmowe);
+  ustawPrzyciskZast_();
+  el('zastBox').classList.remove('ukryte');
+  try { el('zastRej').focus(); } catch(e){}
+};
+el('zastAnulujBtn').onclick = zamknijZast_;
+el('zastRej').oninput = function(){
+  el('bladZastRej').textContent = '';
+  var duze = this.value.toUpperCase();
+  if (duze !== this.value) {
+    var poz = this.selectionStart;
+    this.value = duze;
+    try { this.setSelectionRange(poz, poz); } catch(e){}
+  }
+  clearTimeout(ZAST.t);
+  ZAST.pytanie++;
+  zapomnijZnane_();
+  var n = normRej_(this.value);
+  if (poprawnaRej_(n)) ZAST.t = setTimeout(function(){ sprawdzRejestracje_(n); }, 500);
+};
+el('zastMarka').oninput = function(){ el('bladZastMarka').textContent = ''; };
+el('zastDodajBtn').onclick = function(){
+  var n = normRej_(el('zastRej').value);
+  var marka = el('zastMarka').value.trim();
+  if (!poprawnaRej_(n)) { el('bladZastRej').textContent = 'Same litery i cyfry (4–10 znaków), np. WX 1234A.'; return; }
+  if (ZAST.znane && ZAST.znane.mam) {   // już ma to auto — po prostu je otwieramy
+    var jest = STAN.jednostki.filter(function(j){ return j.idPojazdu === ZAST.znane.idPojazdu; })[0];
+    zamknijZast_();
+    if (jest) wybierzPojazd(jest); else odswiezStartZPaskiem_();
+    return;
+  }
+  if (!ZAST.znane && !marka) { el('bladZastMarka').textContent = 'Wpisz markę i model.'; return; }
+  if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Dodanie auta zastępczego wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
+  pokazOverlay(ZAST.znane ? 'Dołączam do auta…' : 'Dodaję auto zastępcze…');
+  wolajAPI('dodajZastepcze', { rejestracja: n, marka: marka, zaId: el('zastZa').value }).then(function(o){
+    schowajOverlay();
+    if (!o.ok) {
+      if (o.blad === 'E036') { el('bladZastRej').textContent = bezpiecznyTekst(o.wiadomosc); return; }
+      if (o.blad === 'E037') { el('bladZastMarka').textContent = bezpiecznyTekst(o.wiadomosc); return; }
+      pokazInfo_('Nie udało się dodać', komunikatHTML_(zKodem_(o) || 'Nie udało się dodać auta zastępczego.'), 'ic-warn');
+      return;
+    }
+    zamknijZast_();
+    odswiezStartZPaskiem_();   // jak po „Dodaj do moich pojazdów” (Z-84)
+  }).catch(function(){
+    schowajOverlay();
+    pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link');
+  });
+};
+/* „Oddałem to auto” (E2 + pytanie E3). Ta sama droga co „Odepnij”. */
+function oddajZastepcze_(j){
+  if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Oddanie auta wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
+  pokazPytanie_({
+    tytul: 'Oddałeś auto zastępcze?', ikona: 'ic-swap',
+    tresc: '„' + bezpiecznyTekst(j.tytul) + (j.podtytul ? ' · ' + bezpiecznyTekst(j.podtytul) : '') +
+      '” zniknie z Twojej listy. Twoje wpisy na nim zostają w ewidencji. ' +
+      'Jeśli znów nim pojedziesz, dodasz je tą samą rejestracją.',
+    akcja: 'Oddałem auto',
+    poAkcji: function(){
+      pokazOverlay('Zapisuję…');
+      wolajAPI('odepnijJednostke', { idPojazdu: j.idPojazdu }).then(function(o){
+        schowajOverlay();
+        if (!o.ok) { pokazInfo_('Nie udało się', bezpiecznyTekst(o.wiadomosc || 'Nie udało się zapisać.'), 'ic-warn'); return; }
+        poOdpieciu_(j.idPojazdu);
+      }).catch(function(){ schowajOverlay(); pokazInfo_('Brak połączenia', 'Spróbuj ponownie, gdy wróci sieć.', 'ic-link'); });
+    }
+  });
+}
+
 /* Odpięcie prosto z listy pojazdów — nie trzeba najpierw wchodzić na pulpit. */
 function odepnijZListy_(j){
   if (!navigator.onLine) { pokazInfo_('Brak internetu', 'Odpięcie pojazdu wymaga zasięgu. Spróbuj, gdy wróci sieć.', 'ic-link'); return; }
@@ -7538,9 +7744,11 @@ function odepnijZListy_(j){
    Wpisywanie z ręki („WP 2542J") było podatne na literówki, a operator
    koparki nie zna numeru rejestracyjnego swojej maszyny. Lista rozwijana
    zdejmuje z człowieka konieczność cokolwiek pamiętać. */
+/* E-68: dwa kafelki dodawania chowają się i wracają RAZEM. */
+function pokazKafelkiDodawania_(tak){ el('dodajKafelki').classList.toggle('ukryte', !tak); }
 el('dodajJednostkeBtn').onclick = function(){
   el('dodajBox').classList.remove('ukryte');
-  el('dodajJednostkeBtn').classList.add('ukryte');
+  pokazKafelkiDodawania_(false);
   var sel = el('wyborNowej');
   sel.innerHTML = '<option value="">— ładowanie… —</option>';
   odswiezPoleWyb_('wyborNowej');   // Z-8b — wracamy do „Wybierz z listy"
@@ -7590,7 +7798,7 @@ el('dodajJednostkeBtn').onclick = function(){
 };
 el('anulujDodanieBtn').onclick = function(){
   el('dodajBox').classList.add('ukryte');
-  el('dodajJednostkeBtn').classList.remove('ukryte');
+  pokazKafelkiDodawania_(true);
   // E-34: gdyby połączenie wisiało, pasek nie może zostać na ekranie po
   // zamknięciu okienka — odpowiedź (jeśli w ogóle dojdzie) i tak trafi
   // w pustkę dzięki kontroli `ukryte` wyżej.
@@ -7921,7 +8129,7 @@ el('potwierdzDodanieBtn').onclick = function(){
     schowajOverlay();
     if (!o.ok) { zdejmijKarte(); pokazInfo_('Nie udało się dodać', bezpiecznyTekst(o.wiadomosc || 'Nie udało się dodać pojazdu.'), 'ic-warn'); return; }
     el('dodajBox').classList.add('ukryte');
-    el('dodajJednostkeBtn').classList.remove('ukryte');
+    pokazKafelkiDodawania_(true);
     odswiezStartZPaskiem_();   // Z-84: „Odświeżam listę pojazdów…"
   }).catch(function(){
     schowajOverlay();
@@ -7956,7 +8164,11 @@ function dociagnijHistorie_(j){
    żeby nikt nie klikał w ślepy zaułek. */
 /* W-87b: ta sama droga co „Odepnij” z listy pojazdów (`odepnijZListy_`) —
    do 02.10 dwie kopie tego samego pytania i wywołania. */
-el('odepnijBtn').onclick = function(){ if (STAN.aktywna) odepnijZListy_(STAN.aktywna); };
+el('odepnijBtn').onclick = function(){
+  if (!STAN.aktywna) return;
+  if (STAN.aktywna.zastepcze) oddajZastepcze_(STAN.aktywna);   // E-68
+  else odepnijZListy_(STAN.aktywna);
+};
 // F-22 (wzorzec floty, 01.08.2026): „Anuluj" przy nowym wpisie — bez pytania
 // wraca na dashboard (pola i tak dostają domyślne wartości przy kolejnym
 // otworzWpis()). „Anuluj poprawianie" w edycji — wraca do „Moje wpisy",
