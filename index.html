@@ -3249,7 +3249,23 @@ var KLUCZ_ZOLTE = 'ewidencja_terminy_zolte_pokazane';      // {klucz terminu: tr
 // E-36 (19.08.2026): po ilu dniach od ostatniego wpisu „Konserwacja koparki"
 // przypominać operatorowi. Marek najpierw mówił o tygodniu, ostatecznie 5 dni
 // (decyzja 19.08: „e-36 bym zrobił po 5 dniach jednak").
-var PROG_KONSERWACJI_DNI = 3;   // E-64 (25.09.2026): Marek — co 3 dni. Świadomie w kodzie, nie w arkuszu (decyzja Marka: tańszy wariant).
+/* E-72: „2026-09-29” → „29.09” (dopisek „kupione …” przy kawałku łączonym). */
+function dataKrotkaE72_(iso){ var s = String(iso || ''); return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(8,10) + '.' + s.slice(5,7) : s; }
+var PROG_KONSERWACJI_DNI = 5;   // E-71 (12.10.2026): Marek — 5 DNI ROBOCZYCH (pn–pt; serwer liczy `konserwacjaDni` w dniach roboczych). Było 3 kalendarzowe (E-64). Świadomie w kodzie, nie w arkuszu.
+
+/* E-71: dni robocze (pn–pt) po dniu `od` aż do `doDnia` włącznie — ta sama reguła co
+   `dniRoboczeMiedzy_` w API.gs. Używane tylko przy zapisie konserwacji, zanim przyjdzie
+   świeży `status`. */
+function dniRoboczeMiedzy_(od, doDnia){
+  var a = new Date(String(od).slice(0,10) + 'T12:00:00'), b = new Date(String(doDnia).slice(0,10) + 'T12:00:00');
+  if (isNaN(a.getTime()) || isNaN(b.getTime())) return -1;
+  if (b <= a) return 0;
+  var ile = 0;
+  for (var d = new Date(a.getTime() + 86400000); d <= b; d = new Date(d.getTime() + 86400000)) {
+    var t = d.getDay(); if (t !== 0 && t !== 6) ile++;
+  }
+  return ile;
+}
 
 // E-37 (19.08.2026): ostatnio potwierdzony komunikat Marka — {d: dzień, t: treść}.
 var KLUCZ_KOMUNIKAT = 'ewidencja_komunikat_marka';
@@ -4428,7 +4444,7 @@ function dzisLokalnie_(){
 
 // E-36: koparki do przypomnienia o konserwacji. Pole `konserwacjaDni`
 // istnieje tylko dla koparek (API.gs): liczba dni od ostatniego wpisu
-// z kategorią „Konserwacja koparki", -1 = nigdy. Badge pokazujemy, gdy
+// z kategorią „Konserwacja koparki" (od E-71 w DNIACH ROBOCZYCH, pn–pt), -1 = nigdy. Badge pokazujemy, gdy
 // minął próg — a przy „nigdy" tylko jeśli maszyna w ogóle ma wpisy
 // (ostatniaData), żeby nie zaczepiać o jednostki nieużywane.
 function koparkiDoKonserwacji_(){
@@ -4441,7 +4457,7 @@ function koparkiDoKonserwacji_(){
 
 function opisKonserwacji_(j){
   if (j.konserwacjaDni === -1) return 'brak zapisanej konserwacji';
-  return j.konserwacjaDni + ' dni od ostatniej konserwacji';
+  return j.konserwacjaDni + ' dni roboczych od ostatniej konserwacji';   // E-71
 }
 
 function rysujBadgeTerminow_(){
@@ -4775,7 +4791,7 @@ function sprawdzKonserwacje_(){
       '„Konserwacja Koparki" we wpisie z tego dnia.',
     pozycje: koparki.map(function(j){ return {
       lewa: bezpiecznyTekst(j.tytul),
-      prawa: j.konserwacjaDni === -1 ? 'brak zapisanej' : j.konserwacjaDni + ' dni temu'
+      prawa: j.konserwacjaDni === -1 ? 'brak zapisanej' : j.konserwacjaDni + ' dni rob. temu'   // E-71
     }; }),
     przycisk: 'Rozumiem', stozek: 'stozek-fiolet',
     po: function(){
@@ -4809,7 +4825,7 @@ function trzebaPytacOKonserwacje_(j){
 function zapytajOKonserwacje_(j, dalej){
   pokazArkuszKom_({ typ: 'fiolet rowne', ikona: 'ic-wrench', tytul: 'Czy dziś była konserwacja?',
     wstep: '<b>' + bezpiecznyTekst(j.tytul) + '</b> — ' + (j.konserwacjaDni === -1
-      ? 'nie ma zapisanej konserwacji.' : 'ostatnia konserwacja ' + j.konserwacjaDni + ' dni temu.') +
+      ? 'nie ma zapisanej konserwacji.' : 'ostatnia konserwacja ' + j.konserwacjaDni + ' dni roboczych temu.') +   // E-71
       '<br><br>Zaznacz ją <b>tylko jeśli naprawdę została zrobiona</b>. ' +
       'Jeśli nie — zapisz wpis bez niej.',   // 25.09: Marek kazał usunąć „to też jest dobra odpowiedź”
     dwa: { zostaw: 'Nie robiłem', akcja: 'Zrobiłem', stozek: '',   // wybór Marka 25.09 (krótko, symetrycznie)
@@ -4889,7 +4905,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v154';
+var WERSJA_SHELL = 'ewidencja-v155';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -6018,7 +6034,7 @@ el('zapiszBtn').onclick = function(){
   // Serwer przy następnym odświeżeniu poda prawdziwą liczbę dni.
   if (j.konserwacjaDni !== undefined && j.konserwacjaDni !== null &&
       String(payload.serwisKategoria || '').toLowerCase().indexOf('konserwacja koparki') !== -1) {
-    var dniKons = Math.round((new Date(dzisiajISO()) - new Date(data)) / 86400000);
+    var dniKons = dniRoboczeMiedzy_(data, dzisiajISO());   // E-71: dni robocze, jak serwer
     if (dniKons >= 0 && (j.konserwacjaDni === -1 || dniKons < j.konserwacjaDni)) j.konserwacjaDni = dniKons;
   }
 
@@ -6866,7 +6882,10 @@ function rysujImport_(){
              sprawa, a pełne rozbicie dawało trzy linijki tekstu w każdej pozycji. */
           (p.laczone ? '<span class="tp-2 tp-lacz">z tankowania <b>' +
              bezpiecznyTekst(litryPL_(p.laczone.calosc)) + ' L</b> na ' +
-             odmianaMaszyn_(Number(p.laczone.ile) || 0) + '</span>' : '') +
+             odmianaMaszyn_(Number(p.laczone.ile) || 0) +
+             /* E-72: dzień ustalony z licznika — mówimy, kiedy paliwo kupiono */
+             (p.dataFloty && p.dataFloty !== p.data ? ' · kupione ' + bezpiecznyTekst(dataKrotkaE72_(p.dataFloty)) : '') +
+             '</span>' : '') +
           (p.budowa ? '<span class="tp-2">' + bezpiecznyTekst(p.budowa) + '</span>' : '') +
           /* W-71: literówka we wpisie — mówimy, co jest wpisane. Gdy wpis jest
              cudzy albo miesiąc zamknięty, zostaje sama informacja (bez ptaszka). */
