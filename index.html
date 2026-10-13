@@ -3321,6 +3321,10 @@ var KLUCZ_ZOLTE = 'ewidencja_terminy_zolte_pokazane';      // {klucz terminu: tr
 // (decyzja 19.08: „e-36 bym zrobił po 5 dniach jednak").
 /* E-72: „2026-09-29” → „29.09” (dopisek „kupione …” przy kawałku łączonym). */
 function dataKrotkaE72_(iso){ var s = String(iso || ''); return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(8,10) + '.' + s.slice(5,7) : s; }
+/* E-73 (13.10.2026, decyzja Marka K4): przypomnienie po PROG_KONSERWACJI_DNI dniach PRACY (dni z wpisem)
+   ALBO po PROG_KONSERWACJI_GRANICA dniach roboczych od konserwacji (dłuższy postój → przypomni przy ruszeniu);
+   pasek i okno tylko, gdy maszyna pracuje (ostatni wpis dziś albo w poprzednim dniu roboczym). */
+var PROG_KONSERWACJI_GRANICA = 10;
 var PROG_KONSERWACJI_DNI = 5;   // E-71 (12.10.2026): Marek — 5 DNI ROBOCZYCH (pn–pt; serwer liczy `konserwacjaDni` w dniach roboczych). Było 3 kalendarzowe (E-64). Świadomie w kodzie, nie w arkuszu.
 
 /* E-71: dni robocze (pn–pt) po dniu `od` aż do `doDnia` włącznie — ta sama reguła co
@@ -4522,11 +4526,24 @@ function dzisLokalnie_(){
 // minął próg — a przy „nigdy" tylko jeśli maszyna w ogóle ma wpisy
 // (ostatniaData), żeby nie zaczepiać o jednostki nieużywane.
 function koparkiDoKonserwacji_(){
-  return (STAN.jednostki || []).filter(function(j){
-    if (typeof j.konserwacjaDni === 'undefined' || j.konserwacjaDni === null) return false;
-    if (j.konserwacjaDni === -1) return !!j.ostatniaData;
-    return j.konserwacjaDni >= PROG_KONSERWACJI_DNI;
-  });
+  // E-73: pasek i okno — próg minął I maszyna pracuje (w czasie postoju cisza).
+  return (STAN.jednostki || []).filter(function(j){ return konserwacjaPoProgu_(j) && maszynaPracuje_(j); });
+}
+/* E-73 (13.10.2026, K4): czy minął próg konserwacji — BEZ patrzenia na postój (tego używa
+   pytanie przy zapisie: zapis = maszyna właśnie pracuje). Nowy serwer (v69+) przysyła
+   `konserwacjaDniPracy`; stary go nie ma → reguła sprzed E-73 (same dni robocze ≥ 5). */
+function konserwacjaPoProgu_(j){
+  if (!j || typeof j.konserwacjaDni === 'undefined' || j.konserwacjaDni === null) return false;
+  if (j.konserwacjaDni === -1) return !!j.ostatniaData;
+  if (typeof j.konserwacjaDniPracy !== 'number') return j.konserwacjaDni >= PROG_KONSERWACJI_DNI;
+  return j.konserwacjaDniPracy >= PROG_KONSERWACJI_DNI || j.konserwacjaDni >= PROG_KONSERWACJI_GRANICA;
+}
+/* E-73: maszyna „pracuje”, gdy ostatni wpis jest z dziś (albo na jutro) lub z poprzedniego dnia
+   roboczego — piątek → poniedziałek to nadal praca. Bez pola z serwera (stary backend) — jak dotąd. */
+function maszynaPracuje_(j){
+  if (typeof j.konserwacjaDniPracy !== 'number') return true;
+  if (!j.ostatniaData) return false;
+  return dniRoboczeMiedzy_(j.ostatniaData, dzisiajISO()) <= 1;
 }
 
 function opisKonserwacji_(j){
@@ -4894,7 +4911,9 @@ function trzebaPytacOKonserwacje_(j){
   if (STAN.edytowanyId || !j) return false;
   var czip = czipKonserwacji_();
   if (!czip || czip.classList.contains('zaznaczony')) return false;
-  return koparkiDoKonserwacji_().some(function(k){ return k.idPojazdu === j.idPojazdu; });
+  // E-73: przy zapisie bez warunku postoju — zapis znaczy, że maszyna rusza (po długim postoju
+  // przypomni od razu przy pierwszym wpisie).
+  return konserwacjaPoProgu_(j);
 }
 function zapytajOKonserwacje_(j, dalej){
   pokazArkuszKom_({ typ: 'fiolet rowne', ikona: 'ic-wrench', tytul: 'Czy dziś była konserwacja?',
@@ -4979,7 +4998,7 @@ function wersjaWorkera_(){
    wprost i dajemy guzik, który przeładowuje. Ten sam wzorzec ma Asystent od
    dawna; Ewidencja go nie miała i dlatego kosztowało nas to pół dnia zgadywania.
    ⚠ OBA NUMERY MUSZĄ BYĆ PODBIJANE RAZEM — pilnuje tego test. */
-var WERSJA_SHELL = 'ewidencja-v157';
+var WERSJA_SHELL = 'ewidencja-v158';
 
 function pokazWersje_(){
   var e = el('stopkaWersji');
@@ -6110,7 +6129,10 @@ el('zapiszBtn').onclick = function(){
   if (j.konserwacjaDni !== undefined && j.konserwacjaDni !== null &&
       String(payload.serwisKategoria || '').toLowerCase().indexOf('konserwacja koparki') !== -1) {
     var dniKons = dniRoboczeMiedzy_(data, dzisiajISO());   // E-71: dni robocze, jak serwer
-    if (dniKons >= 0 && (j.konserwacjaDni === -1 || dniKons < j.konserwacjaDni)) j.konserwacjaDni = dniKons;
+    if (dniKons >= 0 && (j.konserwacjaDni === -1 || dniKons < j.konserwacjaDni)) {
+      j.konserwacjaDni = dniKons;
+      if (typeof j.konserwacjaDniPracy === 'number') j.konserwacjaDniPracy = 0;   // E-73: od konserwacji liczymy od nowa
+    }
   }
 
   pokazOverlay(STAN.edytowanyId ? 'Zapisywanie poprawki…' : 'Zapisywanie… proszę czekać');
